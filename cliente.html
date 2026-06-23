@@ -511,6 +511,25 @@ body{
   <div class="footer">Seguridad &bull; Control &bull; Confianza</div>
 
 </div>
+<!-- BOTÓN DE PRUEBA -->
+<button id="btnPruebaQR"
+style="
+position:fixed;
+bottom:25px;
+right:25px;
+background:#0A2D73;
+color:white;
+border:none;
+padding:15px 22px;
+border-radius:12px;
+font-size:16px;
+font-weight:bold;
+cursor:pointer;
+box-shadow:0 4px 15px rgba(0,0,0,.2);
+z-index:9999;
+">
+Prueba
+</button>
 
 <script>
 
@@ -617,8 +636,44 @@ async function enviarQR(matricula){
         console.error('Error al enviar QR:', error);
     }
 }
+document.getElementById('btnPruebaQR').addEventListener('click', async ()=>{
+
+    const matricula = prompt("Ingrese la matrícula o ID del alumno:");
+
+    if(!matricula){
+        return;
+    }
+
+    try{
+
+        const respuesta = await fetch('/api/registrar.php',{
+            method:'POST',
+            headers:{
+                'Content-Type':'application/json'
+            },
+            body:JSON.stringify({
+                matricula:matricula
+            })
+        });
+
+        const datos = await respuesta.json();
+
+        if(datos.ok){
+            alert("Notificación enviada correctamente");
+            window.location.href='/registro.php';
+        }else{
+            alert(datos.mensaje || "No se pudo procesar el registro");
+        }
+
+    }catch(error){
+        console.error(error);
+        alert("Error al enviar la notificación");
+    }
+
+});
 
 </script>
+
 
 </body>
 </html>
