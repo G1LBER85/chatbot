@@ -535,11 +535,11 @@ Prueba
 
 async function cargarDashboard(){
     try{
-        const respuesta = await fetch('/api/dashboard.php');
+      const respuesta = await fetch('api/dashboard.php');
         const datos = await respuesta.json();
 
         if(datos.nuevo_registro){
-            window.location.href = '/registro.php';
+            window.location.href = 'registro.php';
             return;
         }
 
@@ -602,38 +602,93 @@ function actualizarReloj(){
 
 actualizarReloj();
 setInterval(actualizarReloj, 1000);
-
 let codigoQR = '';
 let timerQR = null;
+let procesandoQR = false;
 
-document.addEventListener('keypress', function(e){
-    if(e.key === 'Enter'){
-        if(codigoQR.length > 0){
-            enviarQR(codigoQR);
-            codigoQR = '';
-        }
-    } else {
+document.addEventListener('keydown', function (e) {
+
+    // Guardar únicamente caracteres normales
+    if (e.key.length === 1) {
+
         codigoQR += e.key;
+
         clearTimeout(timerQR);
-        timerQR = setTimeout(function(){
+
+        // Cuando el lector deje de escribir durante 200 ms,
+        // se considera terminada la lectura
+        timerQR = setTimeout(function () {
+
+            const codigo = codigoQR.trim();
             codigoQR = '';
-        }, 500);
+
+            if (codigo !== '' && !procesandoQR) {
+                console.log('Código leído:', codigo);
+                enviarQR(codigo);
+            }
+
+        }, 200);
     }
 });
+async function enviarQR(codigo) {
 
-async function enviarQR(matricula){
-    try{
-        const respuesta = await fetch('/api/registrar.php', {
+    if (procesandoQR) {
+        return;
+    }
+
+    procesandoQR = true;
+
+    console.log('Enviando:', codigo);
+
+    try {
+        const respuesta = await fetch('api/registrar.php', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ matricula: matricula })
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                codigo: codigo
+            })
         });
-        const datos = await respuesta.json();
-        if(datos.ok){
-            window.location.href = '/registro.php';
+
+        const texto = await respuesta.text();
+
+        console.log('HTTP:', respuesta.status);
+        console.log('Respuesta del servidor:', texto);
+
+        let datos;
+
+        try {
+            datos = JSON.parse(texto);
+        } catch (error) {
+            throw new Error(
+                'registrar.php no devolvió un JSON válido: ' + texto
+            );
         }
-    } catch(error){
-        console.error('Error al enviar QR:', error);
+
+        if (!respuesta.ok || !datos.ok) {
+            throw new Error(
+                datos.error || 'No se pudo registrar el código'
+            );
+        }
+
+        console.log(
+            'Registro correcto:',
+            datos.nombre,
+            datos.tipo,
+            datos.hora
+        );
+
+        window.location.href = '/checabot/cliente.php';
+
+    } catch (error) {
+        console.error('Error al registrar:', error);
+        alert('Error: ' + error.message);
+
+    } finally {
+        setTimeout(function () {
+            procesandoQR = false;
+        }, 2000);
     }
 }
 document.getElementById('btnPruebaQR').addEventListener('click', async ()=>{
