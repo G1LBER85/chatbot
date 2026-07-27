@@ -1,679 +1,1347 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema de Accesos</title>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
+    <meta charset="UTF-8">
 
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Poppins',sans-serif;
-}
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-body{
-    height:100vh;
-    background:#e8f0fe;
-    color:#0A2D73;
-    overflow:hidden;
-}
+    <title>Sistema de Accesos</title>
 
-.pantalla{
-    width:100%;
-    height:100vh;
-    display:flex;
-    flex-direction:column;
-    padding:28px 36px 20px;
-}
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
 
-/* HEADER */
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
 
-.header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:28px;
-}
+        body {
+            min-height: 100vh;
+            background: #e8f0fe;
+            color: #0A2D73;
+        }
 
-.logo-area{
-    display:flex;
-    align-items:center;
-    gap:18px;
-}
+        .pantalla {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 28px 36px 20px;
+        }
 
-.logo-circulo{
-    width:72px;
-    height:72px;
-    border-radius:50%;
-    background:#0A2D73;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-shrink:0;
-}
+        /* HEADER */
 
-.logo-circulo svg{
-    width:42px;
-    height:42px;
-    fill:white;
-}
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
 
-.escuela-nombre{
-    font-size:26px;
-    font-weight:700;
-    color:#0A2D73;
-    line-height:1.2;
-}
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
 
-.escuela-sub{
-    font-size:14px;
-    color:#4a6fa5;
-    margin-top:3px;
-}
+        .logo-circulo {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #0A2D73;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
 
-.reloj{
-    text-align:right;
-}
+        .logo-circulo svg {
+            width: 42px;
+            height: 42px;
+            fill: white;
+        }
 
-.reloj-hora{
-    font-size:44px;
-    font-weight:700;
-    color:#0A2D73;
-    line-height:1;
-}
+        .escuela-nombre {
+            font-size: 26px;
+            font-weight: 700;
+            color: #0A2D73;
+            line-height: 1.2;
+        }
 
-.reloj-fecha{
-    font-size:15px;
-    color:#4a6fa5;
-    margin-top:5px;
-}
+        .escuela-sub {
+            font-size: 14px;
+            color: #4a6fa5;
+            margin-top: 3px;
+        }
 
-/* CUERPO PRINCIPAL */
+        .reloj {
+            text-align: right;
+        }
 
-.cuerpo{
-    flex:1;
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:24px;
-    align-items:center;
-}
+        .reloj-hora {
+            font-size: 44px;
+            font-weight: 700;
+            color: #0A2D73;
+            line-height: 1;
+        }
 
-/* IZQUIERDA: QR */
+        .reloj-fecha {
+            font-size: 15px;
+            color: #4a6fa5;
+            margin-top: 5px;
+        }
 
-.zona-qr{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:20px;
-}
+        /* CUERPO */
 
-.qr-contenedor{
-    width:220px;
-    height:220px;
-    background:white;
-    border-radius:50%;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border:5px solid #b8d0f5;
-}
+        .cuerpo {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: center;
+        }
 
-.qr-contenedor svg{
-    width:120px;
-    height:120px;
-}
+        /* ZONA QR */
 
-.qr-titulo{
-    font-size:32px;
-    font-weight:800;
-    color:#0A2D73;
-    text-align:center;
-    line-height:1.15;
-}
+        .zona-qr {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
 
-.qr-sub{
-    font-size:16px;
-    color:#4a6fa5;
-    text-align:center;
-}
+        .qr-contenedor {
+            width: 220px;
+            height: 220px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 5px solid #b8d0f5;
+            transition: border-color 0.2s, transform 0.2s;
+        }
 
-/* DERECHA: ÚLTIMO REGISTRO */
+        .qr-contenedor.leyendo {
+            border-color: #378ADD;
+            transform: scale(1.04);
+        }
 
-.zona-registro{
-    background:white;
-    border-radius:24px;
-    padding:28px 30px;
-}
+        .qr-contenedor.correcto {
+            border-color: #22c55e;
+        }
 
-.registro-titulo{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    font-size:18px;
-    font-weight:700;
-    color:#0A2D73;
-    margin-bottom:20px;
-}
+        .qr-contenedor.error {
+            border-color: #ef4444;
+        }
 
-.registro-titulo svg{
-    width:22px;
-    height:22px;
-    stroke:#0A2D73;
-    fill:none;
-    stroke-width:2;
-    stroke-linecap:round;
-    stroke-linejoin:round;
-}
+        .qr-contenedor svg {
+            width: 120px;
+            height: 120px;
+        }
 
-.registro-contenido{
-    display:flex;
-    gap:18px;
-    align-items:flex-start;
-}
+        .qr-titulo {
+            font-size: 32px;
+            font-weight: 800;
+            color: #0A2D73;
+            text-align: center;
+            line-height: 1.15;
+        }
 
-.avatar-area{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:10px;
-    flex-shrink:0;
-}
+        .qr-sub {
+            font-size: 16px;
+            color: #4a6fa5;
+            text-align: center;
+            min-height: 24px;
+        }
 
-.avatar-foto{
-    width:80px;
-    height:80px;
-    border-radius:50%;
-    background:#dbe8f8;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
-}
+        .qr-sub.correcto {
+            color: #15803d;
+            font-weight: 600;
+        }
 
-.avatar-foto img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    display:none;
-}
+        .qr-sub.error {
+            color: #dc2626;
+            font-weight: 600;
+        }
 
-.avatar-foto svg{
-    width:46px;
-    height:46px;
-    stroke:#7eaad8;
-    fill:none;
-    stroke-width:1.5;
-}
+        /* ÚLTIMO REGISTRO */
 
-.avatar-iconos{
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-}
+        .zona-registro {
+            background: white;
+            border-radius: 24px;
+            padding: 28px 30px;
+        }
 
-.icono-avatar{
-    width:32px;
-    height:32px;
-    border-radius:50%;
-    background:#e8f0fe;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-}
+        .registro-titulo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 700;
+            color: #0A2D73;
+            margin-bottom: 20px;
+        }
 
-.icono-avatar svg{
-    width:16px;
-    height:16px;
-    stroke:#0A2D73;
-    fill:none;
-    stroke-width:2;
-    stroke-linecap:round;
-    stroke-linejoin:round;
-}
+        .registro-titulo svg {
+            width: 22px;
+            height: 22px;
+            stroke: #0A2D73;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
 
-.registro-datos{
-    flex:1;
-}
+        .registro-contenido {
+            display: flex;
+            gap: 18px;
+            align-items: flex-start;
+        }
 
-.reg-nombre{
-    font-size:20px;
-    font-weight:700;
-    color:#0A2D73;
-    line-height:1.2;
-    margin-bottom:10px;
-}
+        .avatar-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
 
-.reg-fila{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    font-size:14px;
-    color:#4a6fa5;
-    margin-bottom:8px;
-}
+        .avatar-foto {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #dbe8f8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
 
-.reg-fila svg{
-    width:15px;
-    height:15px;
-    stroke:#7eaad8;
-    fill:none;
-    stroke-width:2;
-    stroke-linecap:round;
-    flex-shrink:0;
-}
+        .avatar-foto img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: none;
+        }
 
-.separador-v{
-    color:#c5d8ef;
-}
+        .avatar-foto svg {
+            width: 46px;
+            height: 46px;
+            stroke: #7eaad8;
+            fill: none;
+            stroke-width: 1.5;
+        }
 
-.badge-entrada{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    background:#dcfce7;
-    color:#166534;
-    font-size:14px;
-    font-weight:700;
-    padding:6px 14px;
-    border-radius:30px;
-    margin-top:4px;
-}
+        .avatar-iconos {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
 
-.badge-salida{
-    display:inline-flex;
-    align-items:center;
-    gap:6px;
-    background:#dbeafe;
-    color:#1e40af;
-    font-size:14px;
-    font-weight:700;
-    padding:6px 14px;
-    border-radius:30px;
-    margin-top:4px;
-}
+        .icono-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #e8f0fe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-.badge-entrada svg,
-.badge-salida svg{
-    width:14px;
-    height:14px;
-    stroke:currentColor;
-    fill:none;
-    stroke-width:2.5;
-    stroke-linecap:round;
-    stroke-linejoin:round;
-}
+        .icono-avatar svg {
+            width: 16px;
+            height: 16px;
+            stroke: #0A2D73;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
 
-/* ESTADÍSTICAS */
+        .registro-datos {
+            flex: 1;
+        }
 
-.estadisticas{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:16px;
-    margin-top:24px;
-}
+        .reg-nombre {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0A2D73;
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
 
-.stat-card{
-    background:white;
-    border-radius:18px;
-    padding:18px 20px;
-    display:flex;
-    align-items:center;
-    gap:14px;
-}
+        .reg-fila {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            color: #4a6fa5;
+            margin-bottom: 8px;
+        }
 
-.stat-icono{
-    width:48px;
-    height:48px;
-    border-radius:50%;
-    background:#e8f0fe;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-shrink:0;
-}
+        .reg-fila svg {
+            width: 15px;
+            height: 15px;
+            stroke: #7eaad8;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            flex-shrink: 0;
+        }
 
-.stat-icono svg{
-    width:24px;
-    height:24px;
-    stroke:#185FA5;
-    fill:none;
-    stroke-width:2;
-    stroke-linecap:round;
-    stroke-linejoin:round;
-}
+        .separador-v {
+            color: #c5d8ef;
+        }
 
-.stat-info{}
+        .badge-entrada,
+        .badge-salida {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 30px;
+            margin-top: 4px;
+        }
 
-.stat-label{
-    font-size:13px;
-    color:#4a6fa5;
-}
+        .badge-entrada {
+            background: #dcfce7;
+            color: #166534;
+        }
 
-.stat-valor{
-    font-size:28px;
-    font-weight:800;
-    color:#0A2D73;
-    line-height:1.1;
-}
+        .badge-salida {
+            background: #dbeafe;
+            color: #1e40af;
+        }
 
-/* FOOTER */
+        .badge-entrada svg,
+        .badge-salida svg {
+            width: 14px;
+            height: 14px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
 
-.footer{
-    text-align:center;
-    font-size:14px;
-    color:#7eaad8;
-    padding-top:14px;
-    letter-spacing:0.05em;
-}
+        /* ESTADÍSTICAS */
 
-</style>
+        .estadisticas {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 18px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .stat-icono {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #e8f0fe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stat-icono svg {
+            width: 24px;
+            height: 24px;
+            stroke: #185FA5;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #4a6fa5;
+        }
+
+        .stat-valor {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0A2D73;
+            line-height: 1.1;
+        }
+
+        /* MENSAJE */
+
+        .mensaje-sistema {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-130px);
+            min-width: 320px;
+            max-width: 90%;
+            padding: 14px 20px;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            z-index: 9999;
+            transition: transform 0.3s ease;
+        }
+
+        .mensaje-sistema.visible {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .mensaje-sistema.exito {
+            background: #15803d;
+        }
+
+        .mensaje-sistema.error {
+            background: #b91c1c;
+        }
+
+        .mensaje-sistema.info {
+            background: #185FA5;
+        }
+
+        /* FOOTER */
+
+        .footer {
+            text-align: center;
+            font-size: 14px;
+            color: #7eaad8;
+            padding-top: 14px;
+            letter-spacing: 0.05em;
+        }
+
+        @media (max-width: 900px) {
+            body {
+                overflow: auto;
+            }
+
+            .pantalla {
+                padding: 20px;
+            }
+
+            .header {
+                align-items: flex-start;
+                gap: 20px;
+            }
+
+            .reloj-hora {
+                font-size: 32px;
+            }
+
+            .cuerpo {
+                grid-template-columns: 1fr;
+            }
+
+            .estadisticas {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-<div class="pantalla">
+    <div
+        id="mensajeSistema"
+        class="mensaje-sistema info"
+    ></div>
 
-  <header class="header">
+    <div class="pantalla">
 
-    <div class="logo-area">
-      <div class="logo-circulo">
-        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          <path d="M50 10 L90 30 L90 55 C90 75 72 90 50 95 C28 90 10 75 10 55 L10 30 Z"/>
-          <text x="50" y="62" text-anchor="middle" font-size="36" fill="#0A2D73" font-family="serif">📚</text>
-        </svg>
-      </div>
-      <div>
-        <div class="escuela-nombre">Preparatoria No. 3 del Estado</div>
-        <div class="escuela-sub">Sistema Gestor de Accesos</div>
-      </div>
-    </div>
+        <header class="header">
 
-    <div class="reloj">
-      <div class="reloj-hora" id="relojHora">--:--:-- --</div>
-      <div class="reloj-fecha" id="relojFecha">-- de ------ de ----  |  --------</div>
-    </div>
+            <div class="logo-area">
+                <div class="logo-circulo">
+                    <svg
+                        viewBox="0 0 100 100"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <path
+                            d="M50 10 L90 30 L90 55 C90 75 72 90 50 95 C28 90 10 75 10 55 L10 30 Z"
+                        />
 
-  </header>
+                        <text
+                            x="50"
+                            y="62"
+                            text-anchor="middle"
+                            font-size="36"
+                            fill="#0A2D73"
+                            font-family="serif"
+                        >
+                            📚
+                        </text>
+                    </svg>
+                </div>
 
-  <div class="cuerpo">
+                <div>
+                    <div class="escuela-nombre">
+                        Preparatoria No. 3 del Estado
+                    </div>
 
-    <div class="zona-qr">
-      <div class="qr-contenedor">
-        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="10" y="10" width="35" height="35" rx="4" stroke="#378ADD" stroke-width="5" fill="none"/>
-          <rect x="20" y="20" width="15" height="15" fill="#378ADD"/>
-          <rect x="55" y="10" width="35" height="35" rx="4" stroke="#378ADD" stroke-width="5" fill="none"/>
-          <rect x="65" y="20" width="15" height="15" fill="#378ADD"/>
-          <rect x="10" y="55" width="35" height="35" rx="4" stroke="#378ADD" stroke-width="5" fill="none"/>
-          <rect x="20" y="65" width="15" height="15" fill="#378ADD"/>
-          <rect x="55" y="55" width="10" height="10" fill="#378ADD"/>
-          <rect x="70" y="55" width="10" height="10" fill="#378ADD"/>
-          <rect x="55" y="70" width="10" height="10" fill="#378ADD"/>
-          <rect x="80" y="70" width="10" height="10" fill="#378ADD"/>
-          <rect x="70" y="80" width="10" height="10" fill="#378ADD"/>
-          <rect x="55" y="80" width="10" height="10" fill="#378ADD"/>
-          <rect x="80" y="55" width="10" height="10" fill="#378ADD"/>
-        </svg>
-      </div>
-      <div class="qr-titulo">ESCANEA TU<br>CREDENCIAL</div>
-      <div class="qr-sub">Acerca su credencial al lector</div>
-    </div>
-
-    <div class="zona-registro">
-      <div class="registro-titulo">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        ÚLTIMO REGISTRO
-      </div>
-      <div class="registro-contenido">
-        <div class="avatar-area">
-          <div class="avatar-foto" id="avatarFoto">
-            <img id="fotoUltimo" src="" alt="Alumno">
-            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          </div>
-          <div class="avatar-iconos">
-            <div class="icono-avatar">
-              <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                    <div class="escuela-sub">
+                        Sistema Gestor de Accesos
+                    </div>
+                </div>
             </div>
-            <div class="icono-avatar">
-              <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+
+            <div class="reloj">
+                <div
+                    class="reloj-hora"
+                    id="relojHora"
+                >
+                    --:--:-- --
+                </div>
+
+                <div
+                    class="reloj-fecha"
+                    id="relojFecha"
+                >
+                    -- de ------ de ---- | --------
+                </div>
             </div>
-          </div>
-        </div>
-        <div class="registro-datos">
-          <div class="reg-nombre" id="ultimoNombre">Cargando...</div>
-          <div class="reg-fila">
-            <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-            <span id="ultimoGrupo">-- Semestre</span>
-            <span class="separador-v">|</span>
-            <span id="ultimoGrupoB">Grupo --</span>
-          </div>
-          <div class="reg-fila">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span id="ultimoHora">--:-- --</span>
-          </div>
-          <div id="badgeMovimiento" class="badge-entrada">
-            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-            <span id="ultimoMovimiento">ENTRADA</span>
-          </div>
-        </div>
-      </div>
+
+        </header>
+
+        <main class="cuerpo">
+
+            <section class="zona-qr">
+
+                <div
+                    class="qr-contenedor"
+                    id="qrContenedor"
+                >
+                    <svg
+                        viewBox="0 0 100 100"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                    >
+                        <rect
+                            x="10"
+                            y="10"
+                            width="35"
+                            height="35"
+                            rx="4"
+                            stroke="#378ADD"
+                            stroke-width="5"
+                        />
+
+                        <rect
+                            x="20"
+                            y="20"
+                            width="15"
+                            height="15"
+                            fill="#378ADD"
+                        />
+
+                        <rect
+                            x="55"
+                            y="10"
+                            width="35"
+                            height="35"
+                            rx="4"
+                            stroke="#378ADD"
+                            stroke-width="5"
+                        />
+
+                        <rect
+                            x="65"
+                            y="20"
+                            width="15"
+                            height="15"
+                            fill="#378ADD"
+                        />
+
+                        <rect
+                            x="10"
+                            y="55"
+                            width="35"
+                            height="35"
+                            rx="4"
+                            stroke="#378ADD"
+                            stroke-width="5"
+                        />
+
+                        <rect
+                            x="20"
+                            y="65"
+                            width="15"
+                            height="15"
+                            fill="#378ADD"
+                        />
+
+                        <rect x="55" y="55" width="10" height="10" fill="#378ADD"/>
+                        <rect x="70" y="55" width="10" height="10" fill="#378ADD"/>
+                        <rect x="55" y="70" width="10" height="10" fill="#378ADD"/>
+                        <rect x="80" y="70" width="10" height="10" fill="#378ADD"/>
+                        <rect x="70" y="80" width="10" height="10" fill="#378ADD"/>
+                        <rect x="55" y="80" width="10" height="10" fill="#378ADD"/>
+                        <rect x="80" y="55" width="10" height="10" fill="#378ADD"/>
+                    </svg>
+                </div>
+
+                <div class="qr-titulo">
+                    ESCANEA TU<br>
+                    CREDENCIAL
+                </div>
+
+                <div
+                    class="qr-sub"
+                    id="estadoLector"
+                >
+                    Acerca tu credencial al lector
+                </div>
+
+            </section>
+
+            <section class="zona-registro">
+
+                <div class="registro-titulo">
+                    <svg viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+
+                    ÚLTIMO REGISTRO
+                </div>
+
+                <div class="registro-contenido">
+
+                    <div class="avatar-area">
+
+                        <div
+                            class="avatar-foto"
+                            id="avatarFoto"
+                        >
+                            <img
+                                id="fotoUltimo"
+                                src=""
+                                alt="Alumno"
+                            >
+
+                            <svg viewBox="0 0 24 24">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+
+                        <div class="avatar-iconos">
+
+                            <div class="icono-avatar">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                                    <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                                </svg>
+                            </div>
+
+                            <div class="icono-avatar">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                                    <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                                </svg>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="registro-datos">
+
+                        <div
+                            class="reg-nombre"
+                            id="ultimoNombre"
+                        >
+                            Cargando...
+                        </div>
+
+                        <div class="reg-fila">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                                <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                            </svg>
+
+                            <span id="ultimoGrupo">
+                                -- Semestre
+                            </span>
+
+                            <span class="separador-v">
+                                |
+                            </span>
+
+                            <span id="ultimoGrupoB">
+                                Grupo --
+                            </span>
+                        </div>
+
+                        <div class="reg-fila">
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 6 12 12 16 14"/>
+                            </svg>
+
+                            <span id="ultimoHora">
+                                --:-- --
+                            </span>
+                        </div>
+
+                        <div
+                            id="badgeMovimiento"
+                            class="badge-entrada"
+                        >
+                            <svg viewBox="0 0 24 24">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+
+                            <span id="ultimoMovimiento">
+                                ENTRADA
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+
+        <section class="estadisticas">
+
+            <div class="stat-card">
+
+                <div class="stat-icono">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                </div>
+
+                <div>
+                    <div class="stat-label">
+                        Entradas hoy
+                    </div>
+
+                    <div
+                        class="stat-valor"
+                        id="totalEntradas"
+                    >
+                        0
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+
+                <div class="stat-icono">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                </div>
+
+                <div>
+                    <div class="stat-label">
+                        Salidas hoy
+                    </div>
+
+                    <div
+                        class="stat-valor"
+                        id="totalSalidas"
+                    >
+                        0
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+
+                <div class="stat-icono">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <line x1="19" y1="8" x2="19" y2="14"/>
+                        <line x1="22" y1="11" x2="16" y2="11"/>
+                    </svg>
+                </div>
+
+                <div>
+                    <div class="stat-label">
+                        En el plantel
+                    </div>
+
+                    <div
+                        class="stat-valor"
+                        id="enPlantel"
+                    >
+                        0
+                    </div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+
+                <div class="stat-icono">
+                    <svg viewBox="0 0 24 24">
+                        <rect x="3" y="4" width="18" height="18" rx="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                    </svg>
+                </div>
+
+                <div>
+                    <div class="stat-label">
+                        Total alumnos
+                    </div>
+
+                    <div
+                        class="stat-valor"
+                        id="totalAlumnos"
+                    >
+                        0
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <footer class="footer">
+            Seguridad &bull; Control &bull; Confianza
+        </footer>
+
     </div>
 
-  </div>
+    <script>
+        /*
+         * Rutas relativas a:
+         * http://localhost/checabot/cliente.html
+         */
+        const URL_DASHBOARD = 'api/dashboard.php';
+        const URL_REGISTRAR = 'api/registrar.php';
+        const URL_REGISTRO = 'registro.php';
 
-  <div class="estadisticas">
+        let codigoQR = '';
+        let temporizadorQR = null;
+        let procesandoQR = false;
+        let temporizadorMensaje = null;
 
-    <div class="stat-card">
-      <div class="stat-icono">
-        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-      </div>
-      <div class="stat-info">
-        <div class="stat-label">Entradas hoy</div>
-        <div class="stat-valor" id="totalEntradas">0</div>
-      </div>
-    </div>
+        const qrContenedor =
+            document.getElementById('qrContenedor');
 
-    <div class="stat-card">
-      <div class="stat-icono">
-        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      </div>
-      <div class="stat-info">
-        <div class="stat-label">Salidas hoy</div>
-        <div class="stat-valor" id="totalSalidas">0</div>
-      </div>
-    </div>
+        const estadoLector =
+            document.getElementById('estadoLector');
 
-    <div class="stat-card">
-      <div class="stat-icono">
-        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
-      </div>
-      <div class="stat-info">
-        <div class="stat-label">En el plantel</div>
-        <div class="stat-valor" id="enPlantel">0</div>
-      </div>
-    </div>
+        const mensajeSistema =
+            document.getElementById('mensajeSistema');
 
-    <div class="stat-card">
-      <div class="stat-icono">
-        <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-      </div>
-      <div class="stat-info">
-        <div class="stat-label">Total alumnos</div>
-        <div class="stat-valor" id="totalAlumnos">0</div>
-      </div>
-    </div>
+        /*
+         * Mostrar un mensaje arriba de la pantalla.
+         */
+        function mostrarMensaje(texto, tipo = 'info') {
+            clearTimeout(temporizadorMensaje);
 
-  </div>
+            mensajeSistema.textContent = texto;
+            mensajeSistema.className =
+                `mensaje-sistema ${tipo} visible`;
 
-  <div class="footer">Seguridad &bull; Control &bull; Confianza</div>
-
-</div>
-<!-- BOTÓN DE PRUEBA -->
-<button id="btnPruebaQR"
-style="
-position:fixed;
-bottom:25px;
-right:25px;
-background:#0A2D73;
-color:white;
-border:none;
-padding:15px 22px;
-border-radius:12px;
-font-size:16px;
-font-weight:bold;
-cursor:pointer;
-box-shadow:0 4px 15px rgba(0,0,0,.2);
-z-index:9999;
-">
-Prueba
-</button>
-
-<script>
-
-async function cargarDashboard(){
-    try{
-        const respuesta = await fetch('/api/dashboard.php');
-        const datos = await respuesta.json();
-
-        if(datos.nuevo_registro){
-            window.location.href = '/registro.php';
-            return;
+            temporizadorMensaje = setTimeout(function () {
+                mensajeSistema.classList.remove('visible');
+            }, 3500);
         }
 
-        const u = datos.ultimo || {};
+        /*
+         * Cambiar visualmente el estado del lector.
+         */
+        function cambiarEstadoLector(tipo, texto) {
+            qrContenedor.classList.remove(
+                'leyendo',
+                'correcto',
+                'error'
+            );
 
-        document.getElementById('ultimoNombre').textContent = u.nombre || '—';
-        document.getElementById('ultimoGrupo').textContent = u.semestre || u.grado || '—';
-        document.getElementById('ultimoGrupoB').textContent = u.grupo || '—';
-        document.getElementById('ultimoHora').textContent = u.hora || '—';
+            estadoLector.classList.remove(
+                'correcto',
+                'error'
+            );
 
-        const tipo = (u.tipo_movimiento || u.tipo || u.movimiento || 'entrada').toLowerCase();
-        const esSalida = tipo.includes('salida');
-        const badge = document.getElementById('badgeMovimiento');
-        const spanMov = document.getElementById('ultimoMovimiento');
-        spanMov.textContent = esSalida ? 'SALIDA' : 'ENTRADA';
-        badge.className = esSalida ? 'badge-salida' : 'badge-entrada';
-        badge.querySelector('svg').innerHTML = esSalida
-            ? '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'
-            : '<polyline points="20 6 9 17 4 12"/>';
+            if (tipo) {
+                qrContenedor.classList.add(tipo);
 
-        const img = document.getElementById('fotoUltimo');
-        const svgAvatar = img.nextElementSibling;
-        if(u.foto){
-            img.src = u.foto;
-            img.style.display = 'block';
-            if(svgAvatar) svgAvatar.style.display = 'none';
-        } else {
-            img.style.display = 'none';
-            if(svgAvatar) svgAvatar.style.display = '';
+                if (
+                    tipo === 'correcto' ||
+                    tipo === 'error'
+                ) {
+                    estadoLector.classList.add(tipo);
+                }
+            }
+
+            estadoLector.textContent = texto;
         }
 
-        const e = datos.estadisticas || {};
-        document.getElementById('totalEntradas').textContent = e.entradas ?? '—';
-        document.getElementById('totalSalidas').textContent = e.salidas ?? '—';
-        document.getElementById('enPlantel').textContent = e.enPlantel ?? e.en_plantel ?? '—';
-        document.getElementById('totalAlumnos').textContent = e.totalAlumnos ?? e.total_alumnos ?? '—';
+        /*
+         * Cargar último registro y estadísticas.
+         */
+        async function cargarDashboard() {
+            try {
+                const respuesta = await fetch(
+                    URL_DASHBOARD,
+                    {
+                        method: 'GET',
+                        cache: 'no-store'
+                    }
+                );
 
-    } catch(error){
-        console.error('Error al cargar datos:', error);
-    }
-}
+                const texto = await respuesta.text();
 
-cargarDashboard();
-setInterval(cargarDashboard, 5000);
+                let datos;
 
-function actualizarReloj(){
-    const ahora = new Date();
-    let horas = ahora.getHours();
-    const ampm = horas >= 12 ? 'PM' : 'AM';
-    horas = horas % 12 || 12;
-    const mm = ahora.getMinutes().toString().padStart(2,'0');
-    const ss = ahora.getSeconds().toString().padStart(2,'0');
-    document.getElementById('relojHora').textContent = `${horas}:${mm}:${ss} ${ampm}`;
+                try {
+                    datos = JSON.parse(texto);
+                } catch (error) {
+                    throw new Error(
+                        'dashboard.php no devolvió JSON válido: ' +
+                        texto
+                    );
+                }
 
-    const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-    const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    document.getElementById('relojFecha').textContent =
-        `${ahora.getDate()} de ${meses[ahora.getMonth()]} de ${ahora.getFullYear()}  |  ${dias[ahora.getDay()]}`;
-}
+                if (!respuesta.ok || datos.ok === false) {
+                    throw new Error(
+                        datos.error ||
+                        'No se pudo cargar el dashboard'
+                    );
+                }
 
-actualizarReloj();
-setInterval(actualizarReloj, 1000);
+                const ultimo = datos.ultimo || {};
 
-let codigoQR = '';
-let timerQR = null;
+                document
+                    .getElementById('ultimoNombre')
+                    .textContent =
+                        ultimo.nombre || 'Sin registros';
 
-document.addEventListener('keypress', function(e){
-    if(e.key === 'Enter'){
-        if(codigoQR.length > 0){
-            enviarQR(codigoQR);
-            codigoQR = '';
+                document
+                    .getElementById('ultimoGrupo')
+                    .textContent =
+                        ultimo.semestre ||
+                        ultimo.grado ||
+                        '—';
+
+                document
+                    .getElementById('ultimoGrupoB')
+                    .textContent =
+                        ultimo.grupo || '—';
+
+                document
+                    .getElementById('ultimoHora')
+                    .textContent =
+                        ultimo.hora || '—';
+
+                actualizarMovimiento(
+                    ultimo.tipo ||
+                    ultimo.tipo_movimiento ||
+                    ultimo.movimiento ||
+                    'entrada'
+                );
+
+                actualizarFoto(ultimo.foto || '');
+
+                const estadisticas =
+                    datos.estadisticas || {};
+
+                document
+                    .getElementById('totalEntradas')
+                    .textContent =
+                        estadisticas.entradas ?? 0;
+
+                document
+                    .getElementById('totalSalidas')
+                    .textContent =
+                        estadisticas.salidas ?? 0;
+
+                document
+                    .getElementById('enPlantel')
+                    .textContent =
+                        estadisticas.enPlantel ??
+                        estadisticas.en_plantel ??
+                        0;
+
+                document
+                    .getElementById('totalAlumnos')
+                    .textContent =
+                        estadisticas.totalAlumnos ??
+                        estadisticas.total_alumnos ??
+                        0;
+
+            } catch (error) {
+                console.error(
+                    'Error al cargar dashboard:',
+                    error
+                );
+            }
         }
-    } else {
-        codigoQR += e.key;
-        clearTimeout(timerQR);
-        timerQR = setTimeout(function(){
-            codigoQR = '';
-        }, 500);
-    }
-});
 
-async function enviarQR(matricula){
-    try{
-        const respuesta = await fetch('/api/registrar.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ matricula: matricula })
-        });
-        const datos = await respuesta.json();
-        if(datos.ok){
-            window.location.href = '/registro.php';
-        }
-    } catch(error){
-        console.error('Error al enviar QR:', error);
-    }
-}
-document.getElementById('btnPruebaQR').addEventListener('click', async ()=>{
+        /*
+         * Mostrar entrada o salida.
+         */
+        function actualizarMovimiento(tipoRecibido) {
+            const tipo = String(tipoRecibido).toLowerCase();
+            const esSalida = tipo.includes('salida');
 
-    const matricula = prompt("Ingrese la matrícula o ID del alumno:");
+            const badge =
+                document.getElementById('badgeMovimiento');
 
-    if(!matricula){
-        return;
-    }
+            const textoMovimiento =
+                document.getElementById('ultimoMovimiento');
 
-    try{
+            const icono = badge.querySelector('svg');
 
-        const respuesta = await fetch('/api/registrar.php',{
-            method:'POST',
-            headers:{
-                'Content-Type':'application/json'
-            },
-            body:JSON.stringify({
-                matricula:matricula
-            })
-        });
+            textoMovimiento.textContent =
+                esSalida ? 'SALIDA' : 'ENTRADA';
 
-        const datos = await respuesta.json();
+            badge.className =
+                esSalida
+                    ? 'badge-salida'
+                    : 'badge-entrada';
 
-        if(datos.ok){
-            alert("Notificación enviada correctamente");
-            window.location.href='/registro.php';
-        }else{
-            alert(datos.mensaje || "No se pudo procesar el registro");
+            icono.innerHTML = esSalida
+                ? `
+                    <path
+                        d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"
+                    />
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                  `
+                : `
+                    <polyline points="20 6 9 17 4 12"/>
+                  `;
         }
 
-    }catch(error){
-        console.error(error);
-        alert("Error al enviar la notificación");
-    }
+        /*
+         * Mostrar la foto solo si existe.
+         */
+        function actualizarFoto(rutaFoto) {
+            const imagen =
+                document.getElementById('fotoUltimo');
 
-});
+            const avatar =
+                imagen.nextElementSibling;
 
-</script>
+            if (rutaFoto) {
+                imagen.src = rutaFoto;
+                imagen.style.display = 'block';
 
+                if (avatar) {
+                    avatar.style.display = 'none';
+                }
+            } else {
+                imagen.removeAttribute('src');
+                imagen.style.display = 'none';
+
+                if (avatar) {
+                    avatar.style.display = '';
+                }
+            }
+        }
+
+        /*
+         * Reloj basado en la hora de la computadora.
+         */
+        function actualizarReloj() {
+            const ahora = new Date();
+
+            let horas = ahora.getHours();
+            const ampm = horas >= 12 ? 'PM' : 'AM';
+
+            horas = horas % 12 || 12;
+
+            const minutos =
+                String(ahora.getMinutes()).padStart(2, '0');
+
+            const segundos =
+                String(ahora.getSeconds()).padStart(2, '0');
+
+            document
+                .getElementById('relojHora')
+                .textContent =
+                    `${horas}:${minutos}:${segundos} ${ampm}`;
+
+            const dias = [
+                'Domingo',
+                'Lunes',
+                'Martes',
+                'Miércoles',
+                'Jueves',
+                'Viernes',
+                'Sábado'
+            ];
+
+            const meses = [
+                'Enero',
+                'Febrero',
+                'Marzo',
+                'Abril',
+                'Mayo',
+                'Junio',
+                'Julio',
+                'Agosto',
+                'Septiembre',
+                'Octubre',
+                'Noviembre',
+                'Diciembre'
+            ];
+
+            document
+                .getElementById('relojFecha')
+                .textContent =
+                    `${ahora.getDate()} de ` +
+                    `${meses[ahora.getMonth()]} de ` +
+                    `${ahora.getFullYear()} | ` +
+                    `${dias[ahora.getDay()]}`;
+        }
+
+        /*
+         * Capturar el lector QR como teclado.
+         *
+         * No depende de que el lector envíe Enter:
+         * cuando deja de escribir durante 200 ms,
+         * procesa el código completo.
+         */
+        document.addEventListener(
+            'keydown',
+            function (evento) {
+
+                if (procesandoQR) {
+                    return;
+                }
+
+                /*
+                 * Si el lector manda Enter o Tab,
+                 * procesar inmediatamente.
+                 */
+                if (
+                    evento.key === 'Enter' ||
+                    evento.key === 'Tab'
+                ) {
+                    evento.preventDefault();
+
+                    clearTimeout(temporizadorQR);
+
+                    const codigo = codigoQR.trim();
+                    codigoQR = '';
+
+                    if (codigo !== '') {
+                        procesarCodigoQR(codigo);
+                    }
+
+                    return;
+                }
+
+                /*
+                 * Solo aceptar caracteres normales.
+                 */
+                if (evento.key.length !== 1) {
+                    return;
+                }
+
+                codigoQR += evento.key;
+
+                cambiarEstadoLector(
+                    'leyendo',
+                    'Leyendo credencial...'
+                );
+
+                clearTimeout(temporizadorQR);
+
+                temporizadorQR = setTimeout(
+                    function () {
+                        const codigo = codigoQR.trim();
+                        codigoQR = '';
+
+                        if (codigo !== '') {
+                            procesarCodigoQR(codigo);
+                        } else {
+                            cambiarEstadoLector(
+                                '',
+                                'Acerca tu credencial al lector'
+                            );
+                        }
+                    },
+                    200
+                );
+            }
+        );
+
+        /*
+         * Validar y enviar el código.
+         */
+        function procesarCodigoQR(codigo) {
+            const codigoLimpio =
+                String(codigo).trim().toUpperCase();
+
+            if (codigoLimpio === '') {
+                return;
+            }
+
+            console.log(
+                'Código leído:',
+                codigoLimpio
+            );
+
+            enviarQR(codigoLimpio);
+        }
+
+        /*
+         * Enviar el código a api/registrar.php.
+         */
+        async function enviarQR(codigo) {
+            if (procesandoQR) {
+                return;
+            }
+
+            procesandoQR = true;
+
+            cambiarEstadoLector(
+                'leyendo',
+                `Registrando ${codigo}...`
+            );
+
+            console.log('Enviando:', codigo);
+
+            try {
+                const respuesta = await fetch(
+                    URL_REGISTRAR,
+                    {
+                        method: 'POST',
+
+                        headers: {
+                            'Content-Type':
+                                'application/json'
+                        },
+
+                        body: JSON.stringify({
+                            codigo: codigo
+                        })
+                    }
+                );
+
+                const texto = await respuesta.text();
+
+                console.log(
+                    'HTTP:',
+                    respuesta.status
+                );
+
+                console.log(
+                    'Respuesta del servidor:',
+                    texto
+                );
+
+                let datos;
+
+                try {
+                    datos = JSON.parse(texto);
+                } catch (error) {
+                    throw new Error(
+                        'registrar.php no devolvió JSON válido: ' +
+                        texto
+                    );
+                }
+
+                if (!respuesta.ok || !datos.ok) {
+                    throw new Error(
+                        datos.error ||
+                        'No se pudo registrar el código'
+                    );
+                }
+
+                cambiarEstadoLector(
+                    'correcto',
+                    `${datos.nombre}: ${datos.tipo}`
+                );
+
+                mostrarMensaje(
+                    `${datos.nombre} registró ` +
+                    `${datos.tipo} a las ${datos.hora}`,
+                    'exito'
+                );
+
+                /*
+                 * Actualizar inmediatamente el dashboard.
+                 */
+                await cargarDashboard();
+
+                /*
+                 * Mostrar la pantalla de confirmación.
+                 * La ruta es relativa a /checabot/.
+                 */
+                setTimeout(function () {
+                    window.location.href = URL_REGISTRO;
+                }, 800);
+
+            } catch (error) {
+                console.error(
+                    'Error al registrar:',
+                    error
+                );
+
+                cambiarEstadoLector(
+                    'error',
+                    error.message
+                );
+
+                mostrarMensaje(
+                    error.message,
+                    'error'
+                );
+
+                /*
+                 * Regresar el lector a su estado normal.
+                 */
+                setTimeout(function () {
+                    cambiarEstadoLector(
+                        '',
+                        'Acerca tu credencial al lector'
+                    );
+                }, 3000);
+
+            } finally {
+                /*
+                 * Esperar para impedir una segunda lectura
+                 * accidental del mismo código.
+                 */
+                setTimeout(function () {
+                    procesandoQR = false;
+                    codigoQR = '';
+                }, 2000);
+            }
+        }
+
+        actualizarReloj();
+        cargarDashboard();
+
+        setInterval(actualizarReloj, 1000);
+        setInterval(cargarDashboard, 5000);
+    </script>
 
 </body>
 </html>
