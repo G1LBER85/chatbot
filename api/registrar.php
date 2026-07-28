@@ -23,7 +23,7 @@ try {
         exit;
     }
 
-    $codigo = trim($datos['codigo'] ?? '');
+    $codigo = trim($datos['CURP'] ?? '');   //Cambié de código a CURP
 
     if ($codigo === '') {
         http_response_code(400);
@@ -38,7 +38,7 @@ try {
 
     // ─────────────────────────────────────────────
     // 1. Buscar alumno activo por su código QR
-    // ─────────────────────────────────────────────
+    // Cambie de Where codigo a WHERE CURP
     $stmtAlumno = $conn->prepare("
         SELECT
             id,
@@ -46,7 +46,7 @@ try {
             grado,
             tutor_chat_id
         FROM alumnos
-        WHERE codigo = ?
+        WHERE CURP = ?
           AND activo = 1
         LIMIT 1
     ");

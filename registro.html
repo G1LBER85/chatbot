@@ -444,8 +444,13 @@
 
             async function cargarRegistro() {
                 try {
+<<<<<<< HEAD
                 const respuesta = await fetch("/api/ultimo-registro.php");
                 const datos = await respuesta.json();
+=======
+                const respuesta = await fetch("api/ultimo-registro.php");   //Cambié de /api/ultimo-registro.php a api/ultimo-registro.php para que aparezca los datos
+                const datos = await respuesta.json();                       // en la pantalla de bienvenida.
+>>>>>>> origin/cesar
 
                 const esSalida = datos.tipo === "salida";
 
