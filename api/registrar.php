@@ -187,48 +187,104 @@ try {
     // ─────────────────────────────────────────────
     $hora = date('h:i A');
 
-    /*
-     * La notificación no debe impedir que se registre la asistencia.
-     * Deja TU_TOKEN mientras no quieras usar Telegram.
-     */
-    $telegramEnviado = false;
-    $token = 'TU_TOKEN';
+    
+   // ─────────────────────────────────────────────
+// Enviar notificación por Telegram
+// ─────────────────────────────────────────────
 
-    if (
-        $token !== 'TU_TOKEN' &&
-        !empty($alumno['tutor_chat_id'])
-    ) {
-        $mensaje = $tipo === 'entrada'
-            ? "✅ *{$alumno['nombre']}* registró su *entrada* a las {$hora} 🏫"
-            : "🚪 *{$alumno['nombre']}* registró su *salida* a las {$hora}";
+$telegramEnviado = false;
+$telegramError = null;
 
-        $url = "https://api.telegram.org/bot{$token}/sendMessage";
+$hora = date('h:i A');
 
-        $payload = json_encode([
-            'chat_id' => $alumno['tutor_chat_id'],
-            'text' => $mensaje,
-            'parse_mode' => 'Markdown'
-        ], JSON_UNESCAPED_UNICODE);
+/*
+ * Coloca aquí el token NUEVO generado en BotFather.
+ * No reutilices el token que quedó expuesto.
+ */
+$token = '8922581761:AAH_SEeEAOjedu18YI2BiWwcJghXv7i3vJE';
 
-        $contexto = stream_context_create([
-            'http' => [
-                'header' => "Content-Type: application/json\r\n",
-                'method' => 'POST',
-                'content' => $payload,
-                'timeout' => 5,
-                'ignore_errors' => true
-            ]
-        ]);
+$chatIdTutor = $alumno['tutor_chat_id'] ?? null;
 
-        $respuestaTelegram = @file_get_contents(
-            $url,
-            false,
-            $contexto
+if (!empty($chatIdTutor)) {
+
+    $nombreSeguro = htmlspecialchars(
+        $alumno['nombre'],
+        ENT_QUOTES | ENT_SUBSTITUTE,
+        'UTF-8'
+    );
+
+    $gradoSeguro = htmlspecialchars(
+        $alumno['grado'] ?? 'Sin grado',
+        ENT_QUOTES | ENT_SUBSTITUTE,
+        'UTF-8'
+    );
+
+    $tipoSeguro = htmlspecialchars(
+        $tipo,
+        ENT_QUOTES | ENT_SUBSTITUTE,
+        'UTF-8'
+    );
+
+    $emoji = $tipo === 'entrada' ? '✅' : '🚪';
+
+    $mensaje =
+        "{$emoji} <b>ChecaBot Escuela</b>\n\n" .
+        "👤 <b>{$nombreSeguro}</b>\n" .
+        "📋 Registró su <b>{$tipoSeguro}</b>\n" .
+        "🕐 {$hora}\n" .
+        "🎓 Grado: {$gradoSeguro}";
+
+    $url = "https://api.telegram.org/bot{$token}/sendMessage";
+
+    $payload = json_encode([
+        'chat_id' => (string)$chatIdTutor,
+        'text' => $mensaje,
+        'parse_mode' => 'HTML'
+    ], JSON_UNESCAPED_UNICODE);
+
+    $contexto = stream_context_create([
+        'http' => [
+            'method' => 'POST',
+            'header' =>
+                "Content-Type: application/json; charset=UTF-8\r\n" .
+                "Content-Length: " . strlen($payload) . "\r\n",
+            'content' => $payload,
+            'timeout' => 10,
+            'ignore_errors' => true
+        ]
+    ]);
+
+    $respuestaTelegram = @file_get_contents(
+        $url,
+        false,
+        $contexto
+    );
+
+    if ($respuestaTelegram === false) {
+        $telegramError =
+            'No fue posible conectar con la API de Telegram';
+    } else {
+        $resultadoTelegram = json_decode(
+            $respuestaTelegram,
+            true
         );
 
-        $telegramEnviado = $respuestaTelegram !== false;
+        if (
+            is_array($resultadoTelegram) &&
+            ($resultadoTelegram['ok'] ?? false) === true
+        ) {
+            $telegramEnviado = true;
+        } else {
+            $telegramError =
+                $resultadoTelegram['description']
+                ?? 'Telegram devolvió una respuesta desconocida';
+        }
     }
 
+} else {
+    $telegramError =
+        'El alumno no tiene tutor_chat_id registrado';
+}
     // ─────────────────────────────────────────────
     // 6. Responder al JavaScript
     // ─────────────────────────────────────────────
@@ -240,7 +296,8 @@ try {
         'grado' => $alumno['grado'],
         'tipo' => $tipo,
         'hora' => $hora,
-        'telegram_enviado' => $telegramEnviado
+        'telegram_enviado' => $telegramEnviado,
+        'telegram_error' => $telegramError
     ], JSON_UNESCAPED_UNICODE);
 
 } catch (Throwable $error) {
