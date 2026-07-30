@@ -1,6 +1,15 @@
 <?php
 
 require '../conexion.php';
+// SE CAMBIÓ ESTO: Verificar conexión a MySQL
+if (!$conn) {
+
+    die(
+        "Error de conexión: "
+        . mysqli_connect_error()
+    );
+
+}
 
 header('Content-Type: application/json; charset=utf-8');
 
@@ -61,6 +70,17 @@ try {
     $stmtAlumno->execute();
 
     $alumno = $stmtAlumno->get_result()->fetch_assoc();
+    // SE CAMBIÓ ESTO: Verificar que sí encontró al alumno
+if (!$alumno) {
+
+    die(
+        "No se encontró alumno con CURP: "
+        . $codigo
+    );
+
+}
+
+$stmtAlumno->close();
 
     $stmtAlumno->close();
 
@@ -155,38 +175,66 @@ try {
     // ─────────────────────────────────────────────
     // 4. Guardar el registro
     // ─────────────────────────────────────────────
-    $stmtRegistro = $conn->prepare("
-        INSERT INTO registros (
-            alumno_id,
-            tipo,
-            fecha_hora,
-            mostrado
-        )
-        VALUES (?, ?, NOW(), 0)
-    ");
+ // SE CAMBIÓ ESTO: Validar si la consulta INSERT se preparó correctamente
+$stmtRegistro = $conn->prepare("
+    INSERT INTO registros (
+        alumno_id,
+        tipo,
+        fecha_hora,
+        mostrado
+    )
+    VALUES (?, ?, NOW(), 0)
+");
 
-    if (!$stmtRegistro) {
-        throw new Exception(
-            'Error preparando el registro: ' . $conn->error
-        );
-    }
+if (!$stmtRegistro) {
+    die(
+        "Error preparando INSERT en registros: "
+        . $conn->error
+    );
+}
 
-    $stmtRegistro->bind_param('is', $alumnoId, $tipo);
-    $stmtRegistro->execute();
+// SE CAMBIÓ ESTO: Mostrar los datos que se intentan guardar
+// SE CAMBIÓ ESTO: Mostrar los datos que se intentan guardar
+echo "<pre>";
+echo "Alumno ID: " . $alumnoId . PHP_EOL;
+echo "Tipo: " . $tipo . PHP_EOL;
+echo "</pre>";
 
-    if ($stmtRegistro->affected_rows !== 1) {
-        throw new Exception('No se pudo guardar el registro');
-    }
+$stmtRegistro->bind_param('is', $alumnoId, $tipo);
 
-    $registroId = $stmtRegistro->insert_id;
+// SE CAMBIÓ ESTO: Ejecutar y validar errores
+if (!$stmtRegistro->execute()) {
 
-    $stmtRegistro->close();
+    die(
+        "Error al ejecutar INSERT: "
+        . $stmtRegistro->error
+    );
+
+}
+
+// SE CAMBIÓ ESTO: Verificar que realmente se insertó
+if ($stmtRegistro->affected_rows !== 1) {
+
+    die(
+        "No se insertó ningún registro."
+    );
+
+}
+
+echo "Registro guardado correctamente.<br>";
+
+$registroId = $stmtRegistro->insert_id;
+
+$stmtRegistro->close();
 
     // ─────────────────────────────────────────────
     // 5. Preparar datos del registro
     // ─────────────────────────────────────────────
     $hora = date('h:i A');
 
+    //─────────────────────────────────────────────
+    // 6. Guardar registro en la base de datos
+    //─────────────────────────────────────────────
     
    // ─────────────────────────────────────────────
 // Enviar notificación por Telegram
