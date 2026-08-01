@@ -605,6 +605,7 @@
                     Acerca tu credencial al lector
                 </div>
 
+
             </section>
 
             <section class="zona-registro">
@@ -829,6 +830,16 @@
         /*
          * Rutas relativas a:
          * http://localhost/checabot/cliente.html
+         *
+         * HISTORIAL DE CAMBIOS (julio 2026):
+         * - Se agregó temporalmente un botón de prueba manual
+         *   (select con alumnos + botón "Simular lectura") para
+         *   poder probar el flujo de registro sin tener el
+         *   lector QR físico conectado. Ese bloque ya fue
+         *   retirado una vez confirmado que el registro
+         *   funcionaba correctamente en la base de datos.
+         * - El flujo real de lectura del lector QR (más abajo,
+         *   funciones procesarCodigoQR / enviarQR) no cambió.
          */
         const URL_DASHBOARD = 'api/dashboard.php';
         const URL_REGISTRAR = 'api/registrar.php';

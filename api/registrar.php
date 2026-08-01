@@ -1,19 +1,20 @@
 <?php
 
 require '../conexion.php';
-// SE CAMBIÓ ESTO: Verificar conexión a MySQL
-if (!$conn) {
-
-    die(
-        "Error de conexión: "
-        . mysqli_connect_error()
-    );
-
-}
 
 header('Content-Type: application/json; charset=utf-8');
 
 date_default_timezone_set('America/Mexico_City');
+
+// Si la conexión falló, responder en JSON (no con die() de texto plano)
+if (!$conn) {
+    http_response_code(500);
+    echo json_encode([
+        'ok' => false,
+        'error' => 'Error de conexión: ' . mysqli_connect_error()
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
 
 try {
 
@@ -32,7 +33,7 @@ try {
         exit;
     }
 
-    $codigo = trim($datos['CURP'] ?? '');   //Cambié de código a CURP
+    $codigo = trim($datos['CURP'] ?? '');   // Cambié de código a CURP
 
     if ($codigo === '') {
         http_response_code(400);
@@ -46,8 +47,8 @@ try {
     }
 
     // ─────────────────────────────────────────────
-    // 1. Buscar alumno activo por su código QR
-    // Cambie de Where codigo a WHERE CURP
+    // 1. Buscar alumno activo por su código QR (CURP)
+    // ─────────────────────────────────────────────
     $stmtAlumno = $conn->prepare("
         SELECT
             id,
@@ -70,17 +71,6 @@ try {
     $stmtAlumno->execute();
 
     $alumno = $stmtAlumno->get_result()->fetch_assoc();
-    // SE CAMBIÓ ESTO: Verificar que sí encontró al alumno
-if (!$alumno) {
-
-    die(
-        "No se encontró alumno con CURP: "
-        . $codigo
-    );
-
-}
-
-$stmtAlumno->close();
 
     $stmtAlumno->close();
 
@@ -105,7 +95,7 @@ $stmtAlumno->close();
         SELECT id
         FROM registros
         WHERE alumno_id = ?
-          AND fecha_hora >= DATE_SUB(NOW(), INTERVAL 3 SECOND)
+          AND fecha_hora >= DATE_SUB(NOW(), INTERVAL 5 SECOND)
         ORDER BY id DESC
         LIMIT 1
     ");
@@ -175,166 +165,140 @@ $stmtAlumno->close();
     // ─────────────────────────────────────────────
     // 4. Guardar el registro
     // ─────────────────────────────────────────────
- // SE CAMBIÓ ESTO: Validar si la consulta INSERT se preparó correctamente
-$stmtRegistro = $conn->prepare("
-    INSERT INTO registros (
-        alumno_id,
-        tipo,
-        fecha_hora,
-        mostrado
-    )
-    VALUES (?, ?, NOW(), 0)
-");
+    $stmtRegistro = $conn->prepare("
+        INSERT INTO registros (
+            alumno_id,
+            tipo,
+            fecha_hora,
+            mostrado
+        )
+        VALUES (?, ?, NOW(), 0)
+    ");
 
-if (!$stmtRegistro) {
-    die(
-        "Error preparando INSERT en registros: "
-        . $conn->error
-    );
-}
+    if (!$stmtRegistro) {
+        throw new Exception(
+            'Error preparando INSERT en registros: ' . $conn->error
+        );
+    }
 
-// SE CAMBIÓ ESTO: Mostrar los datos que se intentan guardar
-// SE CAMBIÓ ESTO: Mostrar los datos que se intentan guardar
-echo "<pre>";
-echo "Alumno ID: " . $alumnoId . PHP_EOL;
-echo "Tipo: " . $tipo . PHP_EOL;
-echo "</pre>";
+    $stmtRegistro->bind_param('is', $alumnoId, $tipo);
 
-$stmtRegistro->bind_param('is', $alumnoId, $tipo);
+    if (!$stmtRegistro->execute()) {
+        throw new Exception(
+            'Error al ejecutar INSERT: ' . $stmtRegistro->error
+        );
+    }
 
-// SE CAMBIÓ ESTO: Ejecutar y validar errores
-if (!$stmtRegistro->execute()) {
+    if ($stmtRegistro->affected_rows !== 1) {
+        throw new Exception('No se insertó ningún registro.');
+    }
 
-    die(
-        "Error al ejecutar INSERT: "
-        . $stmtRegistro->error
-    );
+    $registroId = $stmtRegistro->insert_id;
 
-}
-
-// SE CAMBIÓ ESTO: Verificar que realmente se insertó
-if ($stmtRegistro->affected_rows !== 1) {
-
-    die(
-        "No se insertó ningún registro."
-    );
-
-}
-
-echo "Registro guardado correctamente.<br>";
-
-$registroId = $stmtRegistro->insert_id;
-
-$stmtRegistro->close();
+    $stmtRegistro->close();
 
     // ─────────────────────────────────────────────
     // 5. Preparar datos del registro
     // ─────────────────────────────────────────────
     $hora = date('h:i A');
 
-    //─────────────────────────────────────────────
-    // 6. Guardar registro en la base de datos
-    //─────────────────────────────────────────────
-    
-   // ─────────────────────────────────────────────
-// Enviar notificación por Telegram
-// ─────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // 6. Enviar notificación por Telegram
+    // ─────────────────────────────────────────────
+    $telegramEnviado = false;
+    $telegramError = null;
 
-$telegramEnviado = false;
-$telegramError = null;
+    /*
+     * Coloca aquí el token NUEVO generado en BotFather.
+     * No reutilices el token que quedó expuesto.
+     */
+    $token = '8922581761:AAH_SEeEAOjedu18YI2BiWwcJghXv7i3vJE';
 
-$hora = date('h:i A');
+    $chatIdTutor = $alumno['tutor_chat_id'] ?? null;
 
-/*
- * Coloca aquí el token NUEVO generado en BotFather.
- * No reutilices el token que quedó expuesto.
- */
-$token = '8922581761:AAH_SEeEAOjedu18YI2BiWwcJghXv7i3vJE';
+    if (!empty($chatIdTutor)) {
 
-$chatIdTutor = $alumno['tutor_chat_id'] ?? null;
-
-if (!empty($chatIdTutor)) {
-
-    $nombreSeguro = htmlspecialchars(
-        $alumno['nombre'],
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-
-    $gradoSeguro = htmlspecialchars(
-        $alumno['grado'] ?? 'Sin grado',
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-
-    $tipoSeguro = htmlspecialchars(
-        $tipo,
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-
-    $emoji = $tipo === 'entrada' ? '✅' : '🚪';
-
-    $mensaje =
-        "{$emoji} <b>ChecaBot Escuela</b>\n\n" .
-        "👤 <b>{$nombreSeguro}</b>\n" .
-        "📋 Registró su <b>{$tipoSeguro}</b>\n" .
-        "🕐 {$hora}\n" .
-        "🎓 Grado: {$gradoSeguro}";
-
-    $url = "https://api.telegram.org/bot{$token}/sendMessage";
-
-    $payload = json_encode([
-        'chat_id' => (string)$chatIdTutor,
-        'text' => $mensaje,
-        'parse_mode' => 'HTML'
-    ], JSON_UNESCAPED_UNICODE);
-
-    $contexto = stream_context_create([
-        'http' => [
-            'method' => 'POST',
-            'header' =>
-                "Content-Type: application/json; charset=UTF-8\r\n" .
-                "Content-Length: " . strlen($payload) . "\r\n",
-            'content' => $payload,
-            'timeout' => 10,
-            'ignore_errors' => true
-        ]
-    ]);
-
-    $respuestaTelegram = @file_get_contents(
-        $url,
-        false,
-        $contexto
-    );
-
-    if ($respuestaTelegram === false) {
-        $telegramError =
-            'No fue posible conectar con la API de Telegram';
-    } else {
-        $resultadoTelegram = json_decode(
-            $respuestaTelegram,
-            true
+        $nombreSeguro = htmlspecialchars(
+            $alumno['nombre'],
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
         );
 
-        if (
-            is_array($resultadoTelegram) &&
-            ($resultadoTelegram['ok'] ?? false) === true
-        ) {
-            $telegramEnviado = true;
-        } else {
+        $gradoSeguro = htmlspecialchars(
+            $alumno['grado'] ?? 'Sin grado',
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
+        );
+
+        $tipoSeguro = htmlspecialchars(
+            $tipo,
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
+        );
+
+        $emoji = $tipo === 'entrada' ? '✅' : '🚪';
+
+        $mensaje =
+            "{$emoji} <b>ChecaBot Escuela</b>\n\n" .
+            "👤 <b>{$nombreSeguro}</b>\n" .
+            "📋 Registró su <b>{$tipoSeguro}</b>\n" .
+            "🕐 {$hora}\n" .
+            "🎓 Grado: {$gradoSeguro}";
+
+        $url = "https://api.telegram.org/bot{$token}/sendMessage";
+
+        $payload = json_encode([
+            'chat_id' => (string)$chatIdTutor,
+            'text' => $mensaje,
+            'parse_mode' => 'HTML'
+        ], JSON_UNESCAPED_UNICODE);
+
+        $contexto = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' =>
+                    "Content-Type: application/json; charset=UTF-8\r\n" .
+                    "Content-Length: " . strlen($payload) . "\r\n",
+                'content' => $payload,
+                'timeout' => 10,
+                'ignore_errors' => true
+            ]
+        ]);
+
+        $respuestaTelegram = @file_get_contents(
+            $url,
+            false,
+            $contexto
+        );
+
+        if ($respuestaTelegram === false) {
             $telegramError =
-                $resultadoTelegram['description']
-                ?? 'Telegram devolvió una respuesta desconocida';
+                'No fue posible conectar con la API de Telegram';
+        } else {
+            $resultadoTelegram = json_decode(
+                $respuestaTelegram,
+                true
+            );
+
+            if (
+                is_array($resultadoTelegram) &&
+                ($resultadoTelegram['ok'] ?? false) === true
+            ) {
+                $telegramEnviado = true;
+            } else {
+                $telegramError =
+                    $resultadoTelegram['description']
+                    ?? 'Telegram devolvió una respuesta desconocida';
+            }
         }
+
+    } else {
+        $telegramError =
+            'El alumno no tiene tutor_chat_id registrado';
     }
 
-} else {
-    $telegramError =
-        'El alumno no tiene tutor_chat_id registrado';
-}
     // ─────────────────────────────────────────────
-    // 6. Responder al JavaScript
+    // 7. Responder al JavaScript
     // ─────────────────────────────────────────────
     echo json_encode([
         'ok' => true,
@@ -359,4 +323,3 @@ if (!empty($chatIdTutor)) {
 }
 
 $conn->close();
-?>
