@@ -860,7 +860,7 @@
 
             temporizadorMensaje = setTimeout(function () {
                 mensajeSistema.classList.remove('visible');
-            }, 3500);
+            }, 800);
         }
 
         /*
@@ -1158,10 +1158,7 @@
 
                 codigoQR += evento.key;
 
-                cambiarEstadoLector(
-                    'leyendo',
-                    'Leyendo credencial...'
-                );
+               
 
                 clearTimeout(temporizadorQR);
 
@@ -1179,7 +1176,7 @@
                             );
                         }
                     },
-                    200
+                    100
                 );
             }
         );
@@ -1213,10 +1210,7 @@
 
             procesandoQR = true;
 
-            cambiarEstadoLector(
-                'leyendo',
-                `Registrando ${codigo}...`
-            );
+           
 
             console.log('Enviando:', codigo);
 
@@ -1315,7 +1309,7 @@
                         '',
                         'Acerca tu credencial al lector'
                     );
-                }, 3000);
+                }, 500);
 
             } finally {
                 /*
@@ -1325,7 +1319,7 @@
                 setTimeout(function () {
                     procesandoQR = false;
                     codigoQR = '';
-                }, 2000);
+                }, 300);
             }
         }
 
