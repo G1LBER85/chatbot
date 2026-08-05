@@ -187,25 +187,40 @@
         .zona-registro {
             background: white;
             border-radius: 24px;
-            padding: 28px 30px;
+            padding: 15px 30px;
+            overflow: hidden;
+            position: relative;
+    
+        }
+
+        .zona-registro.tipo-entrada {
+            background: white;
+            border: 5px ridge blue;
+        }
+
+        .zona-registro.tipo-salida {
+            background: white;
+            border: 5px ridge red;
         }
 
         .registro-titulo {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 18px;
+            gap: 5px;
+            font-size: 22px;
             font-weight: 700;
-            color: #0A2D73;
-            margin-bottom: 20px;
+            color: black;
+            margin-bottom: 35px;
+            justify-content: center;
+            text-align: center;
         }
 
         .registro-titulo svg {
             width: 22px;
             height: 22px;
-            stroke: #0A2D73;
+            stroke: black;
             fill: none;
-            stroke-width: 2;
+            stroke-width: 3;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
@@ -213,26 +228,29 @@
         .registro-contenido {
             display: flex;
             gap: 18px;
-            align-items: flex-start;
+            align-items: center;
+            padding-right: 180px;
         }
 
         .avatar-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
+            position: absolute; 
+            right: 10px; 
+            top: 50%;
+            transform: translateY(-50%);
         }
 
         .avatar-foto {
-            width: 80px;
-            height: 80px;
+            width: 220px;
+            height: 220px;
+            min-width: 220px;
+            min-height: 220px;
             border-radius: 50%;
             background: #dbe8f8;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .avatar-foto img {
@@ -245,7 +263,7 @@
         .avatar-foto svg {
             width: 46px;
             height: 46px;
-            stroke: #7eaad8;
+            stroke: black;
             fill: none;
             stroke-width: 1.5;
         }
@@ -256,34 +274,17 @@
             gap: 6px;
         }
 
-        .icono-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #e8f0fe;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icono-avatar svg {
-            width: 16px;
-            height: 16px;
-            stroke: #0A2D73;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
         .registro-datos {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .reg-nombre {
             font-size: 20px;
-            font-weight: 700;
-            color: #0A2D73;
+            font-weight: 600;
+            color: blue;
             line-height: 1.2;
             margin-bottom: 10px;
         }
@@ -292,15 +293,16 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 14px;
-            color: #4a6fa5;
+            font-size: 20px;
+            font-weight: 600;
+            color: blue;
             margin-bottom: 8px;
         }
 
         .reg-fila svg {
-            width: 15px;
-            height: 15px;
-            stroke: #7eaad8;
+            width: 25px;
+            height: 25px;
+            stroke: black;
             fill: none;
             stroke-width: 2;
             stroke-linecap: round;
@@ -308,7 +310,7 @@
         }
 
         .separador-v {
-            color: #c5d8ef;
+            color: black;
         }
 
         .badge-entrada,
@@ -316,7 +318,7 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            font-size: 14px;
+            font-size: 20px;
             font-weight: 700;
             padding: 6px 14px;
             border-radius: 30px;
@@ -324,19 +326,25 @@
         }
 
         .badge-entrada {
-            background: #dcfce7;
-            color: #166534;
+            background: blue;
+            color: whitesmoke;
         }
 
         .badge-salida {
-            background: #dbeafe;
-            color: #1e40af;
+            background: red;
+            color: whitesmoke;
+        }
+
+        .badge-centro {
+            display: flex;
+            justify-content: center;
+            margin-top: 16px;
         }
 
         .badge-entrada svg,
         .badge-salida svg {
-            width: 14px;
-            height: 14px;
+            width: 20px;
+            height: 20px;
             stroke: currentColor;
             fill: none;
             stroke-width: 2.5;
@@ -366,7 +374,7 @@
             width: 48px;
             height: 48px;
             border-radius: 50%;
-            background: #e8f0fe;
+            background: blue;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -376,7 +384,7 @@
         .stat-icono svg {
             width: 24px;
             height: 24px;
-            stroke: #185FA5;
+            stroke: white;
             fill: none;
             stroke-width: 2;
             stroke-linecap: round;
@@ -384,8 +392,9 @@
         }
 
         .stat-label {
-            font-size: 13px;
-            color: #4a6fa5;
+            font-size: 15px;
+            color: blue;
+            font-weight: 700;
         }
 
         .stat-valor {
@@ -620,50 +629,22 @@
 
                 <div class="registro-contenido">
 
-                    <div class="avatar-area">
+                    <div class="registro-datos">
 
-                        <div
-                            class="avatar-foto"
-                            id="avatarFoto"
-                        >
-                            <img
-                                id="fotoUltimo"
-                                src=""
-                                alt="Alumno"
-                            >
+                        <div class="reg-fila">
 
                             <svg viewBox="0 0 24 24">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                                 <circle cx="12" cy="7" r="4"/>
                             </svg>
-                        </div>
 
-                        <div class="avatar-iconos">
-
-                            <div class="icono-avatar">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                                    <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-                                </svg>
+                            <div
+                                class="reg-nombre"
+                                id="ultimoNombre"
+                            >
+                                Cargando...
                             </div>
 
-                            <div class="icono-avatar">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                                    <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-                                </svg>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="registro-datos">
-
-                        <div
-                            class="reg-nombre"
-                            id="ultimoNombre"
-                        >
-                            Cargando...
                         </div>
 
                         <div class="reg-fila">
@@ -696,19 +677,41 @@
                             </span>
                         </div>
 
-                        <div
-                            id="badgeMovimiento"
-                            class="badge-entrada"
-                        >
-                            <svg viewBox="0 0 24 24">
-                                <polyline points="20 6 9 17 4 12"/>
-                            </svg>
+                    </div>
 
-                            <span id="ultimoMovimiento">
-                                ENTRADA
-                            </span>
+                    <div class="avatar-area">
+
+                        <div
+                            class="avatar-foto"
+                            id="avatarFoto"
+                        >
+                            <img
+                                id="fotoUltimo"
+                                src=""
+                                alt="Alumno"
+                            >
+
+                            <svg viewBox="0 0 24 24">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
                         </div>
 
+                    </div>
+                </div>
+
+                <div class="badge-centro">
+                    <div
+                        class="badge-entrada"
+                        id="badgeMovimiento">
+
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+
+                        <span id="ultimoMovimiento">
+                            ENTRADA
+                        </span>
                     </div>
                 </div>
 
@@ -1000,6 +1003,16 @@
             const tipo = String(tipoRecibido).toLowerCase();
             const esSalida = tipo.includes('salida');
 
+            const zonaRegistro = document.querySelector('.zona-registro');
+
+            if (esSalida) {
+                zonaRegistro.classList.remove('tipo-entrada');
+                zonaRegistro.classList.add('tipo-salida');
+            } else {
+                zonaRegistro.classList.remove('tipo-salida');
+                zonaRegistro.classList.add('tipo-entrada');
+            }
+
             const badge =
                 document.getElementById('badgeMovimiento');
 
@@ -1157,8 +1170,6 @@
                 }
 
                 codigoQR += evento.key;
-
-               
 
                 clearTimeout(temporizadorQR);
 
