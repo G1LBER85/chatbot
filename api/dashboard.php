@@ -17,6 +17,8 @@ try {
             r.id,
             a.nombre,
             a.grado,
+            a.grupo,
+            a.foto,
             r.tipo,
             DATE_FORMAT(r.fecha_hora, '%h:%i %p') AS hora,
             DATE_FORMAT(r.fecha_hora, '%e de %M de %Y') AS fecha,
@@ -50,11 +52,11 @@ try {
         $ultimo = [
             'nombre'   => $fila['nombre'],
             'semestre' => $fila['grado'],
-            'grupo'    => '',
+            'grupo'    => $fila['grupo'],
             'hora'     => $fila['hora'],
             'fecha'    => $fila['fecha'],
             'tipo'     => $fila['tipo'],
-            'foto'     => ''
+            'foto'     => $fila['foto'],
         ];
     }
 

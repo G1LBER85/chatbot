@@ -127,15 +127,16 @@ try {
     // ─────────────────────────────────────────────
     // 3. Determinar si corresponde entrada o salida
     // ─────────────────────────────────────────────
-    $hoy = date('Y-m-d');
+    
 
     $stmtUltimo = $conn->prepare("
-        SELECT tipo
-        FROM registros
-        WHERE alumno_id = ?
-          AND DATE(fecha_hora) = ?
-        ORDER BY id DESC
-        LIMIT 1
+         SELECT tipo
+    FROM registros
+    WHERE alumno_id = ?
+      AND fecha_hora >= CURDATE()
+      AND fecha_hora < CURDATE() + INTERVAL 1 DAY
+    ORDER BY id DESC
+    LIMIT 1
     ");
 
     if (!$stmtUltimo) {
@@ -145,7 +146,7 @@ try {
         );
     }
 
-    $stmtUltimo->bind_param('is', $alumnoId, $hoy);
+    $stmtUltimo->bind_param('i', $alumnoId);
     $stmtUltimo->execute();
 
     $ultimoRegistro = $stmtUltimo->get_result()->fetch_assoc();

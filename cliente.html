@@ -187,25 +187,40 @@
         .zona-registro {
             background: white;
             border-radius: 24px;
-            padding: 28px 30px;
+            padding: 15px 30px;
+            overflow: hidden;
+            position: relative;
+    
+        }
+
+        .zona-registro.tipo-entrada {
+            background: white;
+            border: 5px ridge blue;
+        }
+
+        .zona-registro.tipo-salida {
+            background: white;
+            border: 5px ridge red;
         }
 
         .registro-titulo {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 18px;
+            gap: 5px;
+            font-size: 22px;
             font-weight: 700;
-            color: #0A2D73;
-            margin-bottom: 20px;
+            color: black;
+            margin-bottom: 35px;
+            justify-content: center;
+            text-align: center;
         }
 
         .registro-titulo svg {
             width: 22px;
             height: 22px;
-            stroke: #0A2D73;
+            stroke: black;
             fill: none;
-            stroke-width: 2;
+            stroke-width: 3;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
@@ -213,26 +228,29 @@
         .registro-contenido {
             display: flex;
             gap: 18px;
-            align-items: flex-start;
+            align-items: center;
+            padding-right: 180px;
         }
 
         .avatar-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
+            position: absolute; 
+            right: 10px; 
+            top: 50%;
+            transform: translateY(-50%);
         }
 
         .avatar-foto {
-            width: 80px;
-            height: 80px;
+            width: 220px;
+            height: 220px;
+            min-width: 220px;
+            min-height: 220px;
             border-radius: 50%;
             background: #dbe8f8;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .avatar-foto img {
@@ -245,7 +263,7 @@
         .avatar-foto svg {
             width: 46px;
             height: 46px;
-            stroke: #7eaad8;
+            stroke: black;
             fill: none;
             stroke-width: 1.5;
         }
@@ -256,34 +274,17 @@
             gap: 6px;
         }
 
-        .icono-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #e8f0fe;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icono-avatar svg {
-            width: 16px;
-            height: 16px;
-            stroke: #0A2D73;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
         .registro-datos {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .reg-nombre {
             font-size: 20px;
-            font-weight: 700;
-            color: #0A2D73;
+            font-weight: 600;
+            color: blue;
             line-height: 1.2;
             margin-bottom: 10px;
         }
@@ -292,15 +293,16 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 14px;
-            color: #4a6fa5;
+            font-size: 20px;
+            font-weight: 600;
+            color: blue;
             margin-bottom: 8px;
         }
 
         .reg-fila svg {
-            width: 15px;
-            height: 15px;
-            stroke: #7eaad8;
+            width: 25px;
+            height: 25px;
+            stroke: black;
             fill: none;
             stroke-width: 2;
             stroke-linecap: round;
@@ -308,7 +310,7 @@
         }
 
         .separador-v {
-            color: #c5d8ef;
+            color: black;
         }
 
         .badge-entrada,
@@ -316,7 +318,7 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            font-size: 14px;
+            font-size: 20px;
             font-weight: 700;
             padding: 6px 14px;
             border-radius: 30px;
@@ -324,19 +326,25 @@
         }
 
         .badge-entrada {
-            background: #dcfce7;
-            color: #166534;
+            background: blue;
+            color: whitesmoke;
         }
 
         .badge-salida {
-            background: #dbeafe;
-            color: #1e40af;
+            background: red;
+            color: whitesmoke;
+        }
+
+        .badge-centro {
+            display: flex;
+            justify-content: center;
+            margin-top: 16px;
         }
 
         .badge-entrada svg,
         .badge-salida svg {
-            width: 14px;
-            height: 14px;
+            width: 20px;
+            height: 20px;
             stroke: currentColor;
             fill: none;
             stroke-width: 2.5;
@@ -366,7 +374,7 @@
             width: 48px;
             height: 48px;
             border-radius: 50%;
-            background: #e8f0fe;
+            background: blue;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -376,7 +384,7 @@
         .stat-icono svg {
             width: 24px;
             height: 24px;
-            stroke: #185FA5;
+            stroke: white;
             fill: none;
             stroke-width: 2;
             stroke-linecap: round;
@@ -384,8 +392,9 @@
         }
 
         .stat-label {
-            font-size: 13px;
-            color: #4a6fa5;
+            font-size: 15px;
+            color: blue;
+            font-weight: 700;
         }
 
         .stat-valor {
@@ -465,10 +474,110 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
+
+        /* MODO REPOSO */
+
+        #pantallaReposo {
+            position: fixed;
+            inset: 0;
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.9s ease;
+
+            background-image:
+                linear-gradient(180deg, rgba(6, 27, 69, 0.72) 0%, rgba(4, 14, 36, 0.9) 100%),
+                url('fondo_de_reposo.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        #pantallaReposo.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .reposo-escuela {
+            font-size: 30px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: whitesmoke;
+            margin-bottom: 30px;
+        }
+
+        .reposo-reloj-hora {
+            font-size: 110px;
+            font-weight: 800;
+            color: lightgoldenrodyellow;
+            line-height: 1;
+            text-shadow: 0 0 40px rgba(55, 138, 221, 0.5);
+        }
+
+        .reposo-reloj-fecha {
+            margin-top: 16px;
+            font-size: 22px;
+            color: lightgoldenrodyellow;
+        }
+
+        .reposo-estado {
+            margin-top: 46px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+            color: #cfe0f5;
+        }
+
+        .reposo-punto {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #378ADD;
+            animation: reposoRespirar 2.4s ease-in-out infinite;
+        }
+
+        @keyframes reposoRespirar {
+            0%   { box-shadow: 0 0 0 0 rgba(55, 138, 221, 0.55); }
+            70%  { box-shadow: 0 0 0 14px rgba(55, 138, 221, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(55, 138, 221, 0); }
+        }
+
+        @media (max-width: 900px) {
+            .reposo-reloj-hora { font-size: 56px; }
+            .reposo-escuela { font-size: 20px; }
+        }
     </style>
 </head>
 
 <body>
+
+    <div id="pantallaReposo">
+        <div class="reposo-escuela">
+            Preparatoria No. 3 del Estado
+        </div>
+
+        <div class="reposo-reloj-hora" id="reposoHora">
+            --:--:-- --
+        </div>
+
+        <div class="reposo-reloj-fecha" id="reposoFecha">
+            -- de ------ de ---- | --------
+        </div>
+
+        <div class="reposo-estado">
+            <span class="reposo-punto"></span>
+            <span>Escaneando &bull; acerca tu credencial para registrar tu entrada o salida</span>
+        </div>
+    </div>
 
     <div
         id="mensajeSistema"
@@ -621,50 +730,22 @@
 
                 <div class="registro-contenido">
 
-                    <div class="avatar-area">
+                    <div class="registro-datos">
 
-                        <div
-                            class="avatar-foto"
-                            id="avatarFoto"
-                        >
-                            <img
-                                id="fotoUltimo"
-                                src=""
-                                alt="Alumno"
-                            >
+                        <div class="reg-fila">
 
                             <svg viewBox="0 0 24 24">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                                 <circle cx="12" cy="7" r="4"/>
                             </svg>
-                        </div>
 
-                        <div class="avatar-iconos">
-
-                            <div class="icono-avatar">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                                    <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-                                </svg>
+                            <div
+                                class="reg-nombre"
+                                id="ultimoNombre"
+                            >
+                                Cargando...
                             </div>
 
-                            <div class="icono-avatar">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                                    <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-                                </svg>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="registro-datos">
-
-                        <div
-                            class="reg-nombre"
-                            id="ultimoNombre"
-                        >
-                            Cargando...
                         </div>
 
                         <div class="reg-fila">
@@ -697,19 +778,41 @@
                             </span>
                         </div>
 
-                        <div
-                            id="badgeMovimiento"
-                            class="badge-entrada"
-                        >
-                            <svg viewBox="0 0 24 24">
-                                <polyline points="20 6 9 17 4 12"/>
-                            </svg>
+                    </div>
 
-                            <span id="ultimoMovimiento">
-                                ENTRADA
-                            </span>
+                    <div class="avatar-area">
+
+                        <div
+                            class="avatar-foto"
+                            id="avatarFoto"
+                        >
+                            <img
+                                id="fotoUltimo"
+                                src=""
+                                alt="Alumno"
+                            >
+
+                            <svg viewBox="0 0 24 24">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
                         </div>
 
+                    </div>
+                </div>
+
+                <div class="badge-centro">
+                    <div
+                        class="badge-entrada"
+                        id="badgeMovimiento">
+
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+
+                        <span id="ultimoMovimiento">
+                            ENTRADA
+                        </span>
                     </div>
                 </div>
 
@@ -845,6 +948,32 @@
         const URL_REGISTRAR = 'api/registrar.php';
         const URL_REGISTRO = 'registro.php';
 
+        /*
+         * MODO REPOSO
+         * Tiempo sin registros nuevos antes de mostrar
+         * la pantalla de reposo (en milisegundos).
+         * 60 * 1000 = 1 minuto.
+         */
+        const REPOSO_MS = 30 * 1000;
+
+        let ultimaActividad = Date.now();
+        let enReposo = false;
+
+        const pantallaReposo =
+            document.getElementById('pantallaReposo');
+
+        function entrarReposo() {
+            if (enReposo) return;
+            enReposo = true;
+            pantallaReposo.classList.add('visible');
+        }
+
+        function salirReposo() {
+            if (!enReposo) return;
+            enReposo = false;
+            pantallaReposo.classList.remove('visible');
+        }
+
         let codigoQR = '';
         let temporizadorQR = null;
         let procesandoQR = false;
@@ -871,7 +1000,7 @@
 
             temporizadorMensaje = setTimeout(function () {
                 mensajeSistema.classList.remove('visible');
-            }, 3500);
+            }, 800);
         }
 
         /*
@@ -969,6 +1098,11 @@
 
                 actualizarFoto(ultimo.foto || '');
 
+                if (datos.nuevo_registro) {
+                    ultimaActividad = Date.now();
+                    salirReposo();
+                }
+
                 const estadisticas =
                     datos.estadisticas || {};
 
@@ -1010,6 +1144,16 @@
         function actualizarMovimiento(tipoRecibido) {
             const tipo = String(tipoRecibido).toLowerCase();
             const esSalida = tipo.includes('salida');
+
+            const zonaRegistro = document.querySelector('.zona-registro');
+
+            if (esSalida) {
+                zonaRegistro.classList.remove('tipo-entrada');
+                zonaRegistro.classList.add('tipo-salida');
+            } else {
+                zonaRegistro.classList.remove('tipo-salida');
+                zonaRegistro.classList.add('tipo-entrada');
+            }
 
             const badge =
                 document.getElementById('badgeMovimiento');
@@ -1121,6 +1265,30 @@
                     `${meses[ahora.getMonth()]} de ` +
                     `${ahora.getFullYear()} | ` +
                     `${dias[ahora.getDay()]}`;
+
+            /*
+             * Mismo reloj, reflejado en la pantalla de reposo.
+             */
+            document
+                .getElementById('reposoHora')
+                .textContent =
+                    `${horas}:${minutos}:${segundos} ${ampm}`;
+
+            document
+                .getElementById('reposoFecha')
+                .textContent =
+                    `${ahora.getDate()} de ` +
+                    `${meses[ahora.getMonth()]} de ` +
+                    `${ahora.getFullYear()} | ` +
+                    `${dias[ahora.getDay()]}`;
+
+            /*
+             * Si pasó demasiado tiempo sin registros nuevos,
+             * activar el modo reposo.
+             */
+            if (!enReposo && Date.now() - ultimaActividad > REPOSO_MS) {
+                entrarReposo();
+            }
         }
 
         /*
@@ -1136,6 +1304,11 @@
 
                 if (procesandoQR) {
                     return;
+                }
+
+                if (enReposo) {
+                    ultimaActividad = Date.now();
+                    salirReposo();
                 }
 
                 /*
@@ -1169,11 +1342,6 @@
 
                 codigoQR += evento.key;
 
-                cambiarEstadoLector(
-                    'leyendo',
-                    'Leyendo credencial...'
-                );
-
                 clearTimeout(temporizadorQR);
 
                 temporizadorQR = setTimeout(
@@ -1190,7 +1358,7 @@
                             );
                         }
                     },
-                    200
+                    100
                 );
             }
         );
@@ -1224,10 +1392,7 @@
 
             procesandoQR = true;
 
-            cambiarEstadoLector(
-                'leyendo',
-                `Registrando ${codigo}...`
-            );
+           
 
             console.log('Enviando:', codigo);
 
@@ -1283,6 +1448,9 @@
                     `${datos.nombre}: ${datos.tipo}`
                 );
 
+                ultimaActividad = Date.now();
+                salirReposo();
+
                 mostrarMensaje(
                     `${datos.nombre} registró ` +
                     `${datos.tipo} a las ${datos.hora}`,
@@ -1300,7 +1468,7 @@
                  */
                 setTimeout(function () {
                     window.location.href = URL_REGISTRO + '?tipo=' + datos.tipo;    //Cambié esta linea (César, para que registrara entrada y salida).
-                }, 800);
+                }, 200);    //Cambié el tiempo de espera a 200 ms para que la pantalla de bienvenida aparezca más rápido.
 
             } catch (error) {
                 console.error(
@@ -1326,7 +1494,7 @@
                         '',
                         'Acerca tu credencial al lector'
                     );
-                }, 3000);
+                }, 500);
 
             } finally {
                 /*
@@ -1336,7 +1504,7 @@
                 setTimeout(function () {
                     procesandoQR = false;
                     codigoQR = '';
-                }, 2000);
+                }, 300);
             }
         }
 
