@@ -553,110 +553,10 @@
                 grid-template-columns: repeat(2, 1fr);
             }
         }
-
-        /* MODO REPOSO */
-
-        #pantallaReposo {
-            position: fixed;
-            inset: 0;
-            z-index: 5000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            color: white;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.9s ease;
-
-            background-image:
-                linear-gradient(180deg, rgba(6, 27, 69, 0.72) 0%, rgba(4, 14, 36, 0.9) 100%),
-                url('fondo_de_reposo.png');
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
-
-        #pantallaReposo.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .reposo-escuela {
-            font-size: 30px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            color: whitesmoke;
-            margin-bottom: 30px;
-        }
-
-        .reposo-reloj-hora {
-            font-size: 110px;
-            font-weight: 800;
-            color: lightgoldenrodyellow;
-            line-height: 1;
-            text-shadow: 0 0 40px rgba(55, 138, 221, 0.5);
-        }
-
-        .reposo-reloj-fecha {
-            margin-top: 16px;
-            font-size: 22px;
-            color: lightgoldenrodyellow;
-        }
-
-        .reposo-estado {
-            margin-top: 46px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 15px;
-            letter-spacing: 0.5px;
-            color: #cfe0f5;
-        }
-
-        .reposo-punto {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: #378ADD;
-            animation: reposoRespirar 2.4s ease-in-out infinite;
-        }
-
-        @keyframes reposoRespirar {
-            0%   { box-shadow: 0 0 0 0 rgba(55, 138, 221, 0.55); }
-            70%  { box-shadow: 0 0 0 14px rgba(55, 138, 221, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(55, 138, 221, 0); }
-        }
-
-        @media (max-width: 900px) {
-            .reposo-reloj-hora { font-size: 56px; }
-            .reposo-escuela { font-size: 20px; }
-        }
     </style>
 </head>
 
 <body>
-
-    <div id="pantallaReposo">
-        <div class="reposo-escuela">
-            Preparatoria No. 3 del Estado
-        </div>
-
-        <div class="reposo-reloj-hora" id="reposoHora">
-            --:--:-- --
-        </div>
-
-        <div class="reposo-reloj-fecha" id="reposoFecha">
-            -- de ------ de ---- | --------
-        </div>
-
-        <div class="reposo-estado">
-            <span class="reposo-punto"></span>
-            <span>Escaneando &bull; acerca tu credencial para registrar tu entrada o salida</span>
-        </div>
-    </div>
 
     <div
         id="mensajeSistema"
@@ -792,7 +692,6 @@
                 >
                     Acerca tu credencial al lector
                 </div>
-
 
             </section>
 
@@ -1044,46 +943,10 @@
         /*
          * Rutas relativas a:
          * http://localhost/checabot/cliente.html
-         *
-         * HISTORIAL DE CAMBIOS (julio 2026):
-         * - Se agregó temporalmente un botón de prueba manual
-         *   (select con alumnos + botón "Simular lectura") para
-         *   poder probar el flujo de registro sin tener el
-         *   lector QR físico conectado. Ese bloque ya fue
-         *   retirado una vez confirmado que el registro
-         *   funcionaba correctamente en la base de datos.
-         * - El flujo real de lectura del lector QR (más abajo,
-         *   funciones procesarCodigoQR / enviarQR) no cambió.
          */
         const URL_DASHBOARD = 'api/dashboard.php';
         const URL_REGISTRAR = 'api/registrar.php';
         const URL_REGISTRO = 'registro.php';
-
-        /*
-         * MODO REPOSO
-         * Tiempo sin registros nuevos antes de mostrar
-         * la pantalla de reposo (en milisegundos).
-         * 60 * 1000 = 1 minuto.
-         */
-        const REPOSO_MS = 30 * 1000;
-
-        let ultimaActividad = Date.now();
-        let enReposo = false;
-
-        const pantallaReposo =
-            document.getElementById('pantallaReposo');
-
-        function entrarReposo() {
-            if (enReposo) return;
-            enReposo = true;
-            pantallaReposo.classList.add('visible');
-        }
-
-        function salirReposo() {
-            if (!enReposo) return;
-            enReposo = false;
-            pantallaReposo.classList.remove('visible');
-        }
 
         let codigoQR = '';
         let temporizadorQR = null;
@@ -1208,11 +1071,6 @@
                 );
 
                 actualizarFoto(ultimo.foto || '');
-
-                if (datos.nuevo_registro) {
-                    ultimaActividad = Date.now();
-                    salirReposo();
-                }
 
                 const estadisticas =
                     datos.estadisticas || {};
@@ -1376,30 +1234,6 @@
                     `${meses[ahora.getMonth()]} de ` +
                     `${ahora.getFullYear()} | ` +
                     `${dias[ahora.getDay()]}`;
-
-            /*
-             * Mismo reloj, reflejado en la pantalla de reposo.
-             */
-            document
-                .getElementById('reposoHora')
-                .textContent =
-                    `${horas}:${minutos}:${segundos} ${ampm}`;
-
-            document
-                .getElementById('reposoFecha')
-                .textContent =
-                    `${ahora.getDate()} de ` +
-                    `${meses[ahora.getMonth()]} de ` +
-                    `${ahora.getFullYear()} | ` +
-                    `${dias[ahora.getDay()]}`;
-
-            /*
-             * Si pasó demasiado tiempo sin registros nuevos,
-             * activar el modo reposo.
-             */
-            if (!enReposo && Date.now() - ultimaActividad > REPOSO_MS) {
-                entrarReposo();
-            }
         }
 
         /*
@@ -1415,11 +1249,6 @@
 
                 if (procesandoQR) {
                     return;
-                }
-
-                if (enReposo) {
-                    ultimaActividad = Date.now();
-                    salirReposo();
                 }
 
                 /*
@@ -1623,9 +1452,6 @@
                     'correcto',
                     `${datos.nombre}: ${datos.tipo}`
                 );
-
-                ultimaActividad = Date.now();
-                salirReposo();
 
                 mostrarMensaje(
                     `${datos.nombre} registró ` +
