@@ -1,4 +1,47 @@
 <?php
+/*
+ * ══════════════════════════════════════════════════════════════
+ *  ADMIN.PHP — Panel de Administrador ChecaBot
+ * ══════════════════════════════════════════════════════════════
+ *  Mapa del archivo (usa Ctrl+F para saltar a cada bloque):
+ *
+ *  PHP (arriba del todo):
+ *    [FUNCION: subirFotoAlumno]     → sube la foto al agregar/editar
+ *    [PROCESO: AGREGAR ALUMNO]       → maneja el POST del formulario nuevo
+ *    [PROCESO: EDITAR ALUMNO]        → maneja el POST del formulario editar
+ *    [PROCESO: ELIMINAR ALUMNO]      → maneja el GET ?eliminar=ID
+ *    [CONSULTA: LISTA DE ALUMNOS]    → datos de la tabla "Ver alumnos"
+ *    [CONSULTA: ALUMNO A EDITAR]     → trae un alumno cuando entras a editar
+ *    [CONSULTA: TABLAS]              → datos de las 4 sub-pestañas de "Tablas"
+ *    [CONSULTA: DASHBOARD]           → estadísticas de las tarjetas de inicio
+ *
+ *  CSS (dentro de <style>):
+ *    [CSS: VARIABLES Y BASE]
+ *    [CSS: SIDEBAR]
+ *    [CSS: CONTENIDO / SECCIONES]
+ *    [CSS: MENSAJES DE ÉXITO/ERROR]
+ *    [CSS: TARJETAS DE ESTADÍSTICAS]
+ *    [CSS: FORMULARIO]
+ *    [CSS: BOTONES]
+ *    [CSS: TABLAS]
+ *    [CSS: RESPONSIVE / MÓVIL]
+ *
+ *  HTML (dentro de <body>):
+ *    [HTML: SIDEBAR]                 → menú lateral izquierdo
+ *    [HTML: DASHBOARD]               → tarjetas de estadísticas
+ *    [HTML: ALUMNOS - LISTA]         → tabla "Ver alumnos"
+ *    [HTML: ALUMNOS - FORMULARIO]    → formulario "Registrar / editar"
+ *    [HTML: TABLAS]                  → las 4 sub-pestañas
+ *    [HTML: CONFIGURACIÓN]           → sección vacía (placeholder)
+ *
+ *  JS (dentro de <script>, hasta abajo):
+ *    [JS: CAMBIAR DE SECCIÓN]        → mostrar/ocultar Dashboard, Alumnos, etc.
+ *    [JS: COLAPSAR SIDEBAR]          → abrir/cerrar grupos Alumnos/Tablas
+ *    [JS: SUB-PESTAÑAS DE TABLAS]    → cambiar entre las 4 vistas de Tablas
+ *    [JS: ABRIR FORM SI VIENE DE EDITAR]
+ * ══════════════════════════════════════════════════════════════
+ */
+
 require 'conexion.php';
 
 $accion = $_GET['accion'] ?? '';
@@ -7,10 +50,14 @@ $tipo_mensaje = '';
 
 $extensionesPermitidas = ['jpg', 'jpeg', 'png'];
 
+// [FUNCION: subirFotoAlumno] ─────────────────────────────────
 /*
  * Sube la foto del alumno (si se envió una) y regresa la ruta
  * relativa para guardar en la base de datos, o null si no se
  * subió nada / hubo un error.
+ *
+ * Se usa tanto en [PROCESO: AGREGAR ALUMNO] como en
+ * [PROCESO: EDITAR ALUMNO], más abajo.
  */
 function subirFotoAlumno($curp, $extensionesPermitidas)
 {
@@ -39,15 +86,16 @@ function subirFotoAlumno($curp, $extensionesPermitidas)
     return null;
 }
 
-// AGREGAR ALUMNO
+// [PROCESO: AGREGAR ALUMNO] ──────────────────────────────────
+// Se activa cuando el formulario de "Registrar / editar" se
+// envía SIN un id (alumno nuevo). Botón: name="agregar".
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar'])) {
     $nombre = trim($_POST['nombre']);
     $grado = trim($_POST['grado']);
     $grupo = trim($_POST['grupo']);
-    $tutor_telefono = trim($_POST['tutor_telefono']);
     $curp = strtoupper(trim($_POST['curp']));
 
-    if ($nombre && $grado && $grupo && $tutor_telefono && $curp) {
+    if ($nombre && $grado && $grupo && $curp) {
 
         // Evitar CURP duplicada (la tabla no tiene UNIQUE todavía)
         $stmtDup = $conn->prepare("SELECT id FROM alumnos WHERE CURP = ? LIMIT 1");
@@ -63,19 +111,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar'])) {
             $foto = subirFotoAlumno($curp, $extensionesPermitidas);
 
             $stmt = $conn->prepare("
-                INSERT INTO alumnos (nombre, grado, grupo, tutor_telefono, CURP, foto)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO alumnos (nombre, grado, grupo, CURP, foto)
+                VALUES (?, ?, ?, ?, ?)
             ");
-            $stmt->bind_param("ssssss", $nombre, $grado, $grupo, $tutor_telefono, $curp, $foto);
+            $stmt->bind_param("sssss", $nombre, $grado, $grupo, $curp, $foto);
 
             if ($stmt->execute()) {
-                $alumno_id = $conn->insert_id;
-                $codigo = "ALU" . str_pad($alumno_id, 3, "0", STR_PAD_LEFT);
-                $stmt2 = $conn->prepare("UPDATE alumnos SET codigo = ? WHERE id = ?");
-                $stmt2->bind_param("si", $codigo, $alumno_id);
-                $stmt2->execute();
-
-                $mensaje = "✅ Alumno '$nombre' agregado con código $codigo";
+                $mensaje = "✅ Alumno '$nombre' agregado correctamente";
                 $tipo_mensaje = "success";
             } else {
                 $mensaje = "❌ Error al agregar alumno";
@@ -88,16 +130,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar'])) {
     }
 }
 
-// EDITAR ALUMNO
+// [PROCESO: EDITAR ALUMNO] ───────────────────────────────────
+// Se activa cuando el formulario se envía CON un id oculto
+// (alumno existente). Botón: name="editar".
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar'])) {
     $id = intval($_POST['id']);
     $nombre = trim($_POST['nombre']);
     $grado = trim($_POST['grado']);
     $grupo = trim($_POST['grupo']);
-    $tutor_telefono = trim($_POST['tutor_telefono']);
     $curp = strtoupper(trim($_POST['curp']));
 
-    if ($nombre && $grado && $grupo && $tutor_telefono && $curp) {
+    if ($nombre && $grado && $grupo && $curp) {
 
         // Evitar que la CURP choque con la de OTRO alumno
         $stmtDup = $conn->prepare("SELECT id FROM alumnos WHERE CURP = ? AND id != ? LIMIT 1");
@@ -122,10 +165,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar'])) {
 
             $stmt = $conn->prepare("
                 UPDATE alumnos
-                SET nombre = ?, grado = ?, grupo = ?, tutor_telefono = ?, CURP = ?, foto = ?
+                SET nombre = ?, grado = ?, grupo = ?, CURP = ?, foto = ?
                 WHERE id = ?
             ");
-            $stmt->bind_param("ssssssi", $nombre, $grado, $grupo, $tutor_telefono, $curp, $foto, $id);
+            $stmt->bind_param("sssssi", $nombre, $grado, $grupo, $curp, $foto, $id);
 
             if ($stmt->execute()) {
                 $mensaje = "✅ Alumno actualizado correctamente";
@@ -141,7 +184,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar'])) {
     }
 }
 
-// ELIMINAR ALUMNO
+// [PROCESO: ELIMINAR ALUMNO] ─────────────────────────────────
+// Se activa desde el botón 🗑️ de la lista: admin.php?eliminar=ID
+// Primero borra sus registros de entrada/salida (por la llave
+// foránea), luego borra al alumno.
 if (isset($_GET['eliminar'])) {
     $id = intval($_GET['eliminar']);
 
@@ -162,10 +208,13 @@ if (isset($_GET['eliminado'])) {
     $tipo_mensaje = "success";
 }
 
-// OBTENER ALUMNOS (sección Alumnos)
+// [CONSULTA: LISTA DE ALUMNOS] ───────────────────────────────
+// Alimenta la tabla de [HTML: ALUMNOS - LISTA]
 $alumnos = $conn->query("SELECT * FROM alumnos ORDER BY id DESC");
 
-// OBTENER UN ALUMNO PARA EDITAR
+// [CONSULTA: ALUMNO A EDITAR] ────────────────────────────────
+// Cuando entras con admin.php?accion=editar&id=X, esto trae los
+// datos de ESE alumno para precargar el formulario.
 $alumno_edit = null;
 if ($accion === 'editar' && isset($_GET['id'])) {
     $id = intval($_GET['id']);
@@ -175,15 +224,17 @@ if ($accion === 'editar' && isset($_GET['id'])) {
     $alumno_edit = $stmt->get_result()->fetch_assoc();
 }
 
-// ── DATOS PARA LA SECCIÓN "TABLAS" ──
+// [CONSULTA: TABLAS] ─────────────────────────────────────────
+// Estas 4 consultas alimentan las 4 sub-pestañas de la sección
+// [HTML: TABLAS] (Grados y grupos / Tutores registrados /
+// Tutores pendientes / Registros).
 
-// Grados y grupos: combinaciones únicas que ya existen en alumnos
+// Grados y grupos: lista de alumnos activos ordenada por grado y grupo
 $gradosGrupos = $conn->query("
-    SELECT grado, grupo, COUNT(*) AS total
+    SELECT nombre, grado, grupo
     FROM alumnos
     WHERE activo = 1
-    GROUP BY grado, grupo
-    ORDER BY grado, grupo
+    ORDER BY grado, grupo, nombre
 ");
 
 // Tutores registrados: ya hicieron /start en Telegram
@@ -209,7 +260,8 @@ $registrosRecientes = $conn->query("
     LIMIT 100
 ");
 
-// Estadísticas simples para el Dashboard
+// [CONSULTA: DASHBOARD] ──────────────────────────────────────
+// Alimenta las 4 tarjetas de [HTML: DASHBOARD]
 $totalAlumnos = $conn->query("SELECT COUNT(*) AS n FROM alumnos WHERE activo = 1")->fetch_assoc()['n'];
 $totalConTutor = $conn->query("SELECT COUNT(*) AS n FROM alumnos WHERE tutor_chat_id IS NOT NULL")->fetch_assoc()['n'];
 $totalSinTutor = $conn->query("SELECT COUNT(*) AS n FROM alumnos WHERE tutor_chat_id IS NULL")->fetch_assoc()['n'];
@@ -222,6 +274,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Panel de Administrador — ChecaBot</title>
   <style>
+    /* [CSS: VARIABLES Y BASE] ──────────────────────────────── */
     :root {
       --navy: #2c3e50;
       --teal: #048A81;
@@ -235,7 +288,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
 
     .layout { display: flex; min-height: 100vh; }
 
-    /* ── SIDEBAR ── */
+    /* [CSS: SIDEBAR] ───────────────────────────────────────── */
     .sidebar {
       width: 260px;
       flex-shrink: 0;
@@ -299,7 +352,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
     .nav-subitem:hover { background: rgba(255,255,255,0.08); color: white; }
     .nav-subitem.activo { color: white; background: rgba(4,138,129,0.35); font-weight: bold; }
 
-    /* ── CONTENIDO ── */
+    /* [CSS: CONTENIDO / SECCIONES] ─────────────────────────── */
     .contenido { flex: 1; padding: 30px 36px; }
 
     .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
@@ -325,16 +378,19 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
     }
     .sub-tab.activa { background: var(--teal); color: white; border-color: var(--teal); }
 
+    /* [CSS: MENSAJES DE ÉXITO/ERROR] ───────────────────────── */
     .mensaje { margin-bottom: 20px; padding: 15px; border-radius: 8px; font-weight: bold; }
     .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
     .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
     .warning { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
 
+    /* [CSS: TARJETAS DE ESTADÍSTICAS] (Dashboard) ──────────── */
     .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .stat-card { background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid var(--borde); }
     .stat-card .valor { font-size: 30px; font-weight: 700; color: var(--navy); }
     .stat-card .etiqueta { font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: bold; margin-top: 4px; }
 
+    /* [CSS: FORMULARIO] (Registrar / editar alumno) ────────── */
     .form-box { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border: 1px solid var(--borde); margin-bottom: 20px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .form-group { margin-bottom: 15px; }
@@ -345,6 +401,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
 
     .foto-preview { width: 70px; height: 70px; border-radius: 50%; object-fit: cover; background: #eee; margin-bottom: 8px; }
 
+    /* [CSS: BOTONES] ───────────────────────────────────────── */
     .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }
     .btn-primary { background: var(--teal); color: white; }
     .btn-primary:hover { background: var(--teal-dark); }
@@ -354,6 +411,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
     .btn-secondary:hover { background: #7f8c8d; }
     .btn-small { padding: 6px 12px; font-size: 12px; }
 
+    /* [CSS: TABLAS] (todas las tablas del panel) ───────────── */
     table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.06); border-radius: 8px; overflow: hidden; }
     th { background: var(--navy); color: white; padding: 13px 15px; text-align: left; font-weight: bold; font-size: 13px; }
     td { padding: 11px 15px; border-bottom: 1px solid var(--borde); font-size: 14px; }
@@ -371,6 +429,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
 
     .empty-state { text-align: center; padding: 40px; color: #999; }
 
+    /* [CSS: RESPONSIVE / MÓVIL] ─────────────────────────────── */
     @media (max-width: 860px) {
       .layout { flex-direction: column; }
       .sidebar { width: 100%; height: auto; position: static; }
@@ -383,7 +442,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
 
 <div class="layout">
 
-  <!-- SIDEBAR -->
+  <!-- [HTML: SIDEBAR] -->
   <aside class="sidebar">
     <div class="sidebar-marca">
       <span class="logo">🏫</span>
@@ -403,7 +462,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
       </button>
       <div class="nav-subgrupo abierto" data-subgrupo="alumnos">
         <button type="button" class="nav-subitem activo" data-seccion="alumnos-lista">Ver alumnos</button>
-        <button type="button" class="nav-subitem" data-seccion="alumnos-form">➕ Registrar / editar</button>
+        <a href="admin.php#alumnos-form" class="nav-subitem" data-seccion="alumnos-form">➕ Registrar / editar</a>
       </div>
 
       <button type="button" class="nav-grupo-btn" data-grupo="tablas">
@@ -422,14 +481,14 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
     </nav>
   </aside>
 
-  <!-- CONTENIDO -->
+  <!-- [HTML: CONTENIDO PRINCIPAL] -->
   <main class="contenido">
 
     <?php if ($mensaje): ?>
       <div class="mensaje <?= $tipo_mensaje ?>"><?= $mensaje ?></div>
     <?php endif; ?>
 
-    <!-- SECCIÓN: DASHBOARD -->
+    <!-- [HTML: DASHBOARD] -->
     <section class="seccion activa" id="seccion-dashboard">
       <div class="panel-header">
         <div>
@@ -458,7 +517,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
       </div>
     </section>
 
-    <!-- SECCIÓN: ALUMNOS -> LISTA -->
+    <!-- [HTML: ALUMNOS - LISTA] -->
     <section class="seccion" id="seccion-alumnos-lista">
       <div class="panel-header">
         <div>
@@ -474,7 +533,6 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
               <th>Foto</th>
               <th>Nombre</th>
               <th>Grado/Grupo</th>
-              <th>Código</th>
               <th>CURP</th>
               <th>Tutor</th>
               <th>Estado</th>
@@ -493,7 +551,6 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
               </td>
               <td><strong><?= htmlspecialchars($alumno['nombre']) ?></strong></td>
               <td><?= htmlspecialchars($alumno['grado']) ?><?= $alumno['grupo'] ? ' ' . htmlspecialchars($alumno['grupo']) : '' ?></td>
-              <td><span style="font-family: monospace; background: #f0f0f0; padding: 4px 8px; border-radius: 4px;"><?= htmlspecialchars($alumno['codigo']) ?></span></td>
               <td><?= $alumno['CURP'] ? htmlspecialchars($alumno['CURP']) : '<span style="color:#bbb;">Sin capturar</span>' ?></td>
               <td>
                 <?php if ($alumno['tutor_chat_id']): ?>
@@ -524,7 +581,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
       <?php endif; ?>
     </section>
 
-    <!-- SECCIÓN: ALUMNOS -> FORMULARIO -->
+    <!-- [HTML: ALUMNOS - FORMULARIO] -->
     <section class="seccion" id="seccion-alumnos-form">
       <div class="panel-header">
         <div>
@@ -567,11 +624,6 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
           </div>
 
           <div class="form-group">
-            <label>Teléfono del Tutor (Whatsapp) *</label>
-            <input type="text" name="tutor_telefono" placeholder="Ejemplo: 5219622339022" required value="<?= htmlspecialchars($alumno_edit['tutor_telefono'] ?? '') ?>">
-          </div>
-
-          <div class="form-group">
             <label>Fotografía <?= $alumno_edit ? '(déjalo vacío para conservar la actual)' : '' ?></label>
             <input type="file" name="foto" accept=".jpg,.jpeg,.png">
           </div>
@@ -581,14 +633,14 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
               <?= $alumno_edit ? "💾 Guardar Cambios" : "➕ Agregar Alumno" ?>
             </button>
             <?php if ($alumno_edit): ?>
-              <a href="admin.php" class="btn btn-secondary">← Cancelar</a>
+              <a href="admin.php#alumnos-form" class="btn btn-secondary">← Cancelar</a>
             <?php endif; ?>
           </div>
         </form>
       </div>
     </section>
 
-    <!-- SECCIÓN: TABLAS -->
+    <!-- [HTML: TABLAS] -->
     <section class="seccion" id="seccion-tablas">
       <div class="panel-header">
         <div>
@@ -604,17 +656,17 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
         <button type="button" class="sub-tab" data-vista-tabla="registros">🕐 Registros</button>
       </div>
 
-      <!-- Grados y grupos -->
+      <!-- [HTML: TABLAS] sub-vista: Grados y grupos -->
       <div class="vista-tabla activa" id="vista-grados_grupos">
         <?php if ($gradosGrupos->num_rows > 0): ?>
           <table>
-            <thead><tr><th>Grado</th><th>Grupo</th><th>Alumnos activos</th></tr></thead>
+            <thead><tr><th>Nombre</th><th>Grado</th><th>Grupo</th></tr></thead>
             <tbody>
               <?php while ($fila = $gradosGrupos->fetch_assoc()): ?>
               <tr>
+                <td><?= htmlspecialchars($fila['nombre']) ?></td>
                 <td><?= htmlspecialchars($fila['grado']) ?></td>
                 <td><?= htmlspecialchars($fila['grupo'] ?: '—') ?></td>
-                <td><?= $fila['total'] ?></td>
               </tr>
               <?php endwhile; ?>
             </tbody>
@@ -624,16 +676,15 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
         <?php endif; ?>
       </div>
 
-      <!-- Tutores registrados -->
+      <!-- [HTML: TABLAS] sub-vista: Tutores registrados -->
       <div class="vista-tabla" id="vista-tutores_registrados">
         <?php if ($tutoresRegistrados->num_rows > 0): ?>
           <table>
-            <thead><tr><th>Alumno</th><th>Grado/Grupo</th><th>Chat ID</th></tr></thead>
+            <thead><tr><th>Alumno</th><th>Chat ID</th></tr></thead>
             <tbody>
               <?php while ($fila = $tutoresRegistrados->fetch_assoc()): ?>
               <tr>
                 <td><?= htmlspecialchars($fila['nombre']) ?></td>
-                <td><?= htmlspecialchars($fila['grado']) ?> <?= htmlspecialchars($fila['grupo'] ?? '') ?></td>
                 <td><?= htmlspecialchars($fila['tutor_chat_id']) ?></td>
               </tr>
               <?php endwhile; ?>
@@ -644,17 +695,17 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
         <?php endif; ?>
       </div>
 
-      <!-- Tutores pendientes -->
+      <!-- [HTML: TABLAS] sub-vista: Tutores pendientes -->
       <div class="vista-tabla" id="vista-tutores_pendientes">
         <?php if ($tutoresPendientes->num_rows > 0): ?>
           <table>
-            <thead><tr><th>Alumno</th><th>Grado/Grupo</th><th>Código para /start</th></tr></thead>
+            <thead><tr><th>Alumno</th><th>Grado/Grupo</th><th>CURP</th></tr></thead>
             <tbody>
               <?php while ($fila = $tutoresPendientes->fetch_assoc()): ?>
               <tr>
                 <td><?= htmlspecialchars($fila['nombre']) ?></td>
                 <td><?= htmlspecialchars($fila['grado']) ?> <?= htmlspecialchars($fila['grupo'] ?? '') ?></td>
-                <td><span style="font-family: monospace;"><?= htmlspecialchars($fila['codigo']) ?></span></td>
+                <td><span style="font-family: monospace;"><?= $fila['CURP'] ? htmlspecialchars($fila['CURP']) : '<span style="color:#bbb;">Sin capturar</span>' ?></span></td>
               </tr>
               <?php endwhile; ?>
             </tbody>
@@ -664,7 +715,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
         <?php endif; ?>
       </div>
 
-      <!-- Registros -->
+      <!-- [HTML: TABLAS] sub-vista: Registros -->
       <div class="vista-tabla" id="vista-registros">
         <?php if ($registrosRecientes->num_rows > 0): ?>
           <table>
@@ -690,7 +741,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
       </div>
     </section>
 
-    <!-- SECCIÓN: CONFIGURACIÓN -->
+    <!-- [HTML: CONFIGURACIÓN] -->
     <section class="seccion" id="seccion-configuracion">
       <div class="panel-header">
         <div>
@@ -707,7 +758,9 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
 </div>
 
 <script>
-  // Cambiar de sección principal
+  // [JS: CAMBIAR DE SECCIÓN] ──────────────────────────────────
+  // Oculta todas las <section class="seccion"> y muestra solo
+  // la que corresponde al botón del sidebar que se presionó.
   function mostrarSeccion(idSeccion) {
     document.querySelectorAll('.seccion').forEach(el => el.classList.remove('activa'));
     document.getElementById('seccion-' + idSeccion).classList.add('activa');
@@ -727,7 +780,8 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
     });
   });
 
-  // Grupos colapsables del sidebar (Alumnos / Tablas)
+  // [JS: COLAPSAR SIDEBAR] ────────────────────────────────────
+  // Abre/cierra los grupos "Alumnos" y "Tablas" del menú lateral.
   document.querySelectorAll('.nav-grupo-btn').forEach(function (boton) {
     const grupo = boton.dataset.grupo;
     const subgrupo = document.querySelector('.nav-subgrupo[data-subgrupo="' + grupo + '"]');
@@ -737,7 +791,9 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
     });
   });
 
-  // Sub-pestañas dentro de "Tablas"
+  // [JS: SUB-PESTAÑAS DE TABLAS] ──────────────────────────────
+  // Cambia entre las 4 vistas dentro de la sección "Tablas"
+  // (Grados y grupos / Tutores registrados / Tutores pendientes / Registros)
   function mostrarVistaTabla(idVista) {
     document.querySelectorAll('.vista-tabla').forEach(el => el.classList.remove('activa'));
     document.getElementById('vista-' + idVista).classList.add('activa');
@@ -752,11 +808,27 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
     });
   });
 
-  // Si venimos de "Editar" (admin.php?accion=editar&id=X), abrir directo el formulario
+  // [JS: ABRIR FORM SI VIENE DE EDITAR] ───────────────────────
+  // Función compartida: activa una sección y resalta su botón
+  // correspondiente en el sidebar.
+  function activarSeccionInicial(idSeccion) {
+    mostrarSeccion(idSeccion);
+    document.querySelectorAll('.nav-item, .nav-subitem').forEach(el => el.classList.remove('activo'));
+    const boton = document.querySelector('[data-seccion="' + idSeccion + '"]');
+    if (boton) boton.classList.add('activo');
+  }
+
+  // Caso 1: se llegó por el link "➕ Registrar / editar" del sidebar
+  // o por "← Cancelar" (ambos navegan a admin.php#alumnos-form,
+  // recargando la página SIN accion=editar, garantizando modo
+  // "Agregar Alumno" limpio, sin arrastrar datos de una edición previa).
+  if (window.location.hash === '#alumnos-form') {
+    activarSeccionInicial('alumnos-form');
+  }
+
+  // Caso 2: se llegó por el ✏️ de la lista (admin.php?accion=editar&id=X)
   <?php if ($alumno_edit): ?>
-  mostrarSeccion('alumnos-form');
-  document.querySelectorAll('.nav-item, .nav-subitem').forEach(el => el.classList.remove('activo'));
-  document.querySelector('[data-seccion="alumnos-form"]').classList.add('activo');
+  activarSeccionInicial('alumnos-form');
   <?php endif; ?>
 </script>
 
