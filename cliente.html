@@ -33,7 +33,7 @@
 
         body {
             min-height: 100vh;
-            background-image: url('imagenfondo.png');
+            background-image: url('img/imagenfondo.png');
             background-size: cover;
             color: #0A2D73;
             overflow: hidden;
@@ -187,25 +187,40 @@
         .zona-registro {
             background: white;
             border-radius: 24px;
-            padding: 28px 30px;
+            padding: 15px 30px;
+            overflow: hidden;
+            position: relative;
+    
+        }
+
+        .zona-registro.tipo-entrada {
+            background: white;
+            border: 5px ridge blue;
+        }
+
+        .zona-registro.tipo-salida {
+            background: white;
+            border: 5px ridge red;
         }
 
         .registro-titulo {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 18px;
+            gap: 5px;
+            font-size: 22px;
             font-weight: 700;
-            color: #0A2D73;
-            margin-bottom: 20px;
+            color: black;
+            margin-bottom: 35px;
+            justify-content: center;
+            text-align: center;
         }
 
         .registro-titulo svg {
             width: 22px;
             height: 22px;
-            stroke: #0A2D73;
+            stroke: black;
             fill: none;
-            stroke-width: 2;
+            stroke-width: 3;
             stroke-linecap: round;
             stroke-linejoin: round;
         }
@@ -213,26 +228,29 @@
         .registro-contenido {
             display: flex;
             gap: 18px;
-            align-items: flex-start;
+            align-items: center;
+            padding-right: 180px;
         }
 
         .avatar-area {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            flex-shrink: 0;
+            position: absolute; 
+            right: 10px; 
+            top: 50%;
+            transform: translateY(-50%);
         }
 
         .avatar-foto {
-            width: 80px;
-            height: 80px;
+            width: 220px;
+            height: 220px;
+            min-width: 220px;
+            min-height: 220px;
             border-radius: 50%;
             background: #dbe8f8;
             display: flex;
             align-items: center;
             justify-content: center;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .avatar-foto img {
@@ -245,7 +263,7 @@
         .avatar-foto svg {
             width: 46px;
             height: 46px;
-            stroke: #7eaad8;
+            stroke: black;
             fill: none;
             stroke-width: 1.5;
         }
@@ -256,51 +274,27 @@
             gap: 6px;
         }
 
-        .icono-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #e8f0fe;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .icono-avatar svg {
-            width: 16px;
-            height: 16px;
-            stroke: #0A2D73;
-            fill: none;
-            stroke-width: 2;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
         .registro-datos {
             flex: 1;
-        }
-
-        .reg-nombre {
-            font-size: 20px;
-            font-weight: 700;
-            color: #0A2D73;
-            line-height: 1.2;
-            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .reg-fila {
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 14px;
-            color: #4a6fa5;
+            font-size: 20px;
+            font-weight: 600;
+            color: blue;
             margin-bottom: 8px;
         }
 
         .reg-fila svg {
-            width: 15px;
-            height: 15px;
-            stroke: #7eaad8;
+            width: 25px;
+            height: 25px;
+            stroke: black;
             fill: none;
             stroke-width: 2;
             stroke-linecap: round;
@@ -308,7 +302,7 @@
         }
 
         .separador-v {
-            color: #c5d8ef;
+            color: black;
         }
 
         .badge-entrada,
@@ -316,7 +310,7 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            font-size: 14px;
+            font-size: 20px;
             font-weight: 700;
             padding: 6px 14px;
             border-radius: 30px;
@@ -324,19 +318,25 @@
         }
 
         .badge-entrada {
-            background: #dcfce7;
-            color: #166534;
+            background: blue;
+            color: whitesmoke;
         }
 
         .badge-salida {
-            background: #dbeafe;
-            color: #1e40af;
+            background: red;
+            color: whitesmoke;
+        }
+
+        .badge-centro {
+            display: flex;
+            justify-content: center;
+            margin-top: 16px;
         }
 
         .badge-entrada svg,
         .badge-salida svg {
-            width: 14px;
-            height: 14px;
+            width: 20px;
+            height: 20px;
             stroke: currentColor;
             fill: none;
             stroke-width: 2.5;
@@ -366,7 +366,7 @@
             width: 48px;
             height: 48px;
             border-radius: 50%;
-            background: #e8f0fe;
+            background: blue;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -376,7 +376,7 @@
         .stat-icono svg {
             width: 24px;
             height: 24px;
-            stroke: #185FA5;
+            stroke: white;
             fill: none;
             stroke-width: 2;
             stroke-linecap: round;
@@ -384,8 +384,9 @@
         }
 
         .stat-label {
-            font-size: 13px;
-            color: #4a6fa5;
+            font-size: 15px;
+            color: blue;
+            font-weight: 700;
         }
 
         .stat-valor {
@@ -437,6 +438,93 @@
             color: greenyellow;
             padding-top: 14px;
             letter-spacing: 0.05em;
+        }
+
+        /* ── Modal alerta horario ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-overlay.visible {
+            display: flex;
+        }
+
+        .modal-caja {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 50px;
+            max-width: 480px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-icono {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        .modal-titulo {
+            font-size: 28px;
+            font-weight: 700;
+            color: blue;
+            margin-bottom: 12px;
+        }
+
+        .modal-mensaje {
+            font-size: 20px;
+            color: black;
+            margin-bottom: 28px;
+            line-height: 1.6;
+            font-weight: 600;
+        }
+
+        .modal-botones {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+
+        .btn-aceptar {
+            background: green;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 12px 32px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-denegar {
+            background: red;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 12px 32px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .modal-aviso {
+            margin-top: 16px;
+            font-size: 20px;
+            color: red;
+            font-weight: 600;
+            display: none;
+        }
+
+        .modal-aviso.visible {
+            display: block;
         }
 
         @media (max-width: 900px) {
@@ -620,50 +708,21 @@
 
                 <div class="registro-contenido">
 
-                    <div class="avatar-area">
+                    <div class="registro-datos">
 
-                        <div
-                            class="avatar-foto"
-                            id="avatarFoto"
-                        >
-                            <img
-                                id="fotoUltimo"
-                                src=""
-                                alt="Alumno"
-                            >
+                        <div class="reg-fila">
 
                             <svg viewBox="0 0 24 24">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                                 <circle cx="12" cy="7" r="4"/>
                             </svg>
-                        </div>
 
-                        <div class="avatar-iconos">
-
-                            <div class="icono-avatar">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                                    <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-                                </svg>
+                            <div
+                                id="ultimoNombre"
+                            >
+                                Cargando...
                             </div>
 
-                            <div class="icono-avatar">
-                                <svg viewBox="0 0 24 24">
-                                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                                    <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-                                </svg>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    <div class="registro-datos">
-
-                        <div
-                            class="reg-nombre"
-                            id="ultimoNombre"
-                        >
-                            Cargando...
                         </div>
 
                         <div class="reg-fila">
@@ -696,19 +755,41 @@
                             </span>
                         </div>
 
-                        <div
-                            id="badgeMovimiento"
-                            class="badge-entrada"
-                        >
-                            <svg viewBox="0 0 24 24">
-                                <polyline points="20 6 9 17 4 12"/>
-                            </svg>
+                    </div>
 
-                            <span id="ultimoMovimiento">
-                                ENTRADA
-                            </span>
+                    <div class="avatar-area">
+
+                        <div
+                            class="avatar-foto"
+                            id="avatarFoto"
+                        >
+                            <img
+                                id="fotoUltimo"
+                                src=""
+                                alt="Alumno"
+                            >
+
+                            <svg viewBox="0 0 24 24">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
                         </div>
 
+                    </div>
+                </div>
+
+                <div class="badge-centro">
+                    <div
+                        class="badge-entrada"
+                        id="badgeMovimiento">
+
+                        <svg viewBox="0 0 24 24">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+
+                        <span id="ultimoMovimiento">
+                            ENTRADA
+                        </span>
                     </div>
                 </div>
 
@@ -825,6 +906,39 @@
 
     </div>
 
+    <!-- Modal alerta horario -->
+    <div class="modal-overlay" id="modalAlerta">
+
+        <div class="modal-caja">
+
+            <div class="modal-icono">
+                ⚠️
+            </div>
+
+            <div class="modal-titulo">Acceso fuera de horario</div>
+
+            <div class="modal-mensaje">
+                El alumno intenta escanear fuera del horario permitido ¿Desea permitir el proceso?
+            </div>
+
+            <div class="modal-botones">
+                <button class="btn-aceptar" id="btnAceptar">
+                    ✓ Aceptar
+                </button>
+
+                <button class="btn-denegar" id="btnDenegar">
+                    ✕ Denegar
+                </button>
+            </div>
+
+            <div class="modal-aviso" id="modalAviso">
+                El alumno no puede seguir con el proceso de escaneo.
+            </div>
+
+        </div>
+
+    </div>
+
     <script>
         /*
          * Rutas relativas a:
@@ -860,7 +974,7 @@
 
             temporizadorMensaje = setTimeout(function () {
                 mensajeSistema.classList.remove('visible');
-            }, 3500);
+            }, 800);
         }
 
         /*
@@ -999,6 +1113,16 @@
         function actualizarMovimiento(tipoRecibido) {
             const tipo = String(tipoRecibido).toLowerCase();
             const esSalida = tipo.includes('salida');
+
+            const zonaRegistro = document.querySelector('.zona-registro');
+
+            if (esSalida) {
+                zonaRegistro.classList.remove('tipo-entrada');
+                zonaRegistro.classList.add('tipo-salida');
+            } else {
+                zonaRegistro.classList.remove('tipo-salida');
+                zonaRegistro.classList.add('tipo-entrada');
+            }
 
             const badge =
                 document.getElementById('badgeMovimiento');
@@ -1158,11 +1282,6 @@
 
                 codigoQR += evento.key;
 
-                cambiarEstadoLector(
-                    'leyendo',
-                    'Leyendo credencial...'
-                );
-
                 clearTimeout(temporizadorQR);
 
                 temporizadorQR = setTimeout(
@@ -1179,7 +1298,7 @@
                             );
                         }
                     },
-                    200
+                    100
                 );
             }
         );
@@ -1187,21 +1306,86 @@
         /*
          * Validar y enviar el código.
          */
+        // Horarios permitidos
+        const ENTRADA_INICIO = 6;    // 6:00 AM
+        const ENTRADA_FIN    = 10;   // 10:00 AM
+        const SALIDA_INICIO  = 12;   // 12:00 PM
+        const SALIDA_FIN     = 15;   // 3:00 PM
+
+        let codigoPendiente = null;
+
+        function dentroDeHorario() {
+            
+            const hora = new Date().getHours(); // Obtiene la hora actual en formato de 24 horas
+
+            return(
+                (hora >= ENTRADA_INICIO && hora < ENTRADA_FIN) ||
+                (hora >= SALIDA_INICIO  && hora < SALIDA_FIN) // Permite el registro si la hora actual está dentro de los rangos de entrada o salida
+            );
+        }
+
+        function pitido() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator(); //Crea el sonidito
+                const vol = ctx.createGain(); //Crea el volumen
+                osc.connect(vol); //Conecta el volumen...
+                vol.connect(ctx.destination); //Y los manda a los altavoces o bocinas
+                osc.frequency.value = 500; //La frecuencia del tono, entre más grande el número, más agudo es el sonido
+                vol.gain.value = 1; //El volumen del tono, 1 es el máximo, 0 es silencio
+                osc.start(); //Inicia el sonido
+                osc.stop(ctx.currentTime + 2); //Detiene el sonido después de 2 segundos
+            } catch(e) {}
+        }
+
         function procesarCodigoQR(codigo) {
-            const codigoLimpio =
+
+            const codigoLimpio = 
                 String(codigo).trim().toUpperCase();
 
             if (codigoLimpio === '') {
                 return;
             }
 
-            console.log(
-                'Código leído:',
-                codigoLimpio
-            );
+            if (!dentroDeHorario()) {
+
+                codigoPendiente = codigoLimpio;
+                pitido();
+                document.getElementById('modalAviso').classList.remove('visible');
+                document.getElementById('modalAlerta').classList.add('visible');
+                return;
+            }
 
             enviarQR(codigoLimpio);
         }
+
+        // Botón Aceptar → continúa el registro
+        document.getElementById('btnAceptar').addEventListener('click', function () {
+
+            document.getElementById('modalAlerta').classList.remove('visible');
+
+            if (codigoPendiente) {
+
+                enviarQR(codigoPendiente);
+                codigoPendiente = null;
+
+            }
+        });
+
+        // Botón Denegar → muestra aviso y cierra
+        document.getElementById('btnDenegar').addEventListener('click', function () {
+
+            document.getElementById('modalAviso').classList.add('visible');
+            codigoPendiente = null;
+            procesandoQR = false;
+
+            setTimeout(function () {
+
+                document.getElementById('modalAlerta').classList.remove('visible');
+                document.getElementById('modalAviso').classList.remove('visible');
+                
+            }, 3000);
+        });
 
         /*
          * Enviar el código a api/registrar.php.
@@ -1213,10 +1397,7 @@
 
             procesandoQR = true;
 
-            cambiarEstadoLector(
-                'leyendo',
-                `Registrando ${codigo}...`
-            );
+           
 
             console.log('Enviando:', codigo);
 
@@ -1289,7 +1470,7 @@
                  */
                 setTimeout(function () {
                     window.location.href = URL_REGISTRO + '?tipo=' + datos.tipo;    //Cambié esta linea (César, para que registrara entrada y salida).
-                }, 800);
+                }, 200);    //Cambié el tiempo de espera a 200 ms para que la pantalla de bienvenida aparezca más rápido.
 
             } catch (error) {
                 console.error(
@@ -1315,7 +1496,7 @@
                         '',
                         'Acerca tu credencial al lector'
                     );
-                }, 3000);
+                }, 500);
 
             } finally {
                 /*
@@ -1325,7 +1506,7 @@
                 setTimeout(function () {
                     procesandoQR = false;
                     codigoQR = '';
-                }, 2000);
+                }, 300);
             }
         }
 

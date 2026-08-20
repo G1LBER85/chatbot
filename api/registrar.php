@@ -6,6 +6,16 @@ header('Content-Type: application/json; charset=utf-8');
 
 date_default_timezone_set('America/Mexico_City');
 
+// Si la conexión falló, responder en JSON (no con die() de texto plano)
+if (!$conn) {
+    http_response_code(500);
+    echo json_encode([
+        'ok' => false,
+        'error' => 'Error de conexión: ' . mysqli_connect_error()
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 try {
 
     // Recibir el JSON enviado desde cliente.html o cliente.php
@@ -23,7 +33,7 @@ try {
         exit;
     }
 
-    $codigo = trim($datos['CURP'] ?? '');   //Cambié de código a CURP
+    $codigo = trim($datos['CURP'] ?? '');   // Cambié de código a CURP
 
     if ($codigo === '') {
         http_response_code(400);
@@ -37,8 +47,8 @@ try {
     }
 
     // ─────────────────────────────────────────────
-    // 1. Buscar alumno activo por su código QR
-    // Cambie de Where codigo a WHERE CURP
+    // 1. Buscar alumno activo por su código QR (CURP)
+    // ─────────────────────────────────────────────
     $stmtAlumno = $conn->prepare("
         SELECT
             id,
@@ -85,7 +95,7 @@ try {
         SELECT id
         FROM registros
         WHERE alumno_id = ?
-          AND fecha_hora >= DATE_SUB(NOW(), INTERVAL 3 SECOND)
+          AND fecha_hora >= DATE_SUB(NOW(), INTERVAL 5 SECOND)
         ORDER BY id DESC
         LIMIT 1
     ");
@@ -117,15 +127,16 @@ try {
     // ─────────────────────────────────────────────
     // 3. Determinar si corresponde entrada o salida
     // ─────────────────────────────────────────────
-    $hoy = date('Y-m-d');
+    
 
     $stmtUltimo = $conn->prepare("
-        SELECT tipo
-        FROM registros
-        WHERE alumno_id = ?
-          AND DATE(fecha_hora) = ?
-        ORDER BY id DESC
-        LIMIT 1
+         SELECT tipo
+    FROM registros
+    WHERE alumno_id = ?
+      AND fecha_hora >= CURDATE()
+      AND fecha_hora < CURDATE() + INTERVAL 1 DAY
+    ORDER BY id DESC
+    LIMIT 1
     ");
 
     if (!$stmtUltimo) {
@@ -135,7 +146,7 @@ try {
         );
     }
 
-    $stmtUltimo->bind_param('is', $alumnoId, $hoy);
+    $stmtUltimo->bind_param('i', $alumnoId);
     $stmtUltimo->execute();
 
     $ultimoRegistro = $stmtUltimo->get_result()->fetch_assoc();
@@ -167,15 +178,20 @@ try {
 
     if (!$stmtRegistro) {
         throw new Exception(
-            'Error preparando el registro: ' . $conn->error
+            'Error preparando INSERT en registros: ' . $conn->error
         );
     }
 
     $stmtRegistro->bind_param('is', $alumnoId, $tipo);
-    $stmtRegistro->execute();
+
+    if (!$stmtRegistro->execute()) {
+        throw new Exception(
+            'Error al ejecutar INSERT: ' . $stmtRegistro->error
+        );
+    }
 
     if ($stmtRegistro->affected_rows !== 1) {
-        throw new Exception('No se pudo guardar el registro');
+        throw new Exception('No se insertó ningún registro.');
     }
 
     $registroId = $stmtRegistro->insert_id;
@@ -187,106 +203,103 @@ try {
     // ─────────────────────────────────────────────
     $hora = date('h:i A');
 
-    
-   // ─────────────────────────────────────────────
-// Enviar notificación por Telegram
-// ─────────────────────────────────────────────
+    // ─────────────────────────────────────────────
+    // 6. Enviar notificación por Telegram
+    // ─────────────────────────────────────────────
+    $telegramEnviado = false;
+    $telegramError = null;
 
-$telegramEnviado = false;
-$telegramError = null;
+    /*
+     * Coloca aquí el token NUEVO generado en BotFather.
+     * No reutilices el token que quedó expuesto.
+     */
+    $token = '8922581761:AAH_SEeEAOjedu18YI2BiWwcJghXv7i3vJE';
 
-$hora = date('h:i A');
+    $chatIdTutor = $alumno['tutor_chat_id'] ?? null;
 
-/*
- * Coloca aquí el token NUEVO generado en BotFather.
- * No reutilices el token que quedó expuesto.
- */
-$token = '8922581761:AAH_SEeEAOjedu18YI2BiWwcJghXv7i3vJE';
+    if (!empty($chatIdTutor)) {
 
-$chatIdTutor = $alumno['tutor_chat_id'] ?? null;
-
-if (!empty($chatIdTutor)) {
-
-    $nombreSeguro = htmlspecialchars(
-        $alumno['nombre'],
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-
-    $gradoSeguro = htmlspecialchars(
-        $alumno['grado'] ?? 'Sin grado',
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-
-    $tipoSeguro = htmlspecialchars(
-        $tipo,
-        ENT_QUOTES | ENT_SUBSTITUTE,
-        'UTF-8'
-    );
-
-    $emoji = $tipo === 'entrada' ? '✅' : '🚪';
-
-    $mensaje =
-        "{$emoji} <b>ChecaBot Escuela</b>\n\n" .
-        "👤 <b>{$nombreSeguro}</b>\n" .
-        "📋 Registró su <b>{$tipoSeguro}</b>\n" .
-        "🕐 {$hora}\n" .
-        "🎓 Grado: {$gradoSeguro}";
-
-    $url = "https://api.telegram.org/bot{$token}/sendMessage";
-
-    $payload = json_encode([
-        'chat_id' => (string)$chatIdTutor,
-        'text' => $mensaje,
-        'parse_mode' => 'HTML'
-    ], JSON_UNESCAPED_UNICODE);
-
-    $contexto = stream_context_create([
-        'http' => [
-            'method' => 'POST',
-            'header' =>
-                "Content-Type: application/json; charset=UTF-8\r\n" .
-                "Content-Length: " . strlen($payload) . "\r\n",
-            'content' => $payload,
-            'timeout' => 10,
-            'ignore_errors' => true
-        ]
-    ]);
-
-    $respuestaTelegram = @file_get_contents(
-        $url,
-        false,
-        $contexto
-    );
-
-    if ($respuestaTelegram === false) {
-        $telegramError =
-            'No fue posible conectar con la API de Telegram';
-    } else {
-        $resultadoTelegram = json_decode(
-            $respuestaTelegram,
-            true
+        $nombreSeguro = htmlspecialchars(
+            $alumno['nombre'],
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
         );
 
-        if (
-            is_array($resultadoTelegram) &&
-            ($resultadoTelegram['ok'] ?? false) === true
-        ) {
-            $telegramEnviado = true;
-        } else {
+        $gradoSeguro = htmlspecialchars(
+            $alumno['grado'] ?? 'Sin grado',
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
+        );
+
+        $tipoSeguro = htmlspecialchars(
+            $tipo,
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
+        );
+
+        $emoji = $tipo === 'entrada' ? '✅' : '🚪';
+
+        $mensaje =
+            "{$emoji} <b>ChecaBot Escuela</b>\n\n" .
+            "👤 <b>{$nombreSeguro}</b>\n" .
+            "📋 Registró su <b>{$tipoSeguro}</b>\n" .
+            "🕐 {$hora}\n" .
+            "🎓 Grado: {$gradoSeguro}";
+
+        $url = "https://api.telegram.org/bot{$token}/sendMessage";
+
+        $payload = json_encode([
+            'chat_id' => (string)$chatIdTutor,
+            'text' => $mensaje,
+            'parse_mode' => 'HTML'
+        ], JSON_UNESCAPED_UNICODE);
+
+        $contexto = stream_context_create([
+            'http' => [
+                'method' => 'POST',
+                'header' =>
+                    "Content-Type: application/json; charset=UTF-8\r\n" .
+                    "Content-Length: " . strlen($payload) . "\r\n",
+                'content' => $payload,
+                'timeout' => 10,
+                'ignore_errors' => true
+            ]
+        ]);
+
+        $respuestaTelegram = @file_get_contents(
+            $url,
+            false,
+            $contexto
+        );
+
+        if ($respuestaTelegram === false) {
             $telegramError =
-                $resultadoTelegram['description']
-                ?? 'Telegram devolvió una respuesta desconocida';
+                'No fue posible conectar con la API de Telegram';
+        } else {
+            $resultadoTelegram = json_decode(
+                $respuestaTelegram,
+                true
+            );
+
+            if (
+                is_array($resultadoTelegram) &&
+                ($resultadoTelegram['ok'] ?? false) === true
+            ) {
+                $telegramEnviado = true;
+            } else {
+                $telegramError =
+                    $resultadoTelegram['description']
+                    ?? 'Telegram devolvió una respuesta desconocida';
+            }
         }
+
+    } else {
+        $telegramError =
+            'El alumno no tiene tutor_chat_id registrado';
     }
 
-} else {
-    $telegramError =
-        'El alumno no tiene tutor_chat_id registrado';
-}
     // ─────────────────────────────────────────────
-    // 6. Responder al JavaScript
+    // 7. Responder al JavaScript
     // ─────────────────────────────────────────────
     echo json_encode([
         'ok' => true,
@@ -311,4 +324,3 @@ if (!empty($chatIdTutor)) {
 }
 
 $conn->close();
-?>
