@@ -187,7 +187,8 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
 
 <div class="layout">
 
-  <!-- [SIDEBAR] — este bloque se repite igual en dashboard.php y tablas.php -->
+  <!-- [SIDEBAR] — ES TE SIRVE PARA LAS VENTANAS EMERGENTES este bloque se repite igual en dashboard.php y tablas.php -->
+
   <aside class="sidebar">
     <div class="sidebar-marca">
       <span class="logo">🏫</span>
@@ -214,10 +215,14 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
         <a href="tablas.php?vista=tutores_registrados" class="nav-subitem">✅ Tutores registrados</a>
         <a href="tablas.php?vista=tutores_pendientes" class="nav-subitem">⏳ Tutores pendientes</a>
         <a href="tablas.php?vista=registros" class="nav-subitem">🕐 Registros</a>
+     
       </div>
 
       <a href="configuracion.php" class="nav-item">
         <span class="nav-icono">⚙️</span> Configuración
+      </a>
+      <a href="importar_alumnos.php" class="nav-item">
+        <span class="nav-icono">📋</span> Importar alumnos
       </a>
     </nav>
   </aside>

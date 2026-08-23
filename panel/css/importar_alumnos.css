@@ -1,0 +1,393 @@
+.contenido {
+  flex: 1;
+  padding: 38px 50px;
+  background: #f3f6f9;
+  min-height: 100vh;
+}
+
+.pagina-header {
+  margin-bottom: 28px;
+}
+
+.pagina-header h1 {
+  margin: 0 0 8px;
+  font-size: 32px;
+  color: #243b53;
+}
+
+.pagina-header p {
+  margin: 0;
+  color: #7b8794;
+  font-size: 16px;
+}
+
+
+/* =============================
+   ETL
+============================= */
+
+.etl-resumen {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+
+  background: white;
+
+  padding: 20px 25px;
+  margin-bottom: 25px;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 3px 12px rgba(0, 0, 0, .06);
+}
+
+.etl-paso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.etl-icono {
+  width: 46px;
+  height: 46px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #e8f8f7;
+
+  border-radius: 10px;
+
+  font-size: 22px;
+}
+
+.etl-paso strong {
+  display: block;
+  color: #243b53;
+}
+
+.etl-paso span {
+  display: block;
+
+  margin-top: 3px;
+
+  color: #8492a6;
+
+  font-size: 13px;
+}
+
+.etl-flecha {
+  color: #a0aec0;
+  font-size: 24px;
+}
+
+
+/* =============================
+   TARJETAS
+============================= */
+
+.panel-card {
+  background: white;
+
+  border-radius: 14px;
+
+  padding: 28px;
+
+  margin-bottom: 25px;
+
+  box-shadow:
+    0 3px 14px rgba(0, 0, 0, .07);
+}
+
+.card-header {
+  margin-bottom: 22px;
+}
+
+.card-header h2 {
+  margin: 0 0 7px;
+  color: #263f55;
+  font-size: 21px;
+}
+
+.card-header p {
+  margin: 0;
+  color: #7a8793;
+}
+
+
+/* =============================
+   ZONA EXCEL
+============================= */
+
+.drop-zone {
+  border: 2px dashed #1ca39c;
+
+  border-radius: 14px;
+
+  padding: 40px 25px;
+
+  background: #f9ffff;
+
+  text-align: center;
+
+  transition: .2s;
+}
+
+.drop-zone.drag-activo {
+  background: #e8f8f7;
+  border-color: #087f78;
+}
+
+.drop-icono {
+  font-size: 45px;
+
+  margin-bottom: 12px;
+}
+
+.drop-zone h3 {
+  margin: 0 0 8px;
+
+  color: #334e68;
+}
+
+.drop-zone p {
+  margin: 0 0 20px;
+
+  color: #8795a1;
+}
+
+#archivo_excel {
+  display: none;
+}
+
+.btn-seleccionar {
+  display: inline-block;
+
+  padding: 11px 20px;
+
+  background: #e7f5f4;
+
+  color: #168d87;
+
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  font-weight: 600;
+}
+
+.btn-seleccionar:hover {
+  background: #d5efed;
+}
+
+.archivo-seleccionado {
+  margin-top: 18px;
+
+  color: #39766f;
+
+  min-height: 20px;
+}
+
+
+/* =============================
+   DATOS A IMPORTAR
+============================= */
+
+.datos-importados {
+  display: grid;
+
+  grid-template-columns:
+    repeat(4, 1fr);
+
+  gap: 15px;
+
+  margin-top: 20px;
+}
+
+.datos-importados div {
+  padding: 15px;
+
+  background: #f5f8fa;
+
+  border-radius: 9px;
+}
+
+.datos-importados span {
+  display: block;
+
+  margin-bottom: 4px;
+
+  font-size: 12px;
+
+  color: #8c98a4;
+}
+
+.datos-importados strong {
+  color: #334e68;
+}
+
+
+/* =============================
+   BOTONES
+============================= */
+
+.acciones {
+  display: flex;
+
+  justify-content: flex-end;
+
+  margin-top: 22px;
+}
+
+.btn {
+  border: none;
+
+  padding: 12px 22px;
+
+  border-radius: 9px;
+
+  cursor: pointer;
+
+  font-size: 14px;
+
+  font-weight: 600;
+}
+
+.btn-principal {
+  background: #109b94;
+
+  color: white;
+}
+
+.btn-principal:hover {
+  background: #0d847e;
+}
+
+
+/* =============================
+   LIMPIEZA
+============================= */
+
+.grados-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 15px;
+}
+
+.grado-opcion {
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+
+  padding: 18px;
+
+  border: 1px solid #dde5eb;
+
+  border-radius: 10px;
+
+  cursor: pointer;
+}
+
+.grado-opcion:hover {
+  background: #f7f9fb;
+}
+
+.grado-opcion input {
+  width: 18px;
+  height: 18px;
+}
+
+.grado-opcion strong {
+  display: block;
+
+  color: #334e68;
+}
+
+.grado-opcion span {
+  display: block;
+
+  margin-top: 3px;
+
+  font-size: 13px;
+
+  color: #8593a1;
+}
+
+
+/* =============================
+   ALERTA
+============================= */
+
+.alerta-peligro {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  margin-top: 20px;
+
+  padding: 14px 16px;
+
+  background: #fff7ed;
+
+  border: 1px solid #fed7aa;
+
+  border-radius: 9px;
+
+  color: #9a4e0d;
+}
+
+.alerta-peligro p {
+  margin: 0;
+
+  font-size: 14px;
+}
+
+.btn-peligro {
+  background: #dc4c4c;
+
+  color: white;
+}
+
+.btn-peligro:hover {
+  background: #c63e3e;
+}
+
+
+/* =============================
+   RESPONSIVE
+============================= */
+
+@media (max-width: 900px) {
+
+  .contenido {
+    padding: 25px;
+  }
+
+  .etl-resumen {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .etl-flecha {
+    display: none;
+  }
+
+  .datos-importados {
+    grid-template-columns:
+      repeat(2, 1fr);
+  }
+
+  .grados-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
