@@ -1,6 +1,6 @@
 <?php
 
-require '../conexion.php';
+require '../includes/conexion.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
