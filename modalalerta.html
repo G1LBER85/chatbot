@@ -148,22 +148,35 @@
 
         
         <script>
-            // Horarios permitidos
-            const ENTRADA_INICIO = 6;    // 6:00 AM
-            const ENTRADA_FIN    = 10;   // 10:00 AM
-            const SALIDA_INICIO  = 12;   // 12:00 PM
-            const SALIDA_FIN     = 15;   // 3:00 PM
+            // Horarios cargados desde el servidor
+            let ENTRADA_INICIO = 0;
+            let ENTRADA_FIN    = 0;
+            let SALIDA_INICIO  = 0;
+            let SALIDA_FIN     = 0;
 
+            let horariosListos = false;
             let codigoPendiente = null;
+
+            // Consultar los horarios al servidor al cargar la página
+            fetch('api/horarios.php')
+                .then(function(r) { return r.json(); })
+                .then(function(horarios) {
+                    ENTRADA_INICIO = horarios.entrada.inicio;
+                    ENTRADA_FIN    = horarios.entrada.fin;
+                    SALIDA_INICIO  = horarios.salida.inicio;
+                    SALIDA_FIN     = horarios.salida.fin;
+                    horariosListos = true;
+                });
 
             function dentroDeHorario() {
                 
-                const hora = new Date().getHours(); // Obtiene la hora actual en formato de 24 horas
-
+                if (!horariosListos) return true; // Si no cargaron los horarios, deja pasar
+                const hora = new Date().getHours();
                 return(
                     (hora >= ENTRADA_INICIO && hora < ENTRADA_FIN) ||
-                    (hora >= SALIDA_INICIO  && hora < SALIDA_FIN) // Permite el registro si la hora actual está dentro de los rangos de entrada o salida
+                    (hora >= SALIDA_INICIO  && hora < SALIDA_FIN)
                 );
+                
             }
 
             function pitido() {
@@ -208,7 +221,7 @@
 
                 if (codigoPendiente) {
 
-                    enviarQR(codigoPendiente);
+                    enviarQR(codigoPendiente, true);
                     codigoPendiente = null;
 
                 }

@@ -153,6 +153,48 @@ try {
         $ultimoRegistro['tipo'] === 'salida'
     ) ? 'entrada' : 'salida';
 
+    // 3.5 Verificar que el tipo corresponda al horario
+    $autorizado = isset($datos['autorizado']) && $datos['autorizado'] === true;
+
+    if (!$autorizado) {
+        $horariosJson = file_get_contents('http://localhost/chatbot/api/horarios.php');
+        $horarios = json_decode($horariosJson, true);
+
+        $horaActual = (int)date('G'); // Hora actual en formato 24h
+
+        $enHorarioEntrada = (
+            $horaActual >= $horarios['entrada']['inicio'] &&
+            $horaActual <  $horarios['entrada']['fin']
+        );
+
+        $enHorarioSalida = (
+            $horaActual >= $horarios['salida']['inicio'] &&
+            $horaActual <  $horarios['salida']['fin']
+        );
+
+        if ($tipo === 'entrada' && $enHorarioSalida) {
+            http_response_code(403);
+            echo json_encode([
+                'ok'    => false,
+                'error' => 'fuera_de_horario',
+                'tipo'  => $tipo,
+                'msg'   => 'El alumno intenta registrar entrada en horario de salida'
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+
+        if ($tipo === 'salida' && $enHorarioEntrada) {
+            http_response_code(403);
+            echo json_encode([
+                'ok'    => false,
+                'error' => 'fuera_de_horario',
+                'tipo'  => $tipo,
+                'msg'   => 'El alumno intenta registrar salida en horario de entrada'
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
+    }
+
     // ─────────────────────────────────────────────
     // 4. Guardar el registro
     // ─────────────────────────────────────────────

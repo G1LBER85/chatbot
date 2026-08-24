@@ -1187,7 +1187,7 @@
             Validar y enviar el código.
             Enviar el código a api/registrar.php.
         */
-        async function enviarQR(codigo) {
+        async function enviarQR(codigo, autorizado = false) {
             if (procesandoQR) {
                 return;
             }
@@ -1208,7 +1208,8 @@
                         },
 
                         body: JSON.stringify({
-                            CURP: codigo    //Cambié  el envío de código a CURP
+                            CURP: codigo,    //Cambié  el envío de código a CURP
+                            autorizado: autorizado
                         })
                     }
                 );
@@ -1237,10 +1238,21 @@
                 }
 
                 if (!respuesta.ok || !datos.ok) {
+
+                    if (datos.error === 'fuera_de_horario') {
+                        codigoPendiente = codigo;
+                        pitido();
+                        document.getElementById('modalAviso').classList.remove('visible');
+                        document.getElementById('modalAlerta').classList.add('visible');
+                        procesandoQR = false;
+                        return;
+                    }
+
                     throw new Error(
                         datos.error ||
                         'No se pudo registrar el código'
                     );
+                
                 }
 
                 cambiarEstadoLector(
