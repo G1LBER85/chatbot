@@ -1,5 +1,5 @@
 <?php
-require 'includes/conexion.php';
+require '../conexion.php';
 
 $paginaActual = 'dashboard';
 
@@ -21,7 +21,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
 
 <div class="layout">
 
-  <?php include 'includes/sidebar.php'; ?>
+  <?php include '../sidebar/sidebar.php'; ?>
 
   <main class="contenido">
     <div class="panel-header">

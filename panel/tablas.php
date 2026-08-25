@@ -1,5 +1,5 @@
 <?php
-require 'includes/conexion.php';
+require '../conexion.php';
 
 $paginaActual = 'tablas';
 
@@ -23,7 +23,7 @@ if (!in_array($vistaActual, $vistasValidas, true)) {
 
 <div class="layout">
 
-  <?php include 'includes/sidebar.php'; ?>
+  <?php include '../sidebar/sidebar.php'; ?>
 
   <main class="contenido">
     <div class="panel-header">

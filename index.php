@@ -1,5 +1,5 @@
 <?php
-require 'includes/conexion.php';
+require 'conexion.php';
 
 $alumnos = $conn->query("SELECT * FROM alumnos WHERE activo = 1");
 ?>
