@@ -2,39 +2,40 @@
 
 date_default_timezone_set('America/Mexico_City');
 
+session_start();
+
 require_once __DIR__ . '/../../conexion.php';
 
 
 // =====================================================
-// 1. VALIDAR DATOS RECIBIDOS
+// 1. VALIDAR DATOS EN SESIÓN
+// =====================================================
+//
+// Ya no leemos $_POST['datos_alumnos']. Los datos fueron
+// guardados por analizar_excel.php directamente en la
+// sesión, lo cual evita depender de post_max_size y de
+// mandar un JSON enorme de ida y vuelta al navegador.
 // =====================================================
 
 if (
-    !isset($_POST['datos_alumnos'])
+    !isset($_SESSION['importacion_alumnos'])
     ||
-    trim($_POST['datos_alumnos']) === ''
+    !is_array($_SESSION['importacion_alumnos'])
 ) {
 
     die(
-        'No se recibieron alumnos para importar.'
+        'No hay datos de importación pendientes. '
+        . 'Por favor analiza el archivo Excel nuevamente.'
     );
 
 }
 
 
-$alumnos = json_decode(
-    $_POST['datos_alumnos'],
-    true
-);
+$alumnos = $_SESSION['importacion_alumnos'];
 
-
-if (!is_array($alumnos)) {
-
-    die(
-        'Los datos recibidos no son válidos.'
-    );
-
-}
+$nombreArchivo =
+    $_SESSION['importacion_archivo']
+    ?? 'archivo desconocido';
 
 
 // =====================================================
@@ -100,6 +101,17 @@ try {
 
     // =================================================
     // PREPARAR BUSCAR CURP
+    // =================================================
+    //
+    // NOTA: aquí SÍ se mantiene una búsqueda individual
+    // porque estamos dentro de una transacción de
+    // escritura y necesitamos el dato más reciente justo
+    // antes de decidir INSERT o UPDATE. La optimización
+    // fuerte (la consulta en lote) ya se hizo en
+    // analizar_excel.php, que es donde de verdad pesaba
+    // con 1,200+ alumnos porque ahí se hacía dos veces
+    // (una para comparar y otra aquí). Ahora solo se hace
+    // una vez, aquí, al momento real de guardar.
     // =================================================
 
     $buscar = $conn->prepare(
@@ -439,6 +451,21 @@ try {
 
 $conn->close();
 
+
+// =====================================================
+// 7. LIMPIAR SESIÓN
+// =====================================================
+//
+// Ya se usaron los datos, se eliminan para no dejarlos
+// pegados en la sesión (evita que un F5 en esta misma
+// página, u otra importación posterior sin pasar por
+// analizar_excel.php, vuelva a insertar lo mismo).
+// =====================================================
+
+unset($_SESSION['importacion_alumnos']);
+
+unset($_SESSION['importacion_archivo']);
+
 ?>
 
 <!DOCTYPE html>
@@ -726,8 +753,13 @@ $conn->close();
 
 
                 <p>
-                    El archivo Excel fue procesado
-                    correctamente.
+                    El archivo
+                    <strong>
+                        <?= htmlspecialchars(
+                            $nombreArchivo
+                        ) ?>
+                    </strong>
+                    fue procesado correctamente.
                 </p>
 
             </div>

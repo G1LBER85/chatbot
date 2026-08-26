@@ -192,7 +192,7 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
 
 
   <?php include '../sidebar/sidebar.php'; ?>
->>>>>>> origin/main
+
 
   <main class="contenido">
 
