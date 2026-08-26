@@ -1,5 +1,5 @@
 <?php
-
+require '../conexion.php';
 $paginaActual = 'importar_alumnos';
 
 ?>
@@ -20,93 +20,7 @@ $paginaActual = 'importar_alumnos';
 
 <div class="layout">
 
-  <!-- SIDEBAR -->
-  <aside class="sidebar">
-
-    <div class="sidebar-marca">
-      <span class="logo">🏫</span>
-
-      <div>
-        <strong>ChecaBot</strong>
-        <small>Panel de Administrador</small>
-      </div>
-    </div>
-
-    <nav class="nav">
-
-      <a href="dashboard.php" class="nav-item">
-        <span class="nav-icono">🏠</span>
-        Dashboard
-      </a>
-
-      <div class="nav-grupo-btn">
-        <span class="nav-icono">🎓</span>
-        Alumnos
-      </div>
-
-      <div class="nav-subgrupo abierto">
-        <a href="alumnos.php" class="nav-subitem">
-          Ver alumnos
-        </a>
-
-        <a href="alumnos.php?accion=nuevo" class="nav-subitem">
-          ➕ Registrar / editar
-        </a>
-      </div>
-
-      <div class="nav-grupo-btn">
-        <span class="nav-icono">📊</span>
-        Tablas
-      </div>
-
-      <div class="nav-subgrupo abierto">
-
-        <a
-          href="tablas.php?vista=grados_grupos"
-          class="nav-subitem"
-        >
-          📚 Grados y grupos
-        </a>
-
-        <a
-          href="tablas.php?vista=tutores_registrados"
-          class="nav-subitem"
-        >
-          ✅ Tutores registrados
-        </a>
-
-        <a
-          href="tablas.php?vista=tutores_pendientes"
-          class="nav-subitem"
-        >
-          ⏳ Tutores pendientes
-        </a>
-
-        <a
-          href="tablas.php?vista=registros"
-          class="nav-subitem"
-        >
-          🕐 Registros
-        </a>
-
-      </div>
-
-      <a href="configuracion.php" class="nav-item">
-        <span class="nav-icono">⚙️</span>
-        Configuración
-      </a>
-
-      <a
-        href="importar_alumnos.php"
-        class="nav-item activo"
-      >
-        <span class="nav-icono">📋</span>
-        Importar alumnos
-      </a>
-
-    </nav>
-
-  </aside>
+  <?php include '../sidebar/sidebar.php'; ?>
 
 
   <!-- CONTENIDO PRINCIPAL -->
@@ -541,5 +455,6 @@ document
 
 </script>
 
+</body>
 </body>
 </html>

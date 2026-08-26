@@ -58,5 +58,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
     <a href="configuracion.php" class="nav-item <?= $paginaActual === 'configuracion' ? 'activo' : '' ?>">
       <span class="nav-icono">⚙️</span> Configuración
     </a>
+       <a href="importar_alumnos.php" class="nav-item <?= $paginaActual === 'importar_alumnos' ? 'activo' : '' ?>">
+      <span class="nav-icono">📋</span> Importar alumnos
+    </a>
   </nav>
 </aside>
