@@ -190,7 +190,9 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
 
 <div class="layout">
 
+
   <?php include '../sidebar/sidebar.php'; ?>
+>>>>>>> origin/main
 
   <main class="contenido">
 
