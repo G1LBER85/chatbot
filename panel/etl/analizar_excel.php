@@ -2,6 +2,8 @@
 
 date_default_timezone_set('America/Mexico_City');
 
+session_start();
+
 require_once __DIR__ . '/../../vendor/autoload.php';
 require_once __DIR__ . '/../../conexion.php';
 
@@ -308,33 +310,99 @@ foreach ($filas as $indice => $fila) {
 
 
 // =====================================================
-// 5. COMPARAR CONTRA MYSQL
+// 5. COMPARAR CONTRA MYSQL — CONSULTA EN LOTE
+// =====================================================
+//
+// En vez de hacer un SELECT por cada alumno (lo cual con
+// 1,200+ alumnos serían 1,200+ consultas), recolectamos
+// TODAS las CURPs válidas del Excel y hacemos UNA sola
+// consulta con WHERE CURP IN (...).
 // =====================================================
 
-$stmtBuscar = $conn->prepare(
-    "
-    SELECT
-        id,
-        nombre,
-        grado,
-        grupo,
-        activo
+// -----------------------------------------------------
+// Recolectar CURPs únicas y válidas (18 caracteres)
+// -----------------------------------------------------
 
-    FROM alumnos
+$curpsParaBuscar = [];
 
-    WHERE CURP = ?
+foreach ($alumnos as $alumno) {
 
-    LIMIT 1
-    "
-);
+    if (
+        $alumno['valido']
+        &&
+        $alumno['curp'] !== ''
+    ) {
+
+        $curpsParaBuscar[$alumno['curp']] = true;
+
+    }
+
+}
+
+$curpsParaBuscar = array_keys($curpsParaBuscar);
 
 
-if (!$stmtBuscar) {
+// -----------------------------------------------------
+// Buscar todos los existentes de una sola vez
+// -----------------------------------------------------
 
-    die(
-        'Error preparando comparación: '
-        . $conn->error
+$existentesPorCurp = [];
+
+if (!empty($curpsParaBuscar)) {
+
+    $placeholders = implode(
+        ',',
+        array_fill(0, count($curpsParaBuscar), '?')
     );
+
+    $tipos = str_repeat('s', count($curpsParaBuscar));
+
+    $sqlBuscar = "
+        SELECT
+            id,
+            nombre,
+            grado,
+            grupo,
+            activo,
+            CURP
+
+        FROM alumnos
+
+        WHERE CURP IN ($placeholders)
+    ";
+
+    $stmtBuscar = $conn->prepare($sqlBuscar);
+
+    if (!$stmtBuscar) {
+
+        die(
+            'Error preparando comparación: '
+            . $conn->error
+        );
+
+    }
+
+    $stmtBuscar->bind_param(
+        $tipos,
+        ...$curpsParaBuscar
+    );
+
+    $stmtBuscar->execute();
+
+    $resultadoBuscar =
+        $stmtBuscar->get_result();
+
+    while (
+        $filaExistente =
+        $resultadoBuscar->fetch_assoc()
+    ) {
+
+        $existentesPorCurp[$filaExistente['CURP']] =
+            $filaExistente;
+
+    }
+
+    $stmtBuscar->close();
 
 }
 
@@ -349,7 +417,7 @@ $erroresImportacion = [];
 
 
 // =====================================================
-// 6. COMPARAR CADA ALUMNO
+// 6. COMPARAR CADA ALUMNO (SIN CONSULTAS ADICIONALES)
 // =====================================================
 
 foreach ($alumnos as &$alumno) {
@@ -377,29 +445,12 @@ foreach ($alumnos as &$alumno) {
         );
 
 
-    // -------------------------------------------------
-    // BUSCAR CURP
-    // -------------------------------------------------
-
-    $stmtBuscar->bind_param(
-        's',
-        $curp
-    );
-
-
-    $stmtBuscar->execute();
-
-
-    $resultado =
-        $stmtBuscar->get_result();
-
-
     // =================================================
     // CURP NO EXISTE
     // =================================================
 
     if (
-        $resultado->num_rows === 0
+        !isset($existentesPorCurp[$curp])
     ) {
 
         $alumno['accion'] =
@@ -418,7 +469,7 @@ foreach ($alumnos as &$alumno) {
     // =================================================
 
     $existente =
-        $resultado->fetch_assoc();
+        $existentesPorCurp[$curp];
 
 
     $alumno['id_existente'] =
@@ -536,13 +587,27 @@ foreach ($alumnos as &$alumno) {
 unset($alumno);
 
 
-$stmtBuscar->close();
-
 $conn->close();
 
 
 // =====================================================
-// 7. CONTADORES
+// 7. GUARDAR EN SESIÓN
+// =====================================================
+//
+// En vez de mandar el JSON completo por un input hidden
+// (lo cual con 1,200+ alumnos puede pesar demasiado y
+// depende de post_max_size), guardamos el arreglo en
+// $_SESSION. La página de confirmación solo necesita
+// mandar la orden de "importar", no los datos.
+// =====================================================
+
+$_SESSION['importacion_alumnos'] = $alumnos;
+
+$_SESSION['importacion_archivo'] = $archivo['name'];
+
+
+// =====================================================
+// 8. CONTADORES
 // =====================================================
 
 $total =
@@ -562,7 +627,7 @@ $totalErrores =
 
 
 // =====================================================
-// 8. TEXTO DE CAMBIOS
+// 9. TEXTO DE CAMBIOS
 // =====================================================
 
 function textoCambios($cambios)
@@ -1188,7 +1253,7 @@ function textoCambios($cambios)
             text-align: left;
 
             border-bottom:
-                1px solid #e6ebef;
+                1px solid #0a131b;
 
         }
 
@@ -1196,7 +1261,7 @@ function textoCambios($cambios)
         th {
 
             background:
-                #eef3f7;
+                #090d11;
 
         }
 
@@ -1963,28 +2028,17 @@ function textoCambios($cambios)
 
         <!-- =====================================
              FORMULARIO
+             (Ya NO se envía el JSON completo por
+             POST. Los datos ya están guardados en
+             $_SESSION['importacion_alumnos']. El
+             formulario solo dispara la acción.)
         ====================================== -->
 
-       <form
-    id="formImportacion"
-    action="importar_excel.php"
-    method="POST"
->
+        <form
+            id="formImportacion"
+            action="importar_excel.php"
+            method="POST"
         >
-
-
-            <input
-                type="hidden"
-                name="datos_alumnos"
-                value="<?= htmlspecialchars(
-                    json_encode(
-                        $alumnos,
-                        JSON_UNESCAPED_UNICODE
-                    ),
-                    ENT_QUOTES,
-                    'UTF-8'
-                ) ?>"
-            >
 
 
             <div class="acciones">
@@ -1998,13 +2052,13 @@ function textoCambios($cambios)
                 </a>
 
 
-              <button
-    type="button"
-    class="btn btn-importar"
-    onclick="abrirModalImportacion()"
->
-    ⚠️ Confirmar e importar
-</button>
+                <button
+                    type="button"
+                    class="btn btn-importar"
+                    onclick="abrirModalImportacion()"
+                >
+                    ⚠️ Confirmar e importar
+                </button>
 
 
             </div>
