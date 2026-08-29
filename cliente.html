@@ -440,93 +440,6 @@
             letter-spacing: 0.05em;
         }
 
-        /* ── Modal alerta horario ── */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.65);
-            z-index: 999;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-overlay.visible {
-            display: flex;
-        }
-
-        .modal-caja {
-            background: white;
-            border-radius: 20px;
-            padding: 40px 50px;
-            max-width: 480px;
-            width: 90%;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
-        }
-
-        .modal-icono {
-            font-size: 64px;
-            margin-bottom: 16px;
-        }
-
-        .modal-titulo {
-            font-size: 28px;
-            font-weight: 700;
-            color: blue;
-            margin-bottom: 12px;
-        }
-
-        .modal-mensaje {
-            font-size: 20px;
-            color: black;
-            margin-bottom: 28px;
-            line-height: 1.6;
-            font-weight: 600;
-        }
-
-        .modal-botones {
-            display: flex;
-            gap: 16px;
-            justify-content: center;
-        }
-
-        .btn-aceptar {
-            background: green;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 12px 32px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .btn-denegar {
-            background: red;
-            color: white;
-            border: none;
-            border-radius: 30px;
-            padding: 12px 32px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            font-family: 'Poppins', sans-serif;
-        }
-
-        .modal-aviso {
-            margin-top: 16px;
-            font-size: 20px;
-            color: red;
-            font-weight: 600;
-            display: none;
-        }
-
-        .modal-aviso.visible {
-            display: block;
-        }
-
         @media (max-width: 900px) {
             body {
                 overflow: auto;
@@ -906,39 +819,6 @@
 
     </div>
 
-    <!-- Modal alerta horario -->
-    <div class="modal-overlay" id="modalAlerta">
-
-        <div class="modal-caja">
-
-            <div class="modal-icono">
-                ⚠️
-            </div>
-
-            <div class="modal-titulo">Acceso fuera de horario</div>
-
-            <div class="modal-mensaje">
-                El alumno intenta escanear fuera del horario permitido ¿Desea permitir el proceso?
-            </div>
-
-            <div class="modal-botones">
-                <button class="btn-aceptar" id="btnAceptar">
-                    ✓ Aceptar
-                </button>
-
-                <button class="btn-denegar" id="btnDenegar">
-                    ✕ Denegar
-                </button>
-            </div>
-
-            <div class="modal-aviso" id="modalAviso">
-                El alumno no puede seguir con el proceso de escaneo.
-            </div>
-
-        </div>
-
-    </div>
-
     <script>
         /*
          * Rutas relativas a:
@@ -1307,7 +1187,7 @@
             Validar y enviar el código.
             Enviar el código a api/registrar.php.
         */
-        async function enviarQR(codigo, autorizado = false) {
+        async function enviarQR(codigo) {
             if (procesandoQR) {
                 return;
             }
@@ -1329,7 +1209,6 @@
 
                         body: JSON.stringify({
                             CURP: codigo,    //Cambié  el envío de código a CURP
-                            autorizado: autorizado
                         })
                     }
                 );
@@ -1358,15 +1237,6 @@
                 }
 
                 if (!respuesta.ok || !datos.ok) {
-
-                    if (datos.error === 'fuera_de_horario') {
-                        codigoPendiente = codigo;
-                        pitido();
-                        document.getElementById('modalAviso').classList.remove('visible');
-                        document.getElementById('modalAlerta').classList.add('visible');
-                        procesandoQR = false;
-                        return;
-                    }
 
                     throw new Error(
                         datos.error ||
