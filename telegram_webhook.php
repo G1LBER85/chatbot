@@ -22,10 +22,7 @@ if (isset($update['message']['text'])) {
     if (strtoupper($texto) === '/REGISTRO') {
         mostrarFormularioRegistro($chat_id, $nombre, $conn, $token);
     }
-    // COMANDO /start con CURP
-    elseif (strpos($texto, '/start') === 0) {
-        procesarRegistroCurp($chat_id, $texto, $nombre, $conn, $token);
-    }
+    
     // CUALQUIER OTRO MENSAJE
     else {
         mostrarMenuOpciones($chat_id, $conn, $token);
@@ -227,12 +224,16 @@ function procesarCallbackQuery($update, $conn, $token) {
             file_get_contents($url, false, $context);
             
             // ENVIAR IMAGEN PNG SI EXISTE
-            if ($respuesta['ruta_imagen']) {
+            if ($respuesta['ruta_imagen'] && !empty($respuesta['ruta_imagen'])) {
                 $url_img = "https://api.telegram.org/bot{$token}/sendPhoto";
+                
+                // Construir URL dinámica de la imagen
+                $url_imagen_completa = "https://sash-sake-guidance.ngrok-free.dev/chatbot/" . $respuesta['ruta_imagen'];
+                
                 $data_img = [
                     "chat_id" => $chat_id,
-                    "photo"   => $respuesta['ruta_imagen'],
-                    "caption" => "📸 Imagen adjunta"
+                    "photo"   => $url_imagen_completa,
+                    "caption" => "📸 Información adjunta"
                 ];
                 
                 $opciones_img = [
