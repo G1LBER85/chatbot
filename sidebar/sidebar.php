@@ -55,11 +55,13 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
       <a href="tablas.php?vista=registros" class="nav-subitem <?= ($paginaActual === 'tablas' && $vistaActual === 'registros') ? 'activo' : '' ?>">🕐 Registros</a>
     </div>
 
-    <a href="configuracion.php" class="nav-item <?= $paginaActual === 'configuracion' ? 'activo' : '' ?>">
-      <span class="nav-icono">⚙️</span> Configuración
+    
+  <a href="telegram_respuestas.php" class="nav-item <?= $paginaActual === 'telegram_respuestas' ? 'activo' : '' ?>">
+      <span class="nav-icono">🤖</span> Respuestas Telegram
     </a>
        <a href="importar_alumnos.php" class="nav-item <?= $paginaActual === 'importar_alumnos' ? 'activo' : '' ?>">
       <span class="nav-icono">📋</span> Importar alumnos
     </a>
+
   </nav>
 </aside>
