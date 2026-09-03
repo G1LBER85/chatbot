@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+    <head>
+        
+        <meta charset="UTF-8">
+
+        <meta
+            name="viewport" 
+            content="width=device-width, initial-scale=1.0"
+        >
+
+        <title>Modal Alerta</title>
+
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        >
+
+        <style>
+
+            /* ── Modal alerta horario ── */
+            .modal-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.65);
+                z-index: 999;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .modal-overlay.visible {
+                display: flex;
+            }
+
+            .modal-caja {
+                background: white;
+                border-radius: 20px;
+                padding: 40px 50px;
+                max-width: 480px;
+                width: 90%;
+                text-align: center;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            }
+
+            .modal-icono {
+                font-size: 64px;
+                margin-bottom: 16px;
+            }
+
+            .modal-titulo {
+                font-size: 28px;
+                font-weight: 700;
+                color: blue;
+                margin-bottom: 12px;
+            }
+
+            .modal-mensaje {
+                font-size: 20px;
+                color: black;
+                margin-bottom: 28px;
+                line-height: 1.6;
+                font-weight: 600;
+            }
+
+            .modal-botones {
+                display: flex;
+                gap: 16px;
+                justify-content: center;
+            }
+
+            .btn-aceptar {
+                background: green;
+                color: white;
+                border: none;
+                border-radius: 30px;
+                padding: 12px 32px;
+                font-size: 18px;
+                font-weight: 700;
+                cursor: pointer;
+                font-family: 'Poppins', sans-serif;
+            }
+
+            .btn-denegar {
+                background: red;
+                color: white;
+                border: none;
+                border-radius: 30px;
+                padding: 12px 32px;
+                font-size: 18px;
+                font-weight: 700;
+                cursor: pointer;
+                font-family: 'Poppins', sans-serif;
+            }
+
+            .modal-aviso {
+                margin-top: 16px;
+                font-size: 20px;
+                color: red;
+                font-weight: 600;
+                display: none;
+            }
+
+            .modal-aviso.visible {
+                display: block;
+            }
+
+        </style>    
+
+    </head>
+
+    <body>
+
+        <!-- Modal alerta horario -->
+        <div class="modal-overlay" id="modalAlerta">
+
+            <div class="modal-caja">
+
+                <div class="modal-icono">
+                    ⚠️
+                </div>
+
+                <div class="modal-titulo">Acceso fuera de horario</div>
+
+                <div class="modal-mensaje">
+                    El alumno intenta escanear fuera del horario permitido ¿Desea permitir el proceso?
+                </div>
+
+                <div class="modal-botones">
+                    <button class="btn-aceptar" id="btnAceptar">
+                        ✓ Aceptar
+                    </button>
+
+                    <button class="btn-denegar" id="btnDenegar">
+                        ✕ Denegar
+                    </button>
+                </div>
+
+                <div class="modal-aviso" id="modalAviso">
+                    El alumno no puede seguir con el proceso de escaneo.
+                </div>
+
+            </div>
+
+        </div>
+
+        
+        <script>
+            // Horarios cargados desde el servidor
+            const INICIO = 6;
+            const FIN = 15;
+
+            let codigoPendiente = null;
+
+            function dentroDeHorario() {
+                
+                const hora = new Date().getHours();
+                return(hora >= INICIO && hora < FIN);
+                
+            }
+
+            function pitido() {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator(); //Crea el sonidito
+                    const vol = ctx.createGain(); //Crea el volumen
+                    osc.connect(vol); //Conecta el volumen...
+                    vol.connect(ctx.destination); //Y los manda a los altavoces o bocinas
+                    osc.frequency.value = 500; //La frecuencia del tono, entre más grande el número, más agudo es el sonido
+                    vol.gain.value = 1; //El volumen del tono, 1 es el máximo, 0 es silencio
+                    osc.start(); //Inicia el sonido
+                    osc.stop(ctx.currentTime + 2); //Detiene el sonido después de 2 segundos
+                } catch(e) {}
+            }
+
+            function procesarCodigoQR(codigo) {
+
+                const codigoLimpio = 
+                    String(codigo).trim().toUpperCase();
+
+                if (codigoLimpio === '') {
+                    return;
+                }
+
+                if (!dentroDeHorario()) {
+
+                    codigoPendiente = codigoLimpio;
+                    pitido();
+                    document.getElementById('modalAviso').classList.remove('visible');
+                    document.getElementById('modalAlerta').classList.add('visible');
+                    return;
+                }
+
+                enviarQR(codigoLimpio);
+            }
+
+            // Botón Aceptar → continúa el registro
+            document.getElementById('btnAceptar').addEventListener('click', function () {
+
+                document.getElementById('modalAlerta').classList.remove('visible');
+
+                if (codigoPendiente) {
+
+                    enviarQR(codigoPendiente);
+                    codigoPendiente = null;
+
+                }
+            });
+
+            // Botón Denegar → muestra aviso y cierra
+            document.getElementById('btnDenegar').addEventListener('click', function () {
+
+                document.getElementById('modalAviso').classList.add('visible');
+                codigoPendiente = null;
+                procesandoQR = false;
+
+                setTimeout(function () {
+
+                    document.getElementById('modalAlerta').classList.remove('visible');
+                    document.getElementById('modalAviso').classList.remove('visible');
+                    
+                }, 3000);
+            });
+        </script>
+
+    </body>
+</html>
