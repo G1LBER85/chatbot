@@ -45,49 +45,8 @@ if (isset($_GET['eliminar_alumno'])) {
     exit;
 }
 
-// [PROCESO: GUARDAR EDICIÓN DE UN REGISTRO DE ASISTENCIA] ─────────
-// Solo aplica a la vista "registros". Permite corregir el tipo
-// (entrada/salida) o la fecha_hora de un registro capturado
-// por error, sin tocar los datos del alumno.
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_registro'])) {
-    $idRegistro = intval($_POST['id']);
-    $tipoNuevo = $_POST['tipo'] ?? '';
-    $fechaHoraNueva = $_POST['fecha_hora'] ?? '';
-
-    // Validación: el tipo solo puede ser uno de estos dos valores,
-    // y la fecha/hora no puede venir vacía.
-    if (in_array($tipoNuevo, ['entrada', 'salida'], true) && $fechaHoraNueva !== '') {
-        $stmtActualizar = $conn->prepare("UPDATE registros SET tipo = ?, fecha_hora = ? WHERE id = ?");
-        $stmtActualizar->bind_param("ssi", $tipoNuevo, $fechaHoraNueva, $idRegistro);
-        $stmtActualizar->execute();
-        $stmtActualizar->close();
-
-        header("Location: tablas.php?vista=registros&editado=1");
-        exit;
-    } else {
-        $mensaje = "⚠️ Datos inválidos al editar el registro";
-        $tipo_mensaje = "warning";
-    }
-}
-
-// [PROCESO: ELIMINAR UN REGISTRO DE ASISTENCIA] ───────────────────
-// Borra solo la fila de la tabla registros (una entrada o salida
-// puntual). El alumno NO se toca.
-if (isset($_GET['eliminar_registro'])) {
-    $idRegistro = intval($_GET['eliminar_registro']);
-
-    $stmtBorraRegistro = $conn->prepare("DELETE FROM registros WHERE id = ?");
-    $stmtBorraRegistro->bind_param("i", $idRegistro);
-    $stmtBorraRegistro->execute();
-    $stmtBorraRegistro->close();
-
-    header("Location: tablas.php?vista=registros&eliminado=1");
-    exit;
-}
-
 // [MENSAJES DE CONFIRMACIÓN] ──────────────────────────────────────
 if (isset($_GET['eliminado'])) { $mensaje = "✅ Eliminado correctamente"; $tipo_mensaje = "success"; }
-if (isset($_GET['editado']))   { $mensaje = "✅ Registro actualizado correctamente"; $tipo_mensaje = "success"; }
 ?>
 <!DOCTYPE html>
 <html lang="es">

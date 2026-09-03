@@ -44,13 +44,22 @@ function subirFotoAlumno($curp, $extensionesPermitidas)
     return null;
 }
 
+// [FUNCION: gradoEsValido] ────────────────────────────────────
+// Regla de negocio: el grado debe ser un solo carácter numérico
+// del 1 al 6 (ni "0", ni "7", ni letras, ni más de un dígito).
+function gradoEsValido($grado)
+{
+    return in_array($grado, ['1', '2', '3', '4', '5', '6'], true);
+}
+
 // [FUNCION: grupoEsValido] ───────────────────────────────────
-// Regla de negocio: el grupo únicamente debe contener números
-// (ej. "1", "2", "3"), sin letras ni símbolos. ctype_digit()
-// rechaza cadenas vacías, letras, espacios y decimales.
+// Regla de negocio: el grupo únicamente debe ser una sola letra
+// entre A y J (mayúscula o minúscula, ya que se normaliza con
+// strtoupper antes de guardar). preg_match rechaza números,
+// símbolos, cadenas vacías y letras fuera de ese rango (K-Z).
 function grupoEsValido($grupo)
 {
-    return ctype_digit($grupo);
+    return (bool) preg_match('/^[A-Ja-j]$/', $grupo);
 }
 
 // [PROCESO: AGREGAR ALUMNO] ──────────────────────────────────
@@ -61,14 +70,19 @@ function grupoEsValido($grupo)
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar'])) {
     $nombre = trim($_POST['nombre']);
     $grado = trim($_POST['grado']);
-    $grupo = trim($_POST['grupo']);
+    $grupo = strtoupper(trim($_POST['grupo']));
     $curp = strtoupper(trim($_POST['curp']));
 
     if ($nombre && $grado && $grupo && $curp) {
 
-        if (!grupoEsValido($grupo)) {
-            // Corta aquí si el grupo trae letras o símbolos.
-            $mensaje = "⚠️ El grupo únicamente debe contener números (ejemplo: 1, 2, 3)";
+        if (!gradoEsValido($grado)) {
+            // Corta aquí si el grado no es un número del 1 al 6.
+            $mensaje = "⚠️ El grado debe ser un número del 1 al 6";
+            $tipo_mensaje = "warning";
+            $accion = 'nuevo';
+        } elseif (!grupoEsValido($grupo)) {
+            // Corta aquí si el grupo trae números o símbolos.
+            $mensaje = "⚠️ El grupo debe ser una sola letra, de la A a la J";
             $tipo_mensaje = "warning";
             $accion = 'nuevo';
         } else {
@@ -117,14 +131,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar'])) {
     $id = intval($_POST['id']);
     $nombre = trim($_POST['nombre']);
     $grado = trim($_POST['grado']);
-    $grupo = trim($_POST['grupo']);
+    $grupo = strtoupper(trim($_POST['grupo']));
     $curp = strtoupper(trim($_POST['curp']));
 
     if ($nombre && $grado && $grupo && $curp) {
 
-        if (!grupoEsValido($grupo)) {
-            // Corta aquí si el grupo trae letras o símbolos.
-            $mensaje = "⚠️ El grupo únicamente debe contener números (ejemplo: 1, 2, 3)";
+        if (!gradoEsValido($grado)) {
+            // Corta aquí si el grado no es un número del 1 al 6.
+            $mensaje = "⚠️ El grado debe ser un número del 1 al 6";
+            $tipo_mensaje = "warning";
+            $accion = 'editar';
+            $_GET['id'] = $id;
+        } elseif (!grupoEsValido($grupo)) {
+            // Corta aquí si el grupo trae números o símbolos.
+            $mensaje = "⚠️ El grupo debe ser una sola letra, de la A a la J";
             $tipo_mensaje = "warning";
             $accion = 'editar';
             $_GET['id'] = $id;
@@ -254,9 +274,47 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
       </div>
 
       <?php if ($alumnos->num_rows > 0): ?>
-        <table>
+
+        <!-- [FILTROS: GRADO, GRUPO Y NOMBRE] ────────────────────
+             Filtrado 100% en el navegador (sin recargar la página).
+             Grado y Grupo se combinan entre sí (AND); el buscador
+             de nombre filtra por coincidencia parcial, así que
+             escribir "juan" muestra todos los Juanes, y seguir
+             escribiendo el apellido va acotando la lista, todo
+             en automático conforme el usuario escribe/borra. -->
+        <div class="form-box" style="margin-bottom: 20px;">
+          <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:20px;">
+            <div style="display:flex; gap:14px; flex-wrap:wrap;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label>Grado</label>
+                <select id="filtroGrado">
+                  <option value="">Todos</option>
+                  <?php for ($g = 1; $g <= 6; $g++): ?>
+                    <option value="<?= $g ?>"><?= $g ?></option>
+                  <?php endfor; ?>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>Grupo</label>
+                <select id="filtroGrupo">
+                  <option value="">Todos</option>
+                  <?php foreach (range('A', 'J') as $letra): ?>
+                    <option value="<?= $letra ?>"><?= $letra ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0; flex:1; min-width:220px;">
+              <label>Buscar por nombre</label>
+              <input type="text" id="filtroNombre" placeholder="Ejemplo: Juan Pérez" autocomplete="off">
+            </div>
+          </div>
+        </div>
+
+        <table id="tablaAlumnos">
           <thead>
             <tr>
+              <th>ID</th>
               <th>Foto</th>
               <th>Nombre</th>
               <th>Grado/Grupo</th>
@@ -268,7 +326,11 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
           </thead>
           <tbody>
             <?php while ($alumno = $alumnos->fetch_assoc()): ?>
-            <tr>
+            <tr
+              data-grado="<?= htmlspecialchars($alumno['grado']) ?>"
+              data-grupo="<?= htmlspecialchars($alumno['grupo']) ?>"
+              data-nombre="<?= htmlspecialchars(mb_strtolower($alumno['nombre'], 'UTF-8')) ?>">
+              <td><?= $alumno['id'] ?></td>
               <td>
                 <?php if (!empty($alumno['foto'])): ?>
                   <img class="foto-mini" src="<?= htmlspecialchars('../' . str_replace('\\', '/', $alumno['foto'])) ?>" alt="">
@@ -301,8 +363,43 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
               </td>
             </tr>
             <?php endwhile; ?>
+            <tr id="filaSinResultados" style="display:none;">
+              <td colspan="8" class="empty-state">No se encontraron alumnos con esos filtros.</td>
+            </tr>
           </tbody>
         </table>
+
+        <script>
+        (function () {
+          const filtroGrado = document.getElementById('filtroGrado');
+          const filtroGrupo = document.getElementById('filtroGrupo');
+          const filtroNombre = document.getElementById('filtroNombre');
+          const filas = document.querySelectorAll('#tablaAlumnos tbody tr[data-nombre]');
+          const filaSinResultados = document.getElementById('filaSinResultados');
+
+          function aplicarFiltros() {
+            const grado = filtroGrado.value;
+            const grupo = filtroGrupo.value;
+            const nombre = filtroNombre.value.trim().toLowerCase();
+            let visibles = 0;
+
+            filas.forEach(function (fila) {
+              const coincideGrado = grado === '' || fila.dataset.grado === grado;
+              const coincideGrupo = grupo === '' || fila.dataset.grupo === grupo;
+              const coincideNombre = nombre === '' || fila.dataset.nombre.includes(nombre);
+              const visible = coincideGrado && coincideGrupo && coincideNombre;
+              fila.style.display = visible ? '' : 'none';
+              if (visible) visibles++;
+            });
+
+            filaSinResultados.style.display = visibles === 0 ? '' : 'none';
+          }
+
+          filtroGrado.addEventListener('change', aplicarFiltros);
+          filtroGrupo.addEventListener('change', aplicarFiltros);
+          filtroNombre.addEventListener('input', aplicarFiltros);
+        })();
+        </script>
       <?php else: ?>
         <div class="empty-state"><p>No hay alumnos registrados aún.</p></div>
       <?php endif; ?>
@@ -340,31 +437,49 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
 
           <div class="form-row">
             <div class="form-group">
-              <label>Grado *</label>
-              <input type="text" name="grado" placeholder="Ejemplo: 1, 2, 3" required value="<?= htmlspecialchars($alumno_edit['grado'] ?? '') ?>">
+              <!--
+                Regla: el grado debe ser un único dígito del 1 al 6.
+                - inputmode="numeric" abre el teclado numérico en móvil.
+                - pattern="[1-6]" bloquea el envío si no es un número
+                  válido del 1 al 6 (validación del NAVEGADOR).
+                - La validación real y definitiva es del lado del
+                  SERVIDOR, en la función gradoEsValido() de arriba,
+                  porque el pattern del navegador se puede saltar.
+              -->
+              <label>Grado (1 al 6) *</label>
+              <input
+                type="text"
+                name="grado"
+                inputmode="numeric"
+                pattern="[1-6]"
+                title="El grado debe ser un número del 1 al 6"
+                maxlength="1"
+                placeholder="Ejemplo: 3"
+                required
+                value="<?= htmlspecialchars($alumno_edit['grado'] ?? '') ?>">
+              <small>Solo un número, del 1 al 6</small>
             </div>
             <div class="form-group">
               <!--
-                Regla: el grupo únicamente debe recibir números.
-                - inputmode="numeric" abre el teclado numérico en móvil.
-                - pattern="[0-9]+" bloquea el envío del formulario si
-                  se escribió una letra (validación del NAVEGADOR).
+                Regla: el grupo únicamente debe ser una sola letra.
+                - pattern="[A-Ja-j]" bloquea el envío si no es una
+                  letra entre A y J (validación del NAVEGADOR).
                 - La validación real y definitiva es del lado del
                   SERVIDOR, en la función grupoEsValido() de arriba,
                   porque el pattern del navegador se puede saltar.
               -->
-              <label>Grupo (solo números) *</label>
+              <label>Grupo (de la A a la J) *</label>
               <input
                 type="text"
                 name="grupo"
-                inputmode="numeric"
-                pattern="[0-9]+"
-                title="El grupo únicamente debe contener números"
-                maxlength="2"
-                placeholder="Ejemplo: 1"
+                pattern="[A-Ja-j]"
+                title="El grupo debe ser una sola letra, de la A a la J"
+                maxlength="1"
+                placeholder="Ejemplo: A"
                 required
+                style="text-transform:uppercase"
                 value="<?= htmlspecialchars($alumno_edit['grupo'] ?? '') ?>">
-              <small>Solo números, ejemplo: 1, 2, 3</small>
+              <small>Solo una letra, de la A a la J</small>
             </div>
           </div>
 
