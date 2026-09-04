@@ -1,217 +1,273 @@
 <?php
-
 require 'conexion.php';
-
-header('Content-Type: text/plain; charset=utf-8');
 
 $token = '8922581761:AAH_SEeEAOjedu18YI2BiWwcJghXv7i3vJE';
 
-try {
+$update = json_decode(file_get_contents('php://input'), true);
 
-    // Recibir actualización enviada por Telegram
-    $update = json_decode(
-        file_get_contents('php://input'),
-        true
-    );
+if (!$update) exit;
 
-    // Ignorar actualizaciones que no sean mensajes de texto
-    if (
-        !is_array($update) ||
-        !isset($update['message']['chat']['id']) ||
-        !isset($update['message']['text'])
-    ) {
-        http_response_code(200);
-        echo 'ok';
-        exit;
+// CALLBACK QUERY - CUANDO TUTOR TOCA UN BOTÓN
+if (isset($update['callback_query'])) {
+    procesarCallbackQuery($update, $conn, $token);
+}
+
+// MENSAJE DE TEXTO
+if (isset($update['message']['text'])) {
+    $chat_id  = $update['message']['chat']['id'];
+    $texto    = $update['message']['text'];
+    $nombre   = $update['message']['chat']['first_name'];
+    
+    // COMANDO /registro
+    if (strtoupper($texto) === '/REGISTRO') {
+        mostrarFormularioRegistro($chat_id, $nombre, $conn, $token);
     }
-
-    $chat_id = (string)$update['message']['chat']['id'];
-    $texto = trim($update['message']['text']);
-    $nombreTutor =
-        $update['message']['chat']['first_name']
-        ?? 'Tutor';
-
-    // Solo atender el comando /start
-    if (strpos($texto, '/start') !== 0) {
-        http_response_code(200);
-        echo 'ok';
-        exit;
+    
+    // CUALQUIER OTRO MENSAJE
+    else {
+        mostrarMenuOpciones($chat_id, $conn, $token);
     }
+}
 
-    /*
-     * Divide:
-     * /start ALU002
-     *
-     * en:
-     * [0] = /start
-     * [1] = ALU002
-     */
-    $partes = preg_split('/\s+/', $texto);
-    $codigo = strtoupper(trim($partes[1] ?? ''));
+// ========== FUNCIONES ==========
 
-    if ($codigo === '') {
-
-        $mensaje =
-            "👋 ¡Hola {$nombreTutor}! Bienvenido a ChecaBot.\n\n" .
-            "Para recibir notificaciones escribe:\n" .
-            "/start CODIGO\n\n" .
-            "Ejemplo:\n" .
-            "/start ALU001\n\n" .
-            "📞 Solicita tu código a la escuela.";
-
-    } else {
-
-        // Buscar al alumno
-        $stmt = $conn->prepare("
-            SELECT
-                id,
-                nombre,
-                grado,
-                codigo
-            FROM alumnos
-            WHERE codigo = ?
-              AND activo = 1
-            LIMIT 1
-        ");
-
-        if (!$stmt) {
-            throw new Exception(
-                'Error preparando la consulta: ' . $conn->error
-            );
-        }
-
-        $stmt->bind_param('s', $codigo);
-        $stmt->execute();
-
-        $alumno = $stmt->get_result()->fetch_assoc();
-
-        $stmt->close();
-
-        if (!$alumno) {
-
-            $mensaje =
-                "❌ Código no encontrado.\n\n" .
-                "Verifica que esté escrito correctamente.\n\n" .
-                "Ejemplo:\n" .
-                "/start ALU002";
-
-        } else {
-
-            // Guardar el chat_id del tutor
-            $stmt2 = $conn->prepare("
-                UPDATE alumnos
-                SET tutor_chat_id = ?
-                WHERE codigo = ?
-            ");
-
-            if (!$stmt2) {
-                throw new Exception(
-                    'Error preparando la actualización: '
-                    . $conn->error
-                );
-            }
-
-            /*
-             * Se usan dos strings para evitar problemas
-             * con identificadores grandes de Telegram.
-             */
-            $stmt2->bind_param(
-                'ss',
-                $chat_id,
-                $codigo
-            );
-
-            $stmt2->execute();
-
-            if ($stmt2->affected_rows < 0) {
-                throw new Exception(
-                    'No se pudo guardar el chat de Telegram'
-                );
-            }
-
-            $stmt2->close();
-
-            $mensaje =
-                "✅ ¡Listo, {$nombreTutor}!\n\n" .
-                "Ahora recibirás notificaciones de:\n" .
-                "👤 *{$alumno['nombre']}*\n" .
-                "🎓 Grado: {$alumno['grado']}\n" .
-                "🔑 Código: {$alumno['codigo']}\n\n" .
-                "Cada vez que registre entrada o salida te avisaré. 🏫";
-        }
+/**
+ * Mostrar menú de opciones (botones)
+ */
+function mostrarMenuOpciones($chat_id, $conn, $token) {
+    $mensaje = "👋 ¿Qué necesitas?\n\nSelecciona una opción:";
+    
+    $respuestas = $conn->query("SELECT numero, titulo FROM telegram_respuestas WHERE activo = 1 AND titulo != '' ORDER BY numero ASC");
+    
+    $botones = [];
+    while ($resp = $respuestas->fetch_assoc()) {
+        $botones[] = [
+            [
+                "text"          => $resp['titulo'],
+                "callback_data" => "opcion_" . $resp['numero']
+            ]
+        ];
     }
-
-    // Responder al chat de Telegram
+    
     $url = "https://api.telegram.org/bot{$token}/sendMessage";
-
     $data = [
-        'chat_id' => $chat_id,
-        'text' => $mensaje,
-        'parse_mode' => 'Markdown'
-    ];
-
-    $payload = json_encode(
-        $data,
-        JSON_UNESCAPED_UNICODE
-    );
-
-    $opciones = [
-        'http' => [
-            'header' =>
-                "Content-Type: application/json; charset=UTF-8\r\n",
-            'method' => 'POST',
-            'content' => $payload,
-            'timeout' => 10,
-            'ignore_errors' => true
+        "chat_id"      => $chat_id,
+        "text"         => $mensaje,
+        "parse_mode"   => "Markdown",
+        "reply_markup" => [
+            "inline_keyboard" => $botones
         ]
     ];
-
-    $contexto = stream_context_create($opciones);
-
-    $respuestaTelegram = file_get_contents(
-        $url,
-        false,
-        $contexto
-    );
-
-    if ($respuestaTelegram === false) {
-        throw new Exception(
-            'No se pudo conectar con Telegram'
-        );
-    }
-
-    $resultadoTelegram = json_decode(
-        $respuestaTelegram,
-        true
-    );
-
-    if (
-        !is_array($resultadoTelegram) ||
-        !($resultadoTelegram['ok'] ?? false)
-    ) {
-        throw new Exception(
-            $resultadoTelegram['description']
-            ?? 'Telegram no pudo enviar la respuesta'
-        );
-    }
-
-    http_response_code(200);
-    echo 'ok';
-
-} catch (Throwable $error) {
-
-    /*
-     * Guardar el error para revisarlo sin mostrarlo a Telegram.
-     */
-    file_put_contents(
-        __DIR__ . '/telegram_error.log',
-        date('Y-m-d H:i:s') .
-        ' - ' .
-        $error->getMessage() .
-        PHP_EOL,
-        FILE_APPEND
-    );
-
-    http_response_code(200);
-    echo 'ok';
+    
+    $opciones = [
+        "http" => [
+            "header"  => "Content-Type: application/json\r\n",
+            "method"  => "POST",
+            "content" => json_encode($data)
+        ]
+    ];
+    
+    $context = stream_context_create($opciones);
+    file_get_contents($url, false, $context);
 }
+
+/**
+ * Mostrar formulario de registro
+ */
+function mostrarFormularioRegistro($chat_id, $nombre, $conn, $token) {
+    $mensaje = "📝 *Registro de Tutor*\n\n"
+             . "Para registrarte y recibir notificaciones, envía:\n\n"
+             . "**/start CURP**\n\n"
+             . "Ejemplo:\n"
+             . "`/start JPXM900115HDFXXX00`\n\n"
+             . "⚠️ Usa el CURP del alumno (18 caracteres)\n"
+             . "📞 Solicítalo a la escuela si no lo tienes.";
+    
+    $url = "https://api.telegram.org/bot{$token}/sendMessage";
+    $data = [
+        "chat_id"    => $chat_id,
+        "text"       => $mensaje,
+        "parse_mode" => "Markdown"
+    ];
+    
+    $opciones = [
+        "http" => [
+            "header"  => "Content-Type: application/json\r\n",
+            "method"  => "POST",
+            "content" => json_encode($data)
+        ]
+    ];
+    
+    $context = stream_context_create($opciones);
+    file_get_contents($url, false, $context);
+}
+
+/**
+ * Procesar /start CURP para registro
+ */
+function procesarRegistroCurp($chat_id, $texto, $nombre, $conn, $token) {
+    $partes = explode(' ', $texto);
+    
+    if (isset($partes[1])) {
+        $curp = strtoupper(trim($partes[1]));
+        
+        // BUSCAR ALUMNO POR CURP
+        $stmt = $conn->prepare("SELECT * FROM alumnos WHERE CURP = ?");
+        $stmt->bind_param("s", $curp);
+        $stmt->execute();
+        $alumno = $stmt->get_result()->fetch_assoc();
+        
+        if ($alumno) {
+            // GUARDAR CHAT ID
+            $stmt2 = $conn->prepare("UPDATE alumnos SET tutor_chat_id = ? WHERE CURP = ?");
+            $stmt2->bind_param("is", $chat_id, $curp);
+            $stmt2->execute();
+            
+            // CONFIRMACIÓN
+            $mensaje = "✅ *¡Listo, {$nombre}!*\n\n"
+                     . "Ahora recibirás notificaciones de:\n"
+                     . "*{$alumno['nombre']}*\n"
+                     . "🎓 Grado: {$alumno['grado']}{$alumno['grupo']}\n\n"
+                     . "¿Qué necesitas?";
+            
+            $url = "https://api.telegram.org/bot{$token}/sendMessage";
+            $data = [
+                "chat_id"    => $chat_id,
+                "text"       => $mensaje,
+                "parse_mode" => "Markdown"
+            ];
+            
+            $opciones = [
+                "http" => [
+                    "header"  => "Content-Type: application/json\r\n",
+                    "method"  => "POST",
+                    "content" => json_encode($data)
+                ]
+            ];
+            
+            $context = stream_context_create($opciones);
+            file_get_contents($url, false, $context);
+            
+            // MOSTRAR MENÚ
+            mostrarMenuOpciones($chat_id, $conn, $token);
+            
+        } else {
+            $mensaje = "❌ *CURP no encontrado*\n\n"
+                     . "Verifica el CURP e intenta de nuevo.\n\n"
+                     . "Ejemplo:\n"
+                     . "`/start JPXM900115HDFXXX00`";
+            
+            $url = "https://api.telegram.org/bot{$token}/sendMessage";
+            $data = [
+                "chat_id"    => $chat_id,
+                "text"       => $mensaje,
+                "parse_mode" => "Markdown"
+            ];
+            
+            $opciones = [
+                "http" => [
+                    "header"  => "Content-Type: application/json\r\n",
+                    "method"  => "POST",
+                    "content" => json_encode($data)
+                ]
+            ];
+            
+            $context = stream_context_create($opciones);
+            file_get_contents($url, false, $context);
+        }
+    } else {
+        mostrarFormularioRegistro($chat_id, $nombre, $conn, $token);
+    }
+}
+
+/**
+ * Procesar cuando tutor toca un botón
+ */
+function procesarCallbackQuery($update, $conn, $token) {
+    $callback = $update['callback_query'];
+    $query_id = $callback['id'];
+    $chat_id  = $callback['from']['id'];
+    $data_btn = $callback['data'];
+    
+    // BUSCAR ALUMNO POR CHAT_ID
+    $stmt = $conn->prepare("SELECT CURP FROM alumnos WHERE tutor_chat_id = ?");
+    $stmt->bind_param("i", $chat_id);
+    $stmt->execute();
+    $alumno = $stmt->get_result()->fetch_assoc();
+    
+    if ($alumno) {
+        // OBTENER RESPUESTA PREDETERMINADA
+        $numero_opcion = intval(substr($data_btn, -1));
+        $stmt2 = $conn->prepare("SELECT * FROM telegram_respuestas WHERE numero = ?");
+        $stmt2->bind_param("i", $numero_opcion);
+        $stmt2->execute();
+        $respuesta = $stmt2->get_result()->fetch_assoc();
+        
+        if ($respuesta && $respuesta['titulo']) {
+            $mensaje_resp = "📌 *{$respuesta['titulo']}*\n\n{$respuesta['respuesta_texto']}";
+            
+            $url = "https://api.telegram.org/bot{$token}/sendMessage";
+            $data_resp = [
+                "chat_id"    => $chat_id,
+                "text"       => $mensaje_resp,
+                "parse_mode" => "Markdown"
+            ];
+            
+            $opciones = [
+                "http" => [
+                    "header"  => "Content-Type: application/json\r\n",
+                    "method"  => "POST",
+                    "content" => json_encode($data_resp)
+                ]
+            ];
+            $context = stream_context_create($opciones);
+            file_get_contents($url, false, $context);
+            
+            // ENVIAR IMAGEN PNG SI EXISTE
+            if ($respuesta['ruta_imagen'] && !empty($respuesta['ruta_imagen'])) {
+                $url_img = "https://api.telegram.org/bot{$token}/sendPhoto";
+                
+                // Construir URL dinámica de la imagen
+                $url_imagen_completa = "https://sash-sake-guidance.ngrok-free.dev/chatbot/" . $respuesta['ruta_imagen'];
+                
+                $data_img = [
+                    "chat_id" => $chat_id,
+                    "photo"   => $url_imagen_completa,
+                    "caption" => "📸 Información adjunta"
+                ];
+                
+                $opciones_img = [
+                    "http" => [
+                        "header"  => "Content-Type: application/json\r\n",
+                        "method"  => "POST",
+                        "content" => json_encode($data_img)
+                    ]
+                ];
+                $context_img = stream_context_create($opciones_img);
+                file_get_contents($url_img, false, $context_img);
+            }
+        }
+    }
+    
+    // RESPUESTA AL CALLBACK
+    $url_notify = "https://api.telegram.org/bot{$token}/answerCallbackQuery";
+    $data_notify = [
+        "callback_query_id" => $query_id,
+        "text"              => "✅ Enviado",
+        "show_alert"        => false
+    ];
+    
+    $opciones_notify = [
+        "http" => [
+            "header"  => "Content-Type: application/json\r\n",
+            "method"  => "POST",
+            "content" => json_encode($data_notify)
+        ]
+    ];
+    $context_notify = stream_context_create($opciones_notify);
+    file_get_contents($url_notify, false, $context_notify);
+}
+
+http_response_code(200);
+echo "ok";
+?>
