@@ -9,6 +9,9 @@ $tipo_mensaje = '';
 $extensionesPermitidas = ['jpg', 'jpeg', 'png'];
 
 // [FUNCION: subirFotoAlumno] ─────────────────────────────────
+// Sube la foto del alumno (si el usuario adjuntó una) y regresa
+// la ruta relativa que se guarda en la BD, o null si no hubo foto
+// o la extensión no está permitida.
 // NOTA: alumnos.php vive en panel/, pero fotos/ vive en la raíz del
 // proyecto, por eso se sube un nivel con '/../fotos'. El valor que se
 // guarda en la BD sigue siendo 'fotos/NOMBRE.ext' (relativo a la raíz),
@@ -41,40 +44,76 @@ function subirFotoAlumno($curp, $extensionesPermitidas)
     return null;
 }
 
+// [FUNCION: gradoEsValido] ────────────────────────────────────
+// Regla de negocio: el grado debe ser un solo carácter numérico
+// del 1 al 6 (ni "0", ni "7", ni letras, ni más de un dígito).
+function gradoEsValido($grado)
+{
+    return in_array($grado, ['1', '2', '3', '4', '5', '6'], true);
+}
+
+// [FUNCION: grupoEsValido] ───────────────────────────────────
+// Regla de negocio: el grupo únicamente debe ser una sola letra
+// entre A y J (mayúscula o minúscula, ya que se normaliza con
+// strtoupper antes de guardar). preg_match rechaza números,
+// símbolos, cadenas vacías y letras fuera de ese rango (K-Z).
+function grupoEsValido($grupo)
+{
+    return (bool) preg_match('/^[A-Ja-j]$/', $grupo);
+}
+
 // [PROCESO: AGREGAR ALUMNO] ──────────────────────────────────
+// Se ejecuta cuando se envía el formulario de "Agregar Nuevo Alumno".
+// Pasos: 1) validar campos obligatorios, 2) validar que el grupo sea
+// numérico, 3) validar que la CURP no esté repetida, 4) subir la foto
+// (si hay), 5) insertar el registro nuevo en la tabla alumnos.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar'])) {
     $nombre = trim($_POST['nombre']);
     $grado = trim($_POST['grado']);
-    $grupo = trim($_POST['grupo']);
+    $grupo = strtoupper(trim($_POST['grupo']));
     $curp = strtoupper(trim($_POST['curp']));
 
     if ($nombre && $grado && $grupo && $curp) {
-        $stmtDup = $conn->prepare("SELECT id FROM alumnos WHERE CURP = ? LIMIT 1");
-        $stmtDup->bind_param("s", $curp);
-        $stmtDup->execute();
-        $existente = $stmtDup->get_result()->fetch_assoc();
-        $stmtDup->close();
 
-        if ($existente) {
-            $mensaje = "⚠️ Ya existe un alumno registrado con esa CURP";
+        if (!gradoEsValido($grado)) {
+            // Corta aquí si el grado no es un número del 1 al 6.
+            $mensaje = "⚠️ El grado debe ser un número del 1 al 6";
+            $tipo_mensaje = "warning";
+            $accion = 'nuevo';
+        } elseif (!grupoEsValido($grupo)) {
+            // Corta aquí si el grupo trae números o símbolos.
+            $mensaje = "⚠️ El grupo debe ser una sola letra, de la A a la J";
             $tipo_mensaje = "warning";
             $accion = 'nuevo';
         } else {
-            $foto = subirFotoAlumno($curp, $extensionesPermitidas);
+            // Verifica que no exista ya un alumno con esa misma CURP.
+            $stmtDup = $conn->prepare("SELECT id FROM alumnos WHERE CURP = ? LIMIT 1");
+            $stmtDup->bind_param("s", $curp);
+            $stmtDup->execute();
+            $existente = $stmtDup->get_result()->fetch_assoc();
+            $stmtDup->close();
 
-            $stmt = $conn->prepare("
-                INSERT INTO alumnos (nombre, grado, grupo, CURP, foto)
-                VALUES (?, ?, ?, ?, ?)
-            ");
-            $stmt->bind_param("sssss", $nombre, $grado, $grupo, $curp, $foto);
-
-            if ($stmt->execute()) {
-                header("Location: alumnos.php?agregado=1");
-                exit;
-            } else {
-                $mensaje = "❌ Error al agregar alumno";
-                $tipo_mensaje = "error";
+            if ($existente) {
+                $mensaje = "⚠️ Ya existe un alumno registrado con esa CURP";
+                $tipo_mensaje = "warning";
                 $accion = 'nuevo';
+            } else {
+                $foto = subirFotoAlumno($curp, $extensionesPermitidas);
+
+                $stmt = $conn->prepare("
+                    INSERT INTO alumnos (nombre, grado, grupo, CURP, foto)
+                    VALUES (?, ?, ?, ?, ?)
+                ");
+                $stmt->bind_param("sssss", $nombre, $grado, $grupo, $curp, $foto);
+
+                if ($stmt->execute()) {
+                    header("Location: alumnos.php?agregado=1");
+                    exit;
+                } else {
+                    $mensaje = "❌ Error al agregar alumno";
+                    $tipo_mensaje = "error";
+                    $accion = 'nuevo';
+                }
             }
         }
     } else {
@@ -85,50 +124,70 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar'])) {
 }
 
 // [PROCESO: EDITAR ALUMNO] ───────────────────────────────────
+// Igual que "Agregar", pero actualiza un alumno existente (por id).
+// La foto solo se reemplaza si el usuario subió una nueva; si no,
+// se conserva la que ya tenía.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar'])) {
     $id = intval($_POST['id']);
     $nombre = trim($_POST['nombre']);
     $grado = trim($_POST['grado']);
-    $grupo = trim($_POST['grupo']);
+    $grupo = strtoupper(trim($_POST['grupo']));
     $curp = strtoupper(trim($_POST['curp']));
 
     if ($nombre && $grado && $grupo && $curp) {
-        $stmtDup = $conn->prepare("SELECT id FROM alumnos WHERE CURP = ? AND id != ? LIMIT 1");
-        $stmtDup->bind_param("si", $curp, $id);
-        $stmtDup->execute();
-        $existente = $stmtDup->get_result()->fetch_assoc();
-        $stmtDup->close();
 
-        if ($existente) {
-            $mensaje = "⚠️ Esa CURP ya pertenece a otro alumno";
+        if (!gradoEsValido($grado)) {
+            // Corta aquí si el grado no es un número del 1 al 6.
+            $mensaje = "⚠️ El grado debe ser un número del 1 al 6";
+            $tipo_mensaje = "warning";
+            $accion = 'editar';
+            $_GET['id'] = $id;
+        } elseif (!grupoEsValido($grupo)) {
+            // Corta aquí si el grupo trae números o símbolos.
+            $mensaje = "⚠️ El grupo debe ser una sola letra, de la A a la J";
             $tipo_mensaje = "warning";
             $accion = 'editar';
             $_GET['id'] = $id;
         } else {
-            $stmtActual = $conn->prepare("SELECT foto FROM alumnos WHERE id = ?");
-            $stmtActual->bind_param("i", $id);
-            $stmtActual->execute();
-            $actual = $stmtActual->get_result()->fetch_assoc();
-            $stmtActual->close();
+            // Verifica que la CURP no le pertenezca a OTRO alumno distinto.
+            $stmtDup = $conn->prepare("SELECT id FROM alumnos WHERE CURP = ? AND id != ? LIMIT 1");
+            $stmtDup->bind_param("si", $curp, $id);
+            $stmtDup->execute();
+            $existente = $stmtDup->get_result()->fetch_assoc();
+            $stmtDup->close();
 
-            $fotoNueva = subirFotoAlumno($curp, $extensionesPermitidas);
-            $foto = $fotoNueva ?? ($actual['foto'] ?? null);
-
-            $stmt = $conn->prepare("
-                UPDATE alumnos
-                SET nombre = ?, grado = ?, grupo = ?, CURP = ?, foto = ?
-                WHERE id = ?
-            ");
-            $stmt->bind_param("sssssi", $nombre, $grado, $grupo, $curp, $foto, $id);
-
-            if ($stmt->execute()) {
-                header("Location: alumnos.php?editado=1");
-                exit;
-            } else {
-                $mensaje = "❌ Error al actualizar";
-                $tipo_mensaje = "error";
+            if ($existente) {
+                $mensaje = "⚠️ Esa CURP ya pertenece a otro alumno";
+                $tipo_mensaje = "warning";
                 $accion = 'editar';
                 $_GET['id'] = $id;
+            } else {
+                // Rescata la foto actual por si no se sube una nueva.
+                $stmtActual = $conn->prepare("SELECT foto FROM alumnos WHERE id = ?");
+                $stmtActual->bind_param("i", $id);
+                $stmtActual->execute();
+                $actual = $stmtActual->get_result()->fetch_assoc();
+                $stmtActual->close();
+
+                $fotoNueva = subirFotoAlumno($curp, $extensionesPermitidas);
+                $foto = $fotoNueva ?? ($actual['foto'] ?? null);
+
+                $stmt = $conn->prepare("
+                    UPDATE alumnos
+                    SET nombre = ?, grado = ?, grupo = ?, CURP = ?, foto = ?
+                    WHERE id = ?
+                ");
+                $stmt->bind_param("sssssi", $nombre, $grado, $grupo, $curp, $foto, $id);
+
+                if ($stmt->execute()) {
+                    header("Location: alumnos.php?editado=1");
+                    exit;
+                } else {
+                    $mensaje = "❌ Error al actualizar";
+                    $tipo_mensaje = "error";
+                    $accion = 'editar';
+                    $_GET['id'] = $id;
+                }
             }
         }
     } else {
@@ -140,6 +199,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar'])) {
 }
 
 // [PROCESO: ELIMINAR ALUMNO] ─────────────────────────────────
+// Borra primero su historial de asistencia (tabla registros) y
+// después al alumno, para no dejar registros huérfanos apuntando
+// a un alumno_id que ya no existe.
 if (isset($_GET['eliminar'])) {
     $id = intval($_GET['eliminar']);
 
@@ -160,6 +222,8 @@ if (isset($_GET['agregado'])) { $mensaje = "✅ Alumno agregado correctamente"; 
 if (isset($_GET['editado']))  { $mensaje = "✅ Alumno actualizado correctamente"; $tipo_mensaje = "success"; }
 
 // [CONSULTA: ALUMNO A EDITAR] ────────────────────────────────
+// Trae los datos actuales del alumno para precargar el formulario
+// cuando venimos de darle clic a "Editar" (accion=editar&id=X).
 $alumno_edit = null;
 if ($accion === 'editar' && isset($_GET['id'])) {
     $id = intval($_GET['id']);
@@ -210,9 +274,47 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
       </div>
 
       <?php if ($alumnos->num_rows > 0): ?>
-        <table>
+
+        <!-- [FILTROS: GRADO, GRUPO Y NOMBRE] ────────────────────
+             Filtrado 100% en el navegador (sin recargar la página).
+             Grado y Grupo se combinan entre sí (AND); el buscador
+             de nombre filtra por coincidencia parcial, así que
+             escribir "juan" muestra todos los Juanes, y seguir
+             escribiendo el apellido va acotando la lista, todo
+             en automático conforme el usuario escribe/borra. -->
+        <div class="form-box" style="margin-bottom: 20px;">
+          <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:20px;">
+            <div style="display:flex; gap:14px; flex-wrap:wrap;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label>Grado</label>
+                <select id="filtroGrado">
+                  <option value="">Todos</option>
+                  <?php for ($g = 1; $g <= 6; $g++): ?>
+                    <option value="<?= $g ?>"><?= $g ?></option>
+                  <?php endfor; ?>
+                </select>
+              </div>
+              <div class="form-group" style="margin-bottom:0;">
+                <label>Grupo</label>
+                <select id="filtroGrupo">
+                  <option value="">Todos</option>
+                  <?php foreach (range('A', 'J') as $letra): ?>
+                    <option value="<?= $letra ?>"><?= $letra ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0; flex:1; min-width:220px;">
+              <label>Buscar por nombre</label>
+              <input type="text" id="filtroNombre" placeholder="Ejemplo: Juan Pérez" autocomplete="off">
+            </div>
+          </div>
+        </div>
+
+        <table id="tablaAlumnos">
           <thead>
             <tr>
+              <th>ID</th>
               <th>Foto</th>
               <th>Nombre</th>
               <th>Grado/Grupo</th>
@@ -224,7 +326,11 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
           </thead>
           <tbody>
             <?php while ($alumno = $alumnos->fetch_assoc()): ?>
-            <tr>
+            <tr
+              data-grado="<?= htmlspecialchars($alumno['grado']) ?>"
+              data-grupo="<?= htmlspecialchars($alumno['grupo']) ?>"
+              data-nombre="<?= htmlspecialchars(mb_strtolower($alumno['nombre'], 'UTF-8')) ?>">
+              <td><?= $alumno['id'] ?></td>
               <td>
                 <?php if (!empty($alumno['foto'])): ?>
                   <img class="foto-mini" src="<?= htmlspecialchars('../' . str_replace('\\', '/', $alumno['foto'])) ?>" alt="">
@@ -257,8 +363,43 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
               </td>
             </tr>
             <?php endwhile; ?>
+            <tr id="filaSinResultados" style="display:none;">
+              <td colspan="8" class="empty-state">No se encontraron alumnos con esos filtros.</td>
+            </tr>
           </tbody>
         </table>
+
+        <script>
+        (function () {
+          const filtroGrado = document.getElementById('filtroGrado');
+          const filtroGrupo = document.getElementById('filtroGrupo');
+          const filtroNombre = document.getElementById('filtroNombre');
+          const filas = document.querySelectorAll('#tablaAlumnos tbody tr[data-nombre]');
+          const filaSinResultados = document.getElementById('filaSinResultados');
+
+          function aplicarFiltros() {
+            const grado = filtroGrado.value;
+            const grupo = filtroGrupo.value;
+            const nombre = filtroNombre.value.trim().toLowerCase();
+            let visibles = 0;
+
+            filas.forEach(function (fila) {
+              const coincideGrado = grado === '' || fila.dataset.grado === grado;
+              const coincideGrupo = grupo === '' || fila.dataset.grupo === grupo;
+              const coincideNombre = nombre === '' || fila.dataset.nombre.includes(nombre);
+              const visible = coincideGrado && coincideGrupo && coincideNombre;
+              fila.style.display = visible ? '' : 'none';
+              if (visible) visibles++;
+            });
+
+            filaSinResultados.style.display = visibles === 0 ? '' : 'none';
+          }
+
+          filtroGrado.addEventListener('change', aplicarFiltros);
+          filtroGrupo.addEventListener('change', aplicarFiltros);
+          filtroNombre.addEventListener('input', aplicarFiltros);
+        })();
+        </script>
       <?php else: ?>
         <div class="empty-state"><p>No hay alumnos registrados aún.</p></div>
       <?php endif; ?>
@@ -296,12 +437,49 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
 
           <div class="form-row">
             <div class="form-group">
-              <label>Grado *</label>
-              <input type="text" name="grado" placeholder="Ejemplo: 1, 2, 3" required value="<?= htmlspecialchars($alumno_edit['grado'] ?? '') ?>">
+              <!--
+                Regla: el grado debe ser un único dígito del 1 al 6.
+                - inputmode="numeric" abre el teclado numérico en móvil.
+                - pattern="[1-6]" bloquea el envío si no es un número
+                  válido del 1 al 6 (validación del NAVEGADOR).
+                - La validación real y definitiva es del lado del
+                  SERVIDOR, en la función gradoEsValido() de arriba,
+                  porque el pattern del navegador se puede saltar.
+              -->
+              <label>Grado (1 al 6) *</label>
+              <input
+                type="text"
+                name="grado"
+                inputmode="numeric"
+                pattern="[1-6]"
+                title="El grado debe ser un número del 1 al 6"
+                maxlength="1"
+                placeholder="Ejemplo: 3"
+                required
+                value="<?= htmlspecialchars($alumno_edit['grado'] ?? '') ?>">
+              <small>Solo un número, del 1 al 6</small>
             </div>
             <div class="form-group">
-              <label>Grupo *</label>
-              <input type="text" name="grupo" maxlength="1" placeholder="Ejemplo: A" required value="<?= htmlspecialchars($alumno_edit['grupo'] ?? '') ?>">
+              <!--
+                Regla: el grupo únicamente debe ser una sola letra.
+                - pattern="[A-Ja-j]" bloquea el envío si no es una
+                  letra entre A y J (validación del NAVEGADOR).
+                - La validación real y definitiva es del lado del
+                  SERVIDOR, en la función grupoEsValido() de arriba,
+                  porque el pattern del navegador se puede saltar.
+              -->
+              <label>Grupo (de la A a la J) *</label>
+              <input
+                type="text"
+                name="grupo"
+                pattern="[A-Ja-j]"
+                title="El grupo debe ser una sola letra, de la A a la J"
+                maxlength="1"
+                placeholder="Ejemplo: A"
+                required
+                style="text-transform:uppercase"
+                value="<?= htmlspecialchars($alumno_edit['grupo'] ?? '') ?>">
+              <small>Solo una letra, de la A a la J</small>
             </div>
           </div>
 
