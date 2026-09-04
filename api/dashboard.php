@@ -26,6 +26,7 @@ try {
         FROM registros r
         INNER JOIN alumnos a
             ON a.id = r.alumno_id
+        WHERE DATE(r.fecha_hora) = CURDATE()
         ORDER BY r.id DESC
         LIMIT 1
     ";
