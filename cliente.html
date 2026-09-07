@@ -1258,15 +1258,15 @@
                 /*
                  * Actualizar inmediatamente el dashboard.
                  */
-                await cargarDashboard();
+                
 
                 /*
                  * Mostrar la pantalla de confirmación.
                  * La ruta es relativa a /checabot/.
                  */
-                setTimeout(function () {
-                    window.location.href = URL_REGISTRO + '?tipo=' + datos.tipo;    //Cambié esta linea (para que registrara entrada y salida).
-                }, 2);    //Cambié el tiempo de espera a 2 ms para que la pantalla de bienvenida aparezca más rápido.
+                window.location.href =
+                     URL_REGISTRO + '?tipo=' + datos.tipo;
+               
 
             } catch (error) {
                 console.error(
