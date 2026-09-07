@@ -22,6 +22,10 @@ if (isset($update['message']['text'])) {
     if (strtoupper($texto) === '/REGISTRO') {
         mostrarFormularioRegistro($chat_id, $nombre, $conn, $token);
     }
+     // COMANDO /start con CURP
+    elseif (strpos($texto, '/start') === 0) {
+        procesarRegistroCurp($chat_id, $texto, $nombre, $conn, $token);
+    }
     
     // CUALQUIER OTRO MENSAJE
     else {
