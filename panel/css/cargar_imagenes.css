@@ -1,0 +1,188 @@
+.btn-camara {
+background: #0d9488;
+color: white;
+border: none;
+border-radius: 8px;
+width: 36px;
+height: 36px;
+display: inline-flex;
+align-items: center;
+justify-content: center;
+cursor: pointer;
+font-size: 16px;
+}
+
+.btn-camara:hover {
+background: #0f766e;
+}
+
+/* ── Modal de opciones ── */
+.modal-foto-overlay {
+display: none;
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.6);
+z-index: 999;
+justify-content: center;
+align-items: center;
+}
+
+.modal-foto-overlay.visible {
+display: flex;
+}
+
+.modal-foto-caja {
+background: white;
+border-radius: 16px;
+padding: 32px 40px;
+width: 90%;
+max-width: 480px;
+text-align: center;
+}
+
+.modal-foto-titulo {
+font-size: 20px;
+font-weight: 700;
+color: #0A2D73;
+margin-bottom: 8px;
+}
+
+.modal-foto-alumno {
+font-size: 15px;
+color: #4a6fa5;
+margin-bottom: 24px;
+}
+
+.modal-foto-opciones {
+display: flex;
+gap: 16px;
+justify-content: center;
+margin-bottom: 20px;
+}
+
+.btn-opcion {
+flex: 1;
+padding: 14px 10px;
+border: none;
+border-radius: 12px;
+font-size: 15px;
+font-weight: 700;
+cursor: pointer;
+font-family: 'Poppins', sans-serif;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 8px;
+}
+
+.btn-opcion-archivo {
+background: #e8f0fe;
+color: #0A2D73;
+position: relative;
+overflow: hidden;
+}
+
+.btn-opcion-archivo input[type="file"] {
+position: absolute;
+inset: 0;
+opacity: 0;
+cursor: pointer;
+width: 100%;
+height: 100%;
+}
+
+.btn-opcion-archivo:hover { background: #c7d7f8; }
+
+.btn-opcion-camara {
+background: #0d9488;
+color: white;
+}
+
+.btn-opcion-camara:hover { background: #0f766e; }
+
+.btn-cancelar-modal {
+background: none;
+border: none;
+color: #9ca3af;
+font-size: 14px;
+cursor: pointer;
+font-family: 'Poppins', sans-serif;
+}
+
+.btn-cancelar-modal:hover { color: #374151; }
+
+/* ── Modal de cámara ── */
+.modal-camara-overlay {
+display: none;
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.85);
+z-index: 1000;
+justify-content: center;
+align-items: center;
+}
+
+.modal-camara-overlay.visible {
+display: flex;
+}
+
+.modal-camara-caja {
+background: #111;
+border-radius: 16px;
+padding: 24px;
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 16px;
+max-width: 640px;
+width: 95%;
+}
+
+.modal-camara-titulo {
+color: white;
+font-size: 18px;
+font-weight: 700;
+}
+
+#videoStream {
+width: 100%;
+border-radius: 10px;
+background: #222;
+}
+
+#canvasCaptura {
+display: none;
+}
+
+.camara-botones {
+display: flex;
+gap: 12px;
+}
+
+.btn-capturar {
+background: #16a34a;
+color: white;
+border: none;
+border-radius: 30px;
+padding: 12px 28px;
+font-size: 15px;
+font-weight: 700;
+cursor: pointer;
+font-family: 'Poppins', sans-serif;
+}
+
+.btn-capturar:hover { background: #15803d; }
+
+.btn-cerrar-camara {
+background: #dc2626;
+color: white;
+border: none;
+border-radius: 30px;
+padding: 12px 28px;
+font-size: 15px;
+font-weight: 700;
+cursor: pointer;
+font-family: 'Poppins', sans-serif;
+}
+
+.btn-cerrar-camara:hover { background: blue; }
