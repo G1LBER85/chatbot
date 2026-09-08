@@ -1,5 +1,22 @@
 <?php
-require '../conexion.php';
+
+session_start();
+
+if (!isset($_SESSION['usuario'])) {
+    echo '
+        <script>
+            alert("Por favor debes iniciar sesión");
+            window.location = "login/index.php";
+        </script>
+    ';
+    session_destroy();
+    die();
+}
+
+/*
+http://localhost/prueba/chatbot/panel/dashboard.php
+*/
+require_once __DIR__ . '/../conexion.php';
 
 $paginaActual = 'dashboard';
 
@@ -21,14 +38,20 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
 
 <div class="layout">
 
-  <?php include '../sidebar/sidebar.php'; ?>
+<?php include __DIR__ . '/../sidebar/sidebar.php'; ?>
 
   <main class="contenido">
+    <!-- Encabezado con clase modificada -->
     <div class="panel-header">
       <div>
         <h1>Dashboard</h1>
         <p>Resumen general del sistema</p>
       </div>
+
+      <!-- BOTÓN REDIRIGIDO Y CON CLASE DE CERRAR SESIÓN ROJA -->
+      <a href="login/php/cerrar_sesion.php" class="btn-logout">
+        Cerrar sesión
+      </a>
     </div>
 
     <div class="stat-grid">
