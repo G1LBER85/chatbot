@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+
+<html lang="es">
+
+    <head>
+        
+        <meta charset="UTF-8">
+
+        <meta
+            name="viewport" 
+            content="width=device-width, initial-scale=1.0"
+        >
+
+        <title>Modal Alerta</title>
+
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+            rel="stylesheet"
+        >
+
+        <style>
+
+            .modal-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.65);
+                z-index: 999;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .modal-overlay.visible {
+                display: flex;
+            }
+
+            .modal-caja {
+                background: white;
+                border-radius: 20px;
+                padding: 40px 50px;
+                max-width: 480px;
+                width: 90%;
+                text-align: center;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            }
+
+            .modal-icono {
+                font-size: 64px;
+                margin-bottom: 16px;
+            }
+
+            .modal-titulo {
+                font-size: 28px;
+                font-weight: 700;
+                color: blue;
+                margin-bottom: 12px;
+            }
+
+            .modal-mensaje {
+                font-size: 22px;
+                color: black;
+                margin-bottom: 28px;
+                line-height: 1.6;
+                font-weight: 600;
+            }
+
+        </style>    
+
+    </head>
+
+    <body>
+
+        <!-- Modal alerta horario -->
+        <div class="modal-overlay" id="modalAlerta">
+
+            <div class="modal-caja">
+
+                <div class="modal-icono">
+                    ⚠️
+                </div>
+
+                <div class="modal-titulo">Acceso fuera de horario</div>
+
+                <div class="modal-mensaje">
+                    No se puede continuar con el proceso de escaneo fuera del horario permitido.
+                </div>
+
+            </div>
+
+        </div>
+
+        
+        <script>
+            // Horarios cargados desde el servidor
+            const INICIO = 6;
+            const FIN = 15;
+
+            let codigoPendiente = null;
+
+            function dentroDeHorario() {
+                
+                const hora = new Date().getHours();
+                return(hora >= INICIO && hora < FIN);
+                
+            }
+
+            function procesarCodigoQR(codigo) {
+
+                const codigoLimpio = String(codigo).trim().toUpperCase();
+
+                if (codigoLimpio === '') {
+                    return;
+                }
+
+                if (!dentroDeHorario()) {
+
+                    codigoPendiente = codigoLimpio;
+                    document.getElementById('modalAlerta').classList.add('visible');
+
+                    setTimeout(function () {
+                        document.getElementById('modalAlerta').classList.remove('visible');
+                        procesandoQR = false;
+                    }, 3000);
+                    return;
+
+                }
+
+                enviarQR(codigoLimpio);
+            }
+
+        </script>
+
+    </body>
+</html>
