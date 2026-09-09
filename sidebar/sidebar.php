@@ -56,11 +56,16 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
     </div>
 
     
-  <a href="telegram_respuestas.php" class="nav-item <?= $paginaActual === 'telegram_respuestas' ? 'activo' : '' ?>">
+    <a href="telegram_respuestas.php" class="nav-item <?= $paginaActual === 'telegram_respuestas' ? 'activo' : '' ?>">
       <span class="nav-icono">🤖</span> Respuestas Telegram
     </a>
-       <a href="importar_alumnos.php" class="nav-item <?= $paginaActual === 'importar_alumnos' ? 'activo' : '' ?>">
+
+    <a href="importar_alumnos.php" class="nav-item <?= $paginaActual === 'importar_alumnos' ? 'activo' : '' ?>">
       <span class="nav-icono">📋</span> Importar alumnos
+    </a>
+
+    <a href="cargar_imagenes.php" class="nav-item <?= $paginaActual === 'cargar_imagenes' ? 'activo' : '' ?>">
+      <span class="nav-icono">🖼️</span> Cargar imágenes
     </a>
 
   </nav>
