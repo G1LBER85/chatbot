@@ -128,43 +128,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['agregar'])) {
 // La foto solo se reemplaza si el usuario subió una nueva; si no,
 // se conserva la que ya tenía.
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar'])) {
-    $id = intval($_POST['id']);
+    $idOriginal = intval($_POST['id_original']);
+    $nuevoId = intval($_POST['id']);
     $nombre = trim($_POST['nombre']);
     $grado = trim($_POST['grado']);
     $grupo = strtoupper(trim($_POST['grupo']));
     $curp = strtoupper(trim($_POST['curp']));
 
-    if ($nombre && $grado && $grupo && $curp) {
+    if ($nombre && $grado && $grupo && $curp && $nuevoId > 0) {
 
         if (!gradoEsValido($grado)) {
             // Corta aquí si el grado no es un número del 1 al 6.
             $mensaje = "⚠️ El grado debe ser un número del 1 al 6";
             $tipo_mensaje = "warning";
             $accion = 'editar';
-            $_GET['id'] = $id;
+            $_GET['id'] = $idOriginal;
         } elseif (!grupoEsValido($grupo)) {
             // Corta aquí si el grupo trae números o símbolos.
             $mensaje = "⚠️ El grupo debe ser una sola letra, de la A a la J";
             $tipo_mensaje = "warning";
             $accion = 'editar';
-            $_GET['id'] = $id;
+            $_GET['id'] = $idOriginal;
         } else {
             // Verifica que la CURP no le pertenezca a OTRO alumno distinto.
             $stmtDup = $conn->prepare("SELECT id FROM alumnos WHERE CURP = ? AND id != ? LIMIT 1");
-            $stmtDup->bind_param("si", $curp, $id);
+            $stmtDup->bind_param("si", $curp, $idOriginal);
             $stmtDup->execute();
             $existente = $stmtDup->get_result()->fetch_assoc();
             $stmtDup->close();
+
+            // Si el admin cambió el ID, verifica que el nuevo número
+            // no esté ya usado por otro alumno.
+            $idDuplicado = false;
+            if ($nuevoId !== $idOriginal) {
+                $stmtIdDup = $conn->prepare("SELECT id FROM alumnos WHERE id = ? LIMIT 1");
+                $stmtIdDup->bind_param("i", $nuevoId);
+                $stmtIdDup->execute();
+                $idDuplicado = (bool) $stmtIdDup->get_result()->fetch_assoc();
+                $stmtIdDup->close();
+            }
 
             if ($existente) {
                 $mensaje = "⚠️ Esa CURP ya pertenece a otro alumno";
                 $tipo_mensaje = "warning";
                 $accion = 'editar';
-                $_GET['id'] = $id;
+                $_GET['id'] = $idOriginal;
+            } elseif ($idDuplicado) {
+                $mensaje = "⚠️ Ya existe un alumno con el ID {$nuevoId}";
+                $tipo_mensaje = "warning";
+                $accion = 'editar';
+                $_GET['id'] = $idOriginal;
             } else {
                 // Rescata la foto actual por si no se sube una nueva.
                 $stmtActual = $conn->prepare("SELECT foto FROM alumnos WHERE id = ?");
-                $stmtActual->bind_param("i", $id);
+                $stmtActual->bind_param("i", $idOriginal);
                 $stmtActual->execute();
                 $actual = $stmtActual->get_result()->fetch_assoc();
                 $stmtActual->close();
@@ -172,12 +189,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar'])) {
                 $fotoNueva = subirFotoAlumno($curp, $extensionesPermitidas);
                 $foto = $fotoNueva ?? ($actual['foto'] ?? null);
 
+                // [CAMBIO DE ID] ─────────────────────────────────
+                // Cambiar la clave primaria de un alumno es delicado
+                // porque la tabla "registros" apunta a ella con una
+                // llave foránea (alumno_id). Se desactivan las
+                // validaciones de llave foránea SOLO durante estas
+                // dos consultas para poder actualizar el ID y luego
+                // "seguir" con él en registros, sin que MySQL rechace
+                // el cambio a medio camino. Se reactivan enseguida.
+                if ($nuevoId !== $idOriginal) {
+                    $conn->query("SET FOREIGN_KEY_CHECKS = 0");
+                    $conn->query("UPDATE alumnos SET id = {$nuevoId} WHERE id = {$idOriginal}");
+                    $conn->query("UPDATE registros SET alumno_id = {$nuevoId} WHERE alumno_id = {$idOriginal}");
+                    $conn->query("SET FOREIGN_KEY_CHECKS = 1");
+                }
+
                 $stmt = $conn->prepare("
                     UPDATE alumnos
                     SET nombre = ?, grado = ?, grupo = ?, CURP = ?, foto = ?
                     WHERE id = ?
                 ");
-                $stmt->bind_param("sssssi", $nombre, $grado, $grupo, $curp, $foto, $id);
+                $stmt->bind_param("sssssi", $nombre, $grado, $grupo, $curp, $foto, $nuevoId);
 
                 if ($stmt->execute()) {
                     header("Location: alumnos.php?editado=1");
@@ -186,7 +218,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar'])) {
                     $mensaje = "❌ Error al actualizar";
                     $tipo_mensaje = "error";
                     $accion = 'editar';
-                    $_GET['id'] = $id;
+                    $_GET['id'] = $nuevoId;
                 }
             }
         }
@@ -194,7 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar'])) {
         $mensaje = "⚠️ Completa todos los campos obligatorios";
         $tipo_mensaje = "warning";
         $accion = 'editar';
-        $_GET['id'] = $id;
+        $_GET['id'] = $idOriginal;
     }
 }
 
@@ -420,7 +452,31 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
 
         <form method="POST" enctype="multipart/form-data">
           <?php if ($alumno_edit): ?>
-            <input type="hidden" name="id" value="<?= $alumno_edit['id'] ?>">
+            <!-- id_original: identifica cuál registro se está editando
+                 (es el WHERE de la consulta). El campo "ID" de abajo,
+                 en cambio, es el NUEVO valor que el admin quiere que
+                 tenga ese alumno — pueden ser el mismo número o no. -->
+            <input type="hidden" name="id_original" value="<?= $alumno_edit['id'] ?>">
+
+            <div class="form-group">
+              <!--
+                Cambiar el ID de un alumno es delicado: es la clave
+                primaria y la tabla "registros" (su historial de
+                asistencia) apunta a ella. El PHP de arriba se encarga
+                de mover también esos registros al nuevo ID para que
+                no queden huérfanos. Aun así, dos alumnos nunca pueden
+                compartir el mismo ID (se valida en el servidor).
+              -->
+              <label>ID *</label>
+              <input
+                type="number"
+                name="id"
+                min="1"
+                required
+                style="max-width:150px;"
+                value="<?= htmlspecialchars($alumno_edit['id']) ?>">
+              <small>Identificador único del alumno. Cambiarlo también actualiza su historial de asistencia.</small>
+            </div>
           <?php endif; ?>
 
           <div class="form-row">
