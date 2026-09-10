@@ -1,5 +1,5 @@
 <?php 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/chatbot/conexion.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/conexion.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $correo = trim($_POST['correo']);
@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             echo "<script>
                     alert('✅ Contraseña actualizada correctamente.');
-                    window.location.href = '../../../../index.php';
+                    window.location.href = '/../../index.php';
                   </script>";
         } else {
             echo "❌ Error al actualizar la contraseña.";
