@@ -11,7 +11,7 @@
 
 //require_once __DIR__ . '/config_sesion.php';
 // Corrección de la ruta a la raíz del proyecto
-require_once __DIR__ . '/../../../../conexion.php'; // Conexión que define $conexion
+require_once __DIR__ . '/conexion.php'; // Conexión que define $conexion
 
 $mensaje = '';
 $error = '';

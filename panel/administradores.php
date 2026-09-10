@@ -2,6 +2,11 @@
 require_once __DIR__ . '/login/php/inicio/auth.php';
 require '../conexion.php';
 
+// Estandarizar la variable de conexión
+if (!isset($conn) && isset($conexion)) {
+    $conn = $conexion;
+}
+
 $paginaActual = 'administradores';
 $accion = $_GET['accion'] ?? '';
 $mensaje = '';
@@ -20,16 +25,20 @@ if ($accion === 'editar' && isset($_GET['id'])) {
 
 // [PROCESAR FORMULARIO: AGREGAR O EDITAR]
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nombre = trim($_POST['nombre']);
-    $correo = trim($_POST['correo']);
-    $usuario = trim($_POST['usuario']);
-    $contrasena = trim($_POST['contrasena']);
+    $nombre = trim($_POST['nombre'] ?? '');
+    $correo = trim($_POST['correo'] ?? '');
+    $usuario = trim($_POST['usuario'] ?? '');
+    $contrasena = trim($_POST['contrasena'] ?? '');
     
-    // Asignación de permisos
+    // Asignación de permisos (garantizando 'dashboard')
     if (isset($_POST['permiso_todo']) && $_POST['permiso_todo'] === 'todo') {
         $permisos = 'todo';
     } else {
-        $permisos = isset($_POST['permisos']) ? implode(',', $_POST['permisos']) : '';
+        $listaPermisos = isset($_POST['permisos']) ? $_POST['permisos'] : [];
+        if (!in_array('dashboard', $listaPermisos, true)) {
+            $listaPermisos[] = 'dashboard';
+        }
+        $permisos = implode(',', array_unique($listaPermisos));
     }
 
     if (isset($_POST['guardar_edicion']) && isset($_POST['id_admin'])) {
@@ -49,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header("Location: administradores.php?editado=1");
             exit;
         } else {
-            $mensaje = "❌ Error al actualizar el administrador";
+            $mensaje = "❌ Error al actualizar el administrador: " . $stmt->error;
             $tipo_mensaje = "error";
             $accion = 'editar';
         }
@@ -76,7 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     header("Location: administradores.php?agregado=1");
                     exit;
                 } else {
-                    $mensaje = "❌ Error al agregar administrador";
+                    $mensaje = "❌ Error al agregar administrador: " . $stmt->error;
                     $tipo_mensaje = "error";
                     $accion = 'nuevo';
                 }
@@ -136,7 +145,7 @@ $esAccesoTotal = ($adminEdit && ($adminEdit['permisos'] === 'todo' || in_array('
   <main class="contenido">
 
     <?php if ($mensaje): ?>
-      <div class="mensaje <?= $tipo_mensaje ?>"><?= $mensaje ?></div>
+      <div class="mensaje <?= $tipo_mensaje ?>"><?= htmlspecialchars($mensaje) ?></div>
     <?php endif; ?>
 
     <?php if (!$mostrandoFormulario): ?>
@@ -224,9 +233,25 @@ $esAccesoTotal = ($adminEdit && ($adminEdit['permisos'] === 'todo' || in_array('
                     'imagenes' => '🖼️ Cargar Imágenes'
                   ];
                   foreach ($modulos as $key => $label):
-                    $checked = ($esAccesoTotal || in_array($key, $permisosActuales, true)) ? 'checked' : '';
+                    $esDashboard = ($key === 'dashboard');
+                    $checked = ($esDashboard || $esAccesoTotal || in_array($key, $permisosActuales, true)) ? 'checked' : '';
+                    $disabled = $esDashboard ? 'disabled' : '';
                 ?>
-                  <label><input type="checkbox" name="permisos[]" value="<?= $key ?>" class="perm-item" <?= $checked ?>> <?= $label ?></label>
+                  <label style="<?= $esDashboard ? 'opacity: 0.85; font-weight: 600;' : '' ?>">
+                    <input 
+                      type="checkbox" 
+                      name="permisos[]" 
+                      value="<?= $key ?>" 
+                      class="perm-item" 
+                      <?= $checked ?> 
+                      <?= $disabled ?>
+                    > 
+                    <?= $label ?> <?= $esDashboard ? '<small style="color:#0d9488;">(Obligatorio)</small>' : '' ?>
+                  </label>
+
+                  <?php if ($esDashboard): ?>
+                    <input type="hidden" name="permisos[]" value="dashboard">
+                  <?php endif; ?>
                 <?php endforeach; ?>
               </div>
             </div>
@@ -243,7 +268,7 @@ $esAccesoTotal = ($adminEdit && ($adminEdit['permisos'] === 'todo' || in_array('
 
       <script>
         function marcarTodos(source) {
-          const checkboxes = document.querySelectorAll('.perm-item');
+          const checkboxes = document.querySelectorAll('.perm-item:not([disabled])');
           checkboxes.forEach(cb => cb.checked = source.checked);
         }
 
