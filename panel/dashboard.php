@@ -1,24 +1,12 @@
 <?php
 
-session_start();
-
-if (!isset($_SESSION['usuario'])) {
-    echo '
-        <script>
-            alert("Por favor debes iniciar sesión");
-            window.location = "login/index.php";
-        </script>
-    ';
-    session_destroy();
-    die();
-}
-
+require_once __DIR__ . '/login/php/inicio/auth.php';
 /*
 http://localhost/prueba/chatbot/panel/dashboard.php
 */
 require_once __DIR__ . '/../conexion.php';
 
-$paginaActual = 'dashboard';
+$paginaActual = 'dashboard.php';
 
 // [CONSULTA: DASHBOARD] — Alimenta las 4 tarjetas de abajo
 $totalAlumnos = $conn->query("SELECT COUNT(*) AS n FROM alumnos WHERE activo = 1")->fetch_assoc()['n'];
@@ -49,7 +37,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
       </div>
 
       <!-- BOTÓN REDIRIGIDO Y CON CLASE DE CERRAR SESIÓN ROJA -->
-      <a href="login/php/cerrar_sesion.php" class="btn-logout">
+      <a href="login/php/inicio/cerrar_sesion.php" class="btn-logout">
         Cerrar sesión
       </a>
     </div>

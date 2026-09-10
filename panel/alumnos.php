@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/login/php/inicio/auth.php';
+
 require '../conexion.php';
 
 $paginaActual = 'alumnos';

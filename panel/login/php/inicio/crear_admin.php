@@ -10,7 +10,8 @@
 // =====================================================
 
 //require_once __DIR__ . '/config_sesion.php';
-require_once __DIR__ . '/conexion_be.php'; // Conexión que define $conexion
+// Corrección de la ruta a la raíz del proyecto
+require_once __DIR__ . '/../../../../conexion.php'; // Conexión que define $conexion
 
 $mensaje = '';
 $error = '';
@@ -37,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
 
         // Comprobación de duplicados en la tabla usuarios
-        $stmt = $conexion->prepare(
+        $stmt = $conn->prepare(
             "SELECT id FROM usuarios WHERE usuario = ? OR correo = ?"
         );
         $stmt->bind_param('ss', $usuario, $correo);
@@ -53,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hash = password_hash($contrasena, PASSWORD_DEFAULT);
 
             // Inserción ordenada según la estructura exacta de tu tabla (nombre_completo, correo, usuario, contrasena)
-            $stmtInsert = $conexion->prepare(
+            $stmtInsert = $conn->prepare(
                 "INSERT INTO usuarios (nombre_completo, correo, usuario, contrasena)
                  VALUES (?, ?, ?, ?)"
             );
@@ -80,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 }
 
-$conexion->close();
+$conn->close();
 
 ?>
 <!DOCTYPE html>

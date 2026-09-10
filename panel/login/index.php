@@ -3,7 +3,8 @@
 session_start();
 
 if(isset($_SESSION['usuario'])){
-    header("location: bienvenida.php");
+    header("location: dashboard.php");
+    exit();
 }
 
 ?>
@@ -13,6 +14,9 @@ if(isset($_SESSION['usuario'])){
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Y Registro - MagtimusPro</title>
+
+    <!-- SweetAlert2 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         *{
@@ -99,8 +103,6 @@ if(isset($_SESSION['usuario'])){
             color: #46A2FD;
         }
 
-        /* Formulario adaptado */
-
         .contenedor__login-recuperacion{
             display: flex;
             align-items: center;
@@ -109,9 +111,7 @@ if(isset($_SESSION['usuario'])){
             position: relative;
             top: -185px;
             left: 10px;
-            z-index: 10; /* Permite capturar los clics del mouse */
-
-            /* Transición de desplazamiento horizontal */
+            z-index: 10;
             transition: left 500ms cubic-bezier(0.175, 0.885, 0.320, 1.275);
         }
 
@@ -163,7 +163,6 @@ if(isset($_SESSION['usuario'])){
         }
 
         @media screen and (max-width: 850px){
-
             main{
                 margin-top: 50px;
             }
@@ -180,9 +179,7 @@ if(isset($_SESSION['usuario'])){
                 position: absolute;
             }
 
-            /* Responsive Formulario */
-
-             .caja__trasera-register{
+            .caja__trasera-register{
                  width: 320px;
                  text-align: right;
                  margin-left: auto;
@@ -203,9 +200,7 @@ if(isset($_SESSION['usuario'])){
 <body>
 
     <main>
-
         <div class="contenedor__todo">
-
             <div class="caja__trasera">
                 <div class="caja__trasera-login">
                     <h3>PREPARATORIA NO. 3</h3>
@@ -219,45 +214,37 @@ if(isset($_SESSION['usuario'])){
                 </div>
             </div>
 
-            <!--Formulario de login y Recuperacion de cuenta-->
             <div class="contenedor__login-recuperacion">
-
-                <form action="php/login_usuario_be.php" method="POST" class="formulario__login">
+                <!-- Formulario Login -->
+                <form action="/chatbot/panel/login/php/inicio/login_usuario_be.php" method="POST" class="formulario__login">
                     <h2>Iniciar Sesión</h2>
-                    <input type="email" placeholder="Correo Electrónico" name="correo" required>
+                    <input type="text" placeholder="Usuario" name="usuario" required>
                     <input type="password" placeholder="Contraseña" name="contrasena" required>
                     <button type="submit">Entrar</button>
                 </form>
 
-                <form action="" method="POST" class="formulario__recuperacion">
+                <!-- Formulario Recuperación -->
+                <form action="/chatbot/panel/login/php/recuperacion/enviar_recuperacion.php" method="POST" class="formulario__recuperacion">
                     <h2>Recuperar cuenta</h2>
                     <input type="email" placeholder="Correo Electrónico" name="correo_recuperacion" required>
                     <button type="submit">Enviar correo</button>
                 </form>
-
             </div>
-
         </div>
-
     </main>
 
     <script>
-        // Ejecutando funciones adaptadas al HTML
         document.getElementById("btn__iniciar-sesion").addEventListener("click", iniciarSesion);
         document.getElementById("btn__recuperacion").addEventListener("click", recuperarCuenta);
         window.addEventListener("resize", anchoPage);
 
-        // Declarando variables
         var formulario_login = document.querySelector(".formulario__login");
         var formulario_recuperacion = document.querySelector(".formulario__recuperacion");
         var contenedor_login_recuperacion = document.querySelector(".contenedor__login-recuperacion");
         var caja_trasera_login = document.querySelector(".caja__trasera-login");
         var caja_trasera_register = document.querySelector(".caja__trasera-register");
 
-        // FUNCIONES
-
         function anchoPage(){
-
             if (window.innerWidth > 850){
                 caja_trasera_register.style.display = "block";
                 caja_trasera_login.style.display = "block";
@@ -306,6 +293,41 @@ if(isset($_SESSION['usuario'])){
             }
         }
     </script>
+
+    <!-- PROCESAMIENTO DE NOTIFICACIONES SWEETALERT2 -->
+    <?php if (isset($_GET['status'])): ?>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const status = "<?= htmlspecialchars($_GET['status']); ?>";
+
+                if (status === 'enviado') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Correo enviado!',
+                        text: 'Si el correo está registrado, recibirás un enlace de recuperación.',
+                        confirmButtonColor: '#46A2FD'
+                    });
+                } else if (status === 'error') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error de envío',
+                        text: 'Ocurrió un problema al enviar el correo. Por favor intentalo más tarde.',
+                        confirmButtonColor: '#d33'
+                    });
+                } else if (status === 'login_requerido') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Acceso restringido',
+                        text: 'Por favor, debes iniciar sesión para acceder a esta sección.',
+                        confirmButtonColor: '#46A2FD'
+                    });
+                }
+
+                // Limpia la URL para evitar re-mostrar la alerta al recargar
+                window.history.replaceState({}, document.title, window.location.pathname);
+            });
+        </script>
+    <?php endif; ?>
 
 </body>
 </html>
