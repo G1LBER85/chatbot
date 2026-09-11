@@ -1,7 +1,12 @@
 <?php
-require '../conexion.php';
 
-$paginaActual = 'dashboard';
+require_once __DIR__ . '/login/php/inicio/auth.php';
+/*
+http://localhost/prueba/chatbot/panel/dashboard.php
+*/
+require_once __DIR__ . '/../conexion.php';
+
+$paginaActual = 'dashboard.php';
 
 // [CONSULTA: DASHBOARD] — Alimenta las 4 tarjetas de abajo
 $totalAlumnos = $conn->query("SELECT COUNT(*) AS n FROM alumnos WHERE activo = 1")->fetch_assoc()['n'];
@@ -21,14 +26,20 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
 
 <div class="layout">
 
-  <?php include '../sidebar/sidebar.php'; ?>
+<?php include __DIR__ . '/../sidebar/sidebar.php'; ?>
 
   <main class="contenido">
+    <!-- Encabezado con clase modificada -->
     <div class="panel-header">
       <div>
         <h1>Dashboard</h1>
         <p>Resumen general del sistema</p>
       </div>
+
+      <!-- BOTÓN REDIRIGIDO Y CON CLASE DE CERRAR SESIÓN ROJA -->
+      <a href="login/php/inicio/cerrar_sesion.php" class="btn-logout">
+        Cerrar sesión
+      </a>
     </div>
 
     <div class="stat-grid">
