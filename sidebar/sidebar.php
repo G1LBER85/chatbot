@@ -37,6 +37,9 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   </div>
 
   <nav class="nav">
+       <a href="credenciales.php" class="nav-item <?= $paginaActual === 'credenciales' ? 'activo' : '' ?>">
+      <span class="nav-icono">🪪</span> Credencialización
+    </a>
     <a href="dashboard.php" class="nav-item <?= $paginaActual === 'dashboard' ? 'activo' : '' ?>">
       <span class="nav-icono">🏠</span> Dashboard
     </a>

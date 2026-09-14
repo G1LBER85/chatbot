@@ -45,8 +45,27 @@ if (isset($_GET['eliminar_alumno'])) {
     exit;
 }
 
+// [PROCESO: ELIMINAR CHAT ID DEL TUTOR] ────────────────────────────
+// Desvincula al tutor (pone tutor_chat_id en NULL) sin borrar al
+// alumno. El alumno pasa automáticamente a "Tutores pendientes",
+// porque esa vista filtra por tutor_chat_id IS NULL. Si el tutor
+// quiere volver a recibir notificaciones, debe escribir /start de
+// nuevo en el bot — ya no hay forma de capturarlo manualmente aquí.
+if (isset($_GET['eliminar_chat_id'])) {
+    $idAlumno = intval($_GET['eliminar_chat_id']);
+
+    $stmtChat = $conn->prepare("UPDATE alumnos SET tutor_chat_id = NULL WHERE id = ?");
+    $stmtChat->bind_param("i", $idAlumno);
+    $stmtChat->execute();
+    $stmtChat->close();
+
+    header("Location: tablas.php?vista={$vistaActual}&chat_eliminado=1");
+    exit;
+}
+
 // [MENSAJES DE CONFIRMACIÓN] ──────────────────────────────────────
 if (isset($_GET['eliminado'])) { $mensaje = "✅ Eliminado correctamente"; $tipo_mensaje = "success"; }
+if (isset($_GET['chat_eliminado'])) { $mensaje = "✅ Chat ID eliminado, el alumno pasó a Tutores pendientes"; $tipo_mensaje = "success"; }
 ?>
 <!DOCTYPE html>
 <html lang="es">
