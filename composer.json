@@ -1,6 +1,8 @@
 {
     "require": {
         "phpoffice/phpspreadsheet": "^5.9",
+        "dompdf/dompdf": "^3.1",
+        "endroid/qr-code": "^6.0",
         "phpmailer/phpmailer": "^7.1"
     }
 }
