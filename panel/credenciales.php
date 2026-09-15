@@ -1,9 +1,29 @@
 <?php
+// ═══════════════════════════════════════════════════════════════
+// panel/credenciales.php
+// ─────────────────────────────────────────────────────────────
+// Vista principal de "Credencialización": lista de alumnos con
+// filtros y checkboxes para elegir a quién generarle su credencial.
+// El trabajo pesado (armar el PDF) NO vive aquí — vive en
+// panel/credenciales/generar_lote.php (mismo patrón que panel/etl/
+// para la importación de Excel). Este archivo solo arma la pantalla
+// y apunta hacia allá. Sirve igual para uno que para muchos alumnos
+// marcados, así que ya no hay un camino aparte para "individual".
+//
+// Índice de este archivo:
+//   1. Consulta de alumnos
+//   2. HTML — filtros (grado, grupo, nombre)
+//   3. HTML — formulario/tabla de selección
+//   4. JavaScript — filtrado y "marcar todos"
+// ═══════════════════════════════════════════════════════════════
+
 require '../conexion.php';
 
 $paginaActual = 'credenciales';
 
-// [CONSULTA: ALUMNOS ACTIVOS] ──────────────────────────────────
+// ─────────────────────────────────────────────────────────────
+// 1. CONSULTA DE ALUMNOS
+// ─────────────────────────────────────────────────────────────
 // Traemos todos los alumnos activos para armar la lista con
 // filtros y checkboxes, igual que en "Ver alumnos".
 $alumnos = $conn->query("
@@ -36,9 +56,12 @@ $alumnos = $conn->query("
 
     <?php if ($alumnos->num_rows > 0): ?>
 
-      <!-- [FILTROS: GRADO, GRUPO Y NOMBRE] ─────────────────────
+      <!-- ═══════════════════════════════════════════════════════
+           2. FILTROS: GRADO, GRUPO Y NOMBRE
            Mismo patrón de filtrado en el navegador usado en
-           "Ver alumnos", para localizar rápido a quién credencializar. -->
+           "Ver alumnos", para localizar rápido a quién credencializar.
+           No toca el servidor — todo pasa en JavaScript (sección 4).
+           ═══════════════════════════════════════════════════════ -->
       <div class="form-box" style="margin-bottom: 20px;">
         <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:20px;">
           <div style="display:flex; gap:14px; flex-wrap:wrap;">
@@ -68,16 +91,16 @@ $alumnos = $conn->query("
         </div>
       </div>
 
-      <!-- [FORMULARIO: SELECCIÓN Y GENERACIÓN POR LOTE] ─────────
-           Los checkboxes marcados se mandan como ids[] a
-           generar_credencial.php, que arma un PDF tipo hoja carta
-           con todas las tarjetas seleccionadas. -->
-      <!-- method="POST" en vez de GET: con muchos alumnos marcados,
-           la URL con todos los ids[] se vuelve tan larga que Apache
-           la rechaza ("Request-URI Too Long"). POST no tiene ese
-           límite porque los datos no viajan en la URL. -->
-      <form action="generar_credencial.php" method="POST" target="_blank">
-        <input type="hidden" name="modo" value="lote">
+      <!-- ═══════════════════════════════════════════════════════
+           3. FORMULARIO Y TABLA DE SELECCIÓN
+           Un solo camino para generar credenciales: se marcan
+           checkboxes (uno o varios — funciona igual para 1 que para
+           muchos) y se manda el formulario por POST a
+           credenciales/generar_lote.php. Es POST y no GET porque
+           con muchos alumnos marcados la URL sería demasiado larga
+           para el servidor ("Request-URI Too Long").
+           ═══════════════════════════════════════════════════════ -->
+      <form action="credenciales/generar_lote.php" method="POST" target="_blank">
 
         <div class="form-box" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
           <label style="display:flex; align-items:center; gap:8px; font-weight:bold; color:#334e68;">
@@ -94,7 +117,6 @@ $alumnos = $conn->query("
               <th>Nombre</th>
               <th>Grado/Grupo</th>
               <th>CURP</th>
-              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -104,7 +126,13 @@ $alumnos = $conn->query("
               data-grupo="<?= htmlspecialchars($alumno['grupo']) ?>"
               data-nombre="<?= htmlspecialchars(mb_strtolower($alumno['nombre'], 'UTF-8')) ?>">
               <td>
-                <input type="checkbox" name="ids[]" value="<?= $alumno['id'] ?>" class="check-alumno" style="width:18px; height:18px;">
+                <input
+                  type="checkbox"
+                  name="ids[]"
+                  value="<?= $alumno['id'] ?>"
+                  class="check-alumno"
+                  style="width:18px; height:18px;"
+                  <?= $alumno['CURP'] ? '' : 'disabled title="Este alumno no tiene CURP capturada"' ?>>
               </td>
               <td><?= htmlspecialchars($alumno['nombre']) ?></td>
               <td><?= htmlspecialchars($alumno['grado']) ?> <?= htmlspecialchars($alumno['grupo'] ?? '') ?></td>
@@ -113,22 +141,20 @@ $alumnos = $conn->query("
                     ? '<span style="font-family:monospace;">' . htmlspecialchars($alumno['CURP']) . '</span>'
                     : '<span style="color:#dc4c4c;">Sin CURP — no se puede credencializar</span>' ?>
               </td>
-              <td>
-                <?php if ($alumno['CURP']): ?>
-                  <a href="generar_credencial.php?modo=individual&id=<?= $alumno['id'] ?>" target="_blank" class="btn btn-primary btn-small" title="Generar credencial de este alumno">🪪 Generar</a>
-                <?php else: ?>
-                  <span class="btn btn-secondary btn-small" style="opacity:.5; cursor:not-allowed;" title="Este alumno no tiene CURP capturada">🪪 Generar</span>
-                <?php endif; ?>
-              </td>
             </tr>
             <?php endwhile; ?>
             <tr id="filaSinResultados" style="display:none;">
-              <td colspan="5" class="empty-state">No se encontraron alumnos con esos filtros.</td>
+              <td colspan="4" class="empty-state">No se encontraron alumnos con esos filtros.</td>
             </tr>
           </tbody>
         </table>
       </form>
 
+      <!-- ═══════════════════════════════════════════════════════
+           4. JAVASCRIPT — FILTRADO Y "MARCAR TODOS"
+           Todo el filtrado ocurre aquí, en el navegador, sin
+           recargar la página ni tocar el servidor.
+           ═══════════════════════════════════════════════════════ -->
       <script>
       (function () {
         const filtroGrado = document.getElementById('filtroGrado');
