@@ -2,6 +2,14 @@
 require '../conexion.php';
 require '../vendor/autoload.php';
 
+// Red de seguridad adicional: aunque redimensionamos las fotos
+// (lo cual reduce el consumo real drásticamente), un lote muy
+// grande de alumnos igual puede necesitar más memoria de la que
+// PHP permite por defecto. Esto SOLO aplica a este script, no
+// afecta el límite del resto del sitio.
+ini_set('memory_limit', '1024M');
+set_time_limit(180);
+
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Endroid\QrCode\Builder\Builder;
@@ -46,6 +54,69 @@ function imagenADataUri(string $rutaAbsoluta): ?string
 }
 
 /**
+ * Redimensiona y comprime una foto antes de incrustarla en el PDF.
+ * Las fotos originales suelen ser mucho más grandes de lo que una
+ * credencial necesita (16x20mm impresos); incrustarlas a tamaño
+ * completo es lo que agota la memoria de PHP cuando se generan
+ * muchas credenciales a la vez. Aquí se reduce a un tamaño de
+ * píxeles suficiente para verse nítida impresa, con recorte tipo
+ * "cover" (llena el rectángulo sin deformar la imagen).
+ * Devuelve null si la imagen no existe o no se puede procesar.
+ */
+function fotoRedimensionadaDataUri(string $rutaAbsoluta, int $anchoPx = 190, int $altoPx = 240): ?string
+{
+    if (!is_file($rutaAbsoluta)) {
+        return null;
+    }
+
+    $info = @getimagesize($rutaAbsoluta);
+    if (!$info) {
+        return null;
+    }
+
+    [$anchoOriginal, $altoOriginal, $tipo] = $info;
+
+    switch ($tipo) {
+        case IMAGETYPE_JPEG:
+            $origen = @imagecreatefromjpeg($rutaAbsoluta);
+            break;
+        case IMAGETYPE_PNG:
+            $origen = @imagecreatefrompng($rutaAbsoluta);
+            break;
+        default:
+            return null; // formato no soportado (gif, webp, etc.)
+    }
+
+    if (!$origen) {
+        return null;
+    }
+
+    // Recorte tipo "cover": escala hasta cubrir todo el rectángulo
+    // destino y recorta el sobrante centrado, igual que el
+    // object-fit:cover que se usaba en el HTML.
+    $escala = max($anchoPx / $anchoOriginal, $altoPx / $altoOriginal);
+    $anchoEscalado = max(1, (int) round($anchoOriginal * $escala));
+    $altoEscalado = max(1, (int) round($altoOriginal * $escala));
+    $offsetX = (int) round(($anchoEscalado - $anchoPx) / 2);
+    $offsetY = (int) round(($altoEscalado - $altoPx) / 2);
+
+    $temporal = imagecreatetruecolor($anchoEscalado, $altoEscalado);
+    imagecopyresampled($temporal, $origen, 0, 0, 0, 0, $anchoEscalado, $altoEscalado, $anchoOriginal, $altoOriginal);
+    imagedestroy($origen);
+
+    $destino = imagecreatetruecolor($anchoPx, $altoPx);
+    imagecopy($destino, $temporal, 0, 0, $offsetX, $offsetY, $anchoPx, $altoPx);
+    imagedestroy($temporal);
+
+    ob_start();
+    imagejpeg($destino, null, 82); // calidad 82: buen balance tamaño/nitidez
+    $contenido = ob_get_clean();
+    imagedestroy($destino);
+
+    return 'data:image/jpeg;base64,' . base64_encode($contenido);
+}
+
+/**
  * Genera el código QR (PNG, como data URI) para un texto dado.
  * El QR contiene la CURP tal cual, que es el mismo valor que
  * cliente.html envía a api/registrar.php al escanear, así la
@@ -73,7 +144,7 @@ function construirHtmlCredencial(array $alumno, ?string $logoDataUri): string
 {
     $fotoRuta = $alumno['foto'] ? str_replace('\\', '/', $alumno['foto']) : null;
     $fotoAbsoluta = $fotoRuta ? __DIR__ . '/../' . $fotoRuta : null;
-    $fotoDataUri = $fotoAbsoluta ? imagenADataUri($fotoAbsoluta) : null;
+    $fotoDataUri = $fotoAbsoluta ? fotoRedimensionadaDataUri($fotoAbsoluta) : null;
 
     $qrDataUri = generarQrDataUri($alumno['CURP']);
 
@@ -266,12 +337,16 @@ function cssCredencial(): string
 // ═══════════════════════════════════════════════════════════════
 // PROCESO PRINCIPAL
 // ═══════════════════════════════════════════════════════════════
-$modo = $_GET['modo'] ?? '';
+// $_REQUEST cubre tanto GET (usado por el enlace de credencial
+// individual, que solo lleva un id) como POST (usado por el
+// formulario de lote, que ahora es POST para no toparse con el
+// límite de longitud de URL de Apache al marcar muchos alumnos).
+$modo = $_REQUEST['modo'] ?? '';
 $logoDataUri = imagenADataUri(RUTA_LOGO);
 
 if ($modo === 'individual') {
 
-    $id = intval($_GET['id'] ?? 0);
+    $id = intval($_REQUEST['id'] ?? 0);
 
     $stmt = $conn->prepare("SELECT id, nombre, grado, grupo, CURP, foto FROM alumnos WHERE id = ? AND activo = 1");
     $stmt->bind_param("i", $id);
@@ -304,7 +379,9 @@ if ($modo === 'individual') {
 
 } elseif ($modo === 'lote') {
 
-    $ids = array_map('intval', $_GET['ids'] ?? []);
+    // Ahora viene por POST (ver el cambio de method en credenciales.php),
+    // así que se lee de $_POST, no de $_GET.
+    $ids = array_map('intval', $_POST['ids'] ?? []);
 
     if (empty($ids)) {
         die('No seleccionaste ningún alumno. Regresa y marca al menos uno.');

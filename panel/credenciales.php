@@ -72,7 +72,11 @@ $alumnos = $conn->query("
            Los checkboxes marcados se mandan como ids[] a
            generar_credencial.php, que arma un PDF tipo hoja carta
            con todas las tarjetas seleccionadas. -->
-      <form action="generar_credencial.php" method="GET" target="_blank">
+      <!-- method="POST" en vez de GET: con muchos alumnos marcados,
+           la URL con todos los ids[] se vuelve tan larga que Apache
+           la rechaza ("Request-URI Too Long"). POST no tiene ese
+           límite porque los datos no viajan en la URL. -->
+      <form action="generar_credencial.php" method="POST" target="_blank">
         <input type="hidden" name="modo" value="lote">
 
         <div class="form-box" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
