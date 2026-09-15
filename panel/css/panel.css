@@ -38,6 +38,7 @@ body { font-family: Arial, sans-serif; background: var(--bg); }
 
 .nav { display: flex; flex-direction: column; gap: 2px; padding: 0 10px; }
 
+
 .nav-item, .nav-grupo-btn {
   display: flex;
   align-items: center;
@@ -79,7 +80,13 @@ body { font-family: Arial, sans-serif; background: var(--bg); }
 /* [CSS: CONTENIDO / SECCIONES] ─────────────────────────── */
 .contenido { flex: 1; padding: 30px 36px; }
 
-.panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+/* PANEL-HEADER CORREGIDO: EMPUJA EL BOTÓN A LA DERECHA */
+.panel-header { 
+  display: flex; 
+  align-items: center; 
+  justify-content: space-between; 
+  margin-bottom: 22px; 
+}
 .panel-header h1 { font-size: 24px; color: var(--navy); }
 .panel-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
 
@@ -124,8 +131,11 @@ body { font-family: Arial, sans-serif; background: var(--bg); }
 .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; text-decoration: none; display: inline-block; }
 .btn-primary { background: var(--teal); color: white; }
 .btn-primary:hover { background: var(--teal-dark); }
+
+/* BOTÓN ROJO DE CERRAR SESIÓN / ELIMINAR */
 .btn-danger { background: #e74c3c; color: white; }
-.btn-danger:hover { background: #c0392b; }
+.btn-danger:hover { background: #c0392b; color: white; }
+
 .btn-secondary { background: #95a5a6; color: white; }
 .btn-secondary:hover { background: #7f8c8d; }
 .btn-small { padding: 6px 12px; font-size: 12px; }

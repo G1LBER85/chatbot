@@ -1,4 +1,5 @@
 <?php
+
 // [CONSULTA: GRADOS Y GRUPOS] ──────────────────────────────────
 // Lista de alumnos activos. Se agrega "id" (antes no venía en el
 // SELECT) porque ahora lo necesitamos para armar los enlaces de
