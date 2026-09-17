@@ -56,6 +56,12 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   </div>
 
   <nav class="nav">
+    <?php if (tienePermiso('credenciales', $listaPermisos, $permisosUsuario)): ?>
+      <a href="credenciales.php" class="nav-item <?= $paginaActual === 'credenciales' ? 'activo' : '' ?>">
+        <span class="nav-icono">🪪</span> Credencialización
+      </a>
+    <?php endif; ?>
+
     <?php if (tienePermiso('dashboard', $listaPermisos, $permisosUsuario)): ?>
       <a href="dashboard.php" class="nav-item <?= $paginaActual === 'dashboard' ? 'activo' : '' ?>">
         <span class="nav-icono">🏠</span> Dashboard

@@ -1,0 +1,179 @@
+/* ═══════════════════════════════════════════════════════════════
+   panel/estilos.css
+   ───────────────────────────────────────────────────────────────
+   Estilos de la credencial. Dompdf no puede cargar este archivo
+   por sí solo con un <link> (está bloqueado por seguridad — ver
+   isRemoteEnabled en panel/credenciales/pdf.php), así que pdf.php
+   lo lee con file_get_contents() y lo mete dentro de un <style>
+   al armar el HTML. Aun así, vive como archivo .css aparte para
+   que sea fácil de encontrar y editar.
+   ═══════════════════════════════════════════════════════════════ */
+
+* {
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* [TARJETA] ──────────────────────────────────────────────────── */
+.credencial {
+    /* 85.6x54mm es el tamaño real de la credencial (CR80), pero se
+       deja un pelín menos (85.2x53.6mm, apenas 0.4mm de diferencia,
+       invisible al imprimir) para que el contenido quede
+       CLARAMENTE por debajo del tamaño exacto de la página. Cuando
+       coincidían al milímetro justo, un redondeo mínimo de Dompdf
+       al convertir mm a puntos hacía que aventara una página en
+       blanco de más después de cada tarjeta. */
+    width: 85.2mm;
+    height: 53.6mm;
+    border: 1px solid #d0d7de;
+    border-radius: 3mm;
+    overflow: hidden;
+}
+
+/* [ENCABEZADO] — display:table en vez de flex, más confiable en
+   Dompdf. fila-tabla (table-row) es obligatorio: a diferencia de
+   un navegador normal, Dompdf NO genera automáticamente la fila
+   intermedia entre table y table-cell; si falta, truena con
+   "Frame not found in cellmap". */
+.encabezado {
+    display: table;
+    width: 100%;
+    background: #2c3e50;
+    color: white;
+}
+
+.fila-tabla {
+    display: table-row;
+}
+
+.celda-logo,
+.celda-nombre-escuela {
+    display: table-cell;
+    vertical-align: middle;
+    padding: 1.8mm 2mm;
+}
+
+.celda-logo {
+    width: 8mm;
+}
+
+.logo-escuela {
+    height: 6mm;
+    width: 6mm;
+    object-fit: contain;
+}
+
+.celda-nombre-escuela {
+    font-size: 8pt;
+    font-weight: bold;
+}
+
+/* [CUERPO DEL FRENTE] — misma técnica: tabla para foto + datos. */
+.cuerpo {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.celda-foto,
+.celda-datos {
+    display: table-cell;
+    vertical-align: middle;
+    padding: 2mm;
+}
+
+.celda-foto {
+    width: 20mm;
+}
+
+.foto-alumno {
+    width: 16mm;
+    height: 20mm;
+    object-fit: cover;
+    border: 1px solid #d0d7de;
+    border-radius: 1mm;
+}
+
+.foto-vacia {
+    display: block;
+    width: 16mm;
+    height: 20mm;
+    background: #f3f6f9;
+    color: #9aa5b1;
+    font-size: 6pt;
+    text-align: center;
+    padding-top: 8mm;
+    border: 1px solid #d0d7de;
+    border-radius: 1mm;
+}
+
+.dato-nombre {
+    font-size: 9.5pt;
+    font-weight: bold;
+    color: #243b53;
+    line-height: 1.3;
+}
+
+.dato-grado {
+    font-size: 8.5pt;
+    color: #048A81;
+    font-weight: bold;
+    margin-top: 2mm;
+}
+
+.dato-curp {
+    /* Se oscureció a propósito (antes un gris-azul muy claro casi
+       ilegible impreso) y se le subió peso/tamaño. */
+    font-size: 8pt;
+    font-weight: 600;
+    color: #1e293b;
+    font-family: monospace;
+    margin-top: 2mm;
+}
+
+/* [REVERSO] — QR grande centrado. */
+.reverso-cuerpo {
+    text-align: center;
+    padding: 2mm;
+}
+
+.qr-reverso {
+    width: 28mm;
+    height: 28mm;
+}
+
+.reverso-texto {
+    font-size: 7pt;
+    font-weight: 600;
+    color: #334e68;
+    margin-top: 1.5mm;
+}
+
+.pie {
+    background: #f3f6f9;
+    color: #7b8794;
+    font-size: 6pt;
+    text-align: center;
+    padding: 1.2mm;
+}
+
+/* [CUADRÍCULA DE LA HOJA] — solo la usa el lote, para acomodar
+   varias parejas de frente+reverso por hoja. */
+.hoja-grid {
+    display: table;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.hoja-fila {
+    display: table-row;
+    page-break-inside: avoid;
+}
+
+.hoja-celda {
+    display: table-cell;
+    padding: 4mm;
+    vertical-align: top;
+}
