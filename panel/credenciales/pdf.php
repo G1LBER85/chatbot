@@ -16,14 +16,15 @@ use Dompdf\Options;
 const ALUMNOS_POR_HOJA = 4;
 
 /**
- * Lee panel/estilos.css del disco. Dompdf no puede cargar un CSS
- * externo con un <link> tal cual (isRemoteEnabled está apagado más
- * abajo, a propósito, por seguridad), así que se lee su contenido
- * y se mete dentro de un <style> al armar el HTML.
+ * Lee panel/credenciales/proceso_de_credenciales/estilos.css del
+ * disco. Dompdf no puede cargar un CSS externo con un <link> tal
+ * cual (isRemoteEnabled está apagado más abajo, a propósito, por
+ * seguridad), así que se lee su contenido y se mete dentro de un
+ * <style> al armar el HTML.
  */
 function cssDeLaCredencial(): string
 {
-    return file_get_contents(__DIR__ . '/../estilos.css');
+    return file_get_contents(__DIR__ . '/proceso_de_credenciales/estilos.css');
 }
 
 /**

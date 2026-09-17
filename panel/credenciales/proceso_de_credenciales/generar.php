@@ -1,12 +1,12 @@
 <?php
 // ═══════════════════════════════════════════════════════════════
-// panel/generar.php
+// panel/credenciales/proceso_de_credenciales/generar.php
 // ─────────────────────────────────────────────────────────────
 // Orquesta todo el proceso de generar credenciales:
 //   1. Trae los datos de los alumnos seleccionados (alumnos.php)
 //   2. Los agrupa por grado+grupo (alumnos.php)
-//   3. Arma y renderiza el PDF de cada grupo (plantilla.php + qr.php
-//      + estilos.css, todo unido por pdf.php)
+//   3. Arma y renderiza el PDF de cada grupo (plantilla_credenciales.php
+//      + qr.php + estilos.css, todo unido por pdf.php)
 //   4. Entrega el resultado: un PDF directo si es un solo archivo,
 //      o un ZIP si son varios (pdf.php)
 //
@@ -16,11 +16,21 @@
 // servidor ("Request-URI Too Long").
 // ═══════════════════════════════════════════════════════════════
 
-require '../conexion.php';
-require __DIR__ . '/credenciales/alumnos.php';
-require __DIR__ . '/credenciales/qr.php';
+// Esta carpeta ("proceso de credenciales") vive DENTRO de
+// panel/credenciales/, así que hay que subir 3 niveles para llegar
+// a la raíz del proyecto (donde está conexion.php):
+// proceso de credenciales/ → credenciales/ → panel/ → raíz.
+require __DIR__ . '/../../../conexion.php';
+
+// alumnos.php, qr.php y pdf.php se quedaron un nivel arriba (en
+// panel/credenciales/), así que se busca con '/../'.
+require __DIR__ . '/../alumnos.php';
+require __DIR__ . '/../qr.php';
+
+// plantilla_credenciales.php vive en esta MISMA carpeta.
 require __DIR__ . '/plantilla_credenciales.php';
-require __DIR__ . '/credenciales/pdf.php';
+
+require __DIR__ . '/../pdf.php';
 
 // Tope de seguridad por ARCHIVO (no por hoja): aunque agrupemos por
 // grado/grupo, un grupo inusualmente grande igual podría acumular

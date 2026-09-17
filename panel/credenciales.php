@@ -5,11 +5,12 @@
 // Vista principal de "Credencialización": lista de alumnos con
 // filtros y checkboxes para elegir a quién generarle su credencial.
 // El trabajo pesado (armar el PDF) NO vive aquí — vive en
-// panel/generar.php, que a su vez usa panel/plantilla_credenciales.php
-// (el diseño), panel/estilos.css, y panel/credenciales/alumnos.php,
-// qr.php y pdf.php. Este archivo solo arma la pantalla y apunta
-// hacia allá. Sirve igual para uno que para muchos alumnos
-// marcados, así que ya no hay un camino aparte para "individual".
+// panel/credenciales/proceso_de_credenciales/generar.php, que a su
+// vez usa plantilla_credenciales.php (el diseño), estilos.css, y
+// panel/credenciales/alumnos.php, qr.php y pdf.php. Este archivo
+// solo arma la pantalla y apunta hacia allá. Sirve igual para uno
+// que para muchos alumnos marcados, así que ya no hay un camino
+// aparte para "individual".
 //
 // Índice de este archivo:
 //   1. Consulta de alumnos
@@ -97,11 +98,12 @@ $alumnos = $conn->query("
            Un solo camino para generar credenciales: se marcan
            checkboxes (uno o varios — funciona igual para 1 que para
            muchos) y se manda el formulario por POST a
-           generar.php. Es POST y no GET porque
-           con muchos alumnos marcados la URL sería demasiado larga
-           para el servidor ("Request-URI Too Long").
+           credenciales/proceso_de_credenciales/generar.php. Es
+           POST y no GET porque con muchos alumnos marcados la URL
+           sería demasiado larga para el servidor ("Request-URI
+           Too Long").
            ═══════════════════════════════════════════════════════ -->
-      <form action="generar.php" method="POST" target="_blank">
+      <form action="credenciales/proceso_de_credenciales/generar.php" method="POST" target="_blank">
 
         <div class="form-box" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
           <label style="display:flex; align-items:center; gap:8px; font-weight:bold; color:#334e68;">

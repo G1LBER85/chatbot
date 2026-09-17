@@ -1,6 +1,6 @@
 <?php
 // ═══════════════════════════════════════════════════════════════
-// panel/plantilla_credenciales.php
+// panel/credenciales/proceso_de_credenciales/plantilla_credenciales.php
 // ─────────────────────────────────────────────────────────────
 // El DISEÑO de la credencial vive aquí, y solo aquí. Si mañana hay
 // que cambiar cómo se ve una credencial (colores, qué datos
@@ -14,7 +14,7 @@
 // o el logo.
 // ─────────────────────────────────────────────────────────────
 const NOMBRE_ESCUELA = 'Preparatoria Número 3';
-const RUTA_LOGO = __DIR__ . '/../img/logo_chiapas.png'; // se usa si existe; si no, se omite sin error
+const RUTA_LOGO = __DIR__ . '/../../../img/logo_chiapas.png'; // se usa si existe; si no, se omite sin error
 
 /**
  * Convierte una imagen del disco a un data URI base64 TAL CUAL,
