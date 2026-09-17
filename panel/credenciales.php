@@ -18,6 +18,7 @@
 //   3. HTML — formulario/tabla de selección + modal de carga
 //   4. JavaScript — filtrado y "marcar todos"
 //   5. JavaScript — modal real de "Generando..." (con fetch)
+//
 // ═══════════════════════════════════════════════════════════════
 
 require '../conexion.php';
