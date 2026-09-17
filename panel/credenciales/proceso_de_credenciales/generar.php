@@ -16,10 +16,10 @@
 // servidor ("Request-URI Too Long").
 // ═══════════════════════════════════════════════════════════════
 
-// Esta carpeta ("proceso de credenciales") vive DENTRO de
+// Esta carpeta ("proceso_de_credenciales") vive DENTRO de
 // panel/credenciales/, así que hay que subir 3 niveles para llegar
 // a la raíz del proyecto (donde está conexion.php):
-// proceso de credenciales/ → credenciales/ → panel/ → raíz.
+// proceso_de_credenciales/ → credenciales/ → panel/ → raíz.
 require __DIR__ . '/../../../conexion.php';
 
 // alumnos.php, qr.php y pdf.php se quedaron un nivel arriba (en
@@ -38,7 +38,12 @@ require __DIR__ . '/../pdf.php';
 const MAX_ALUMNOS_POR_ARCHIVO = 60;
 
 ini_set('memory_limit', '1024M');
-set_time_limit(180);
+
+// 180 segundos (3 minutos) se quedaba corto: un grado completo
+// puede tardar más de eso, y PHP mataba el proceso a la mitad sin
+// avisar (por eso se quedaba "cargando" para siempre y nunca
+// llegaba nada). Se sube a 10 minutos de margen.
+set_time_limit(600);
 
 $ids = array_map('intval', $_POST['ids'] ?? []);
 

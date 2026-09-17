@@ -15,8 +15,9 @@
 // Índice de este archivo:
 //   1. Consulta de alumnos
 //   2. HTML — filtros (grado, grupo, nombre)
-//   3. HTML — formulario/tabla de selección
+//   3. HTML — formulario/tabla de selección + modal de carga
 //   4. JavaScript — filtrado y "marcar todos"
+//   5. JavaScript — modal real de "Generando..." (con fetch)
 // ═══════════════════════════════════════════════════════════════
 
 require '../conexion.php';
@@ -26,8 +27,6 @@ $paginaActual = 'credenciales';
 // ─────────────────────────────────────────────────────────────
 // 1. CONSULTA DE ALUMNOS
 // ─────────────────────────────────────────────────────────────
-// Traemos todos los alumnos activos para armar la lista con
-// filtros y checkboxes, igual que en "Ver alumnos".
 $alumnos = $conn->query("
     SELECT id, nombre, grado, grupo, CURP
     FROM alumnos
@@ -58,12 +57,6 @@ $alumnos = $conn->query("
 
     <?php if ($alumnos->num_rows > 0): ?>
 
-      <!-- ═══════════════════════════════════════════════════════
-           2. FILTROS: GRADO, GRUPO Y NOMBRE
-           Mismo patrón de filtrado en el navegador usado en
-           "Ver alumnos", para localizar rápido a quién credencializar.
-           No toca el servidor — todo pasa en JavaScript (sección 4).
-           ═══════════════════════════════════════════════════════ -->
       <div class="form-box" style="margin-bottom: 20px;">
         <div style="display:flex; flex-wrap:wrap; justify-content:space-between; gap:20px;">
           <div style="display:flex; gap:14px; flex-wrap:wrap;">
@@ -93,17 +86,7 @@ $alumnos = $conn->query("
         </div>
       </div>
 
-      <!-- ═══════════════════════════════════════════════════════
-           3. FORMULARIO Y TABLA DE SELECCIÓN
-           Un solo camino para generar credenciales: se marcan
-           checkboxes (uno o varios — funciona igual para 1 que para
-           muchos) y se manda el formulario por POST a
-           credenciales/proceso_de_credenciales/generar.php. Es
-           POST y no GET porque con muchos alumnos marcados la URL
-           sería demasiado larga para el servidor ("Request-URI
-           Too Long").
-           ═══════════════════════════════════════════════════════ -->
-      <form action="credenciales/proceso_de_credenciales/generar.php" method="POST" target="_blank">
+      <form id="formCredenciales" action="credenciales/proceso_de_credenciales/generar.php" method="POST">
 
         <div class="form-box" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
           <label style="display:flex; align-items:center; gap:8px; font-weight:bold; color:#334e68;">
@@ -153,11 +136,67 @@ $alumnos = $conn->query("
         </table>
       </form>
 
-      <!-- ═══════════════════════════════════════════════════════
-           4. JAVASCRIPT — FILTRADO Y "MARCAR TODOS"
-           Todo el filtrado ocurre aquí, en el navegador, sin
-           recargar la página ni tocar el servidor.
-           ═══════════════════════════════════════════════════════ -->
+      <div class="modal-overlay" id="modalCargando">
+        <div class="modal-caja">
+          <div class="spinner" id="modalSpinner"></div>
+          <div class="modal-titulo" id="modalTitulo">Generando credenciales…</div>
+          <div class="modal-mensaje" id="modalMensaje">
+            Si son muchos alumnos, esto puede tardar varios minutos. No cierres ni recargues esta página.
+          </div>
+          <button type="button" id="modalBotonCerrar" class="btn btn-secondary" style="margin-top:18px; display:none;">Cerrar</button>
+        </div>
+      </div>
+
+      <style>
+        .modal-overlay {
+          display: none;
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.55);
+          z-index: 999;
+          justify-content: center;
+          align-items: center;
+        }
+        .modal-overlay.visible { display: flex; }
+        .modal-caja {
+          background: white;
+          border-radius: 14px;
+          padding: 36px 44px;
+          max-width: 380px;
+          width: 90%;
+          text-align: center;
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+        .modal-titulo {
+          font-size: 18px;
+          font-weight: bold;
+          color: var(--navy, #243b53);
+          margin-bottom: 10px;
+        }
+        .modal-titulo.error { color: #c0392b; }
+        .modal-mensaje {
+          font-size: 14px;
+          color: var(--muted, #64748b);
+          line-height: 1.5;
+        }
+        .spinner {
+          width: 44px;
+          height: 44px;
+          margin: 0 auto 18px;
+          border: 4px solid #e2e8f0;
+          border-top-color: var(--teal, #048A81);
+          border-radius: 50%;
+          animation: girar 0.8s linear infinite;
+        }
+        @keyframes girar {
+          to { transform: rotate(360deg); }
+        }
+        .tabla-bloqueada {
+          pointer-events: none;
+          opacity: 0.6;
+        }
+      </style>
+
       <script>
       (function () {
         const filtroGrado = document.getElementById('filtroGrado');
@@ -185,20 +224,127 @@ $alumnos = $conn->query("
           filaSinResultados.style.display = visibles === 0 ? '' : 'none';
         }
 
-        // "Marcar todos los visibles": solo afecta las filas que
-        // el filtro está mostrando actualmente, no las ocultas.
+        function limpiarSeleccion() {
+          filas.forEach(function (fila) {
+            const checkbox = fila.querySelector('.check-alumno');
+            if (checkbox) checkbox.checked = false;
+          });
+          marcarTodos.checked = false;
+        }
+
         marcarTodos.addEventListener('change', function () {
           filas.forEach(function (fila) {
             if (fila.style.display !== 'none') {
               const checkbox = fila.querySelector('.check-alumno');
-              if (checkbox) checkbox.checked = marcarTodos.checked;
+              if (checkbox && !checkbox.disabled) checkbox.checked = marcarTodos.checked;
             }
           });
         });
 
-        filtroGrado.addEventListener('change', aplicarFiltros);
-        filtroGrupo.addEventListener('change', aplicarFiltros);
-        filtroNombre.addEventListener('input', aplicarFiltros);
+        filtroGrado.addEventListener('change', function () { limpiarSeleccion(); aplicarFiltros(); });
+        filtroGrupo.addEventListener('change', function () { limpiarSeleccion(); aplicarFiltros(); });
+        filtroNombre.addEventListener('input', function () { limpiarSeleccion(); aplicarFiltros(); });
+      })();
+      </script>
+
+      <script>
+      (function () {
+        const formulario = document.getElementById('formCredenciales');
+        const modal = document.getElementById('modalCargando');
+        const modalTitulo = document.getElementById('modalTitulo');
+        const modalMensaje = document.getElementById('modalMensaje');
+        const modalBotonCerrar = document.getElementById('modalBotonCerrar');
+        const modalSpinner = document.getElementById('modalSpinner');
+        const botonGenerar = formulario.querySelector('button[type="submit"]');
+        const tabla = document.getElementById('tablaAlumnos');
+
+        const tituloOriginal = modalTitulo.textContent;
+        const mensajeOriginal = modalMensaje.textContent;
+
+        function bloquearInterfaz() {
+          modal.classList.add('visible');
+          modalTitulo.textContent = tituloOriginal;
+          modalTitulo.classList.remove('error');
+          modalMensaje.textContent = mensajeOriginal;
+          modalSpinner.style.display = '';
+          modalBotonCerrar.style.display = 'none';
+          botonGenerar.disabled = true;
+          tabla.classList.add('tabla-bloqueada');
+        }
+
+        function desbloquearInterfaz() {
+          modal.classList.remove('visible');
+          botonGenerar.disabled = false;
+          tabla.classList.remove('tabla-bloqueada');
+        }
+
+        function mostrarError(mensaje) {
+          modalTitulo.textContent = 'No se pudo generar';
+          modalTitulo.classList.add('error');
+          modalMensaje.textContent = mensaje;
+          modalSpinner.style.display = 'none';
+          modalBotonCerrar.style.display = 'inline-block';
+          botonGenerar.disabled = false;
+          tabla.classList.remove('tabla-bloqueada');
+        }
+
+        modalBotonCerrar.addEventListener('click', function () {
+          modal.classList.remove('visible');
+        });
+
+        formulario.addEventListener('submit', function (evento) {
+          evento.preventDefault();
+
+          const marcados = formulario.querySelectorAll('.check-alumno:checked');
+          if (marcados.length === 0) {
+            alert('Marca al menos un alumno antes de generar credenciales.');
+            return;
+          }
+
+          const datosFormulario = new FormData(formulario);
+
+          bloquearInterfaz();
+
+          fetch(formulario.action, {
+            method: 'POST',
+            body: datosFormulario
+          })
+            .then(function (respuesta) {
+              if (!respuesta.ok) {
+                return respuesta.text().then(function (texto) {
+                  throw new Error(texto || 'Ocurrió un error al generar las credenciales.');
+                });
+              }
+
+              const disposicion = respuesta.headers.get('Content-Disposition') || '';
+              const coincidencia = disposicion.match(/filename="?([^"]+)"?/);
+              const nombreArchivo = coincidencia ? coincidencia[1] : 'credenciales.pdf';
+              const tipo = respuesta.headers.get('Content-Type') || '';
+
+              return respuesta.blob().then(function (blob) {
+                return { blob: blob, nombreArchivo: nombreArchivo, tipo: tipo };
+              });
+            })
+            .then(function (resultado) {
+              const url = URL.createObjectURL(resultado.blob);
+
+              if (resultado.tipo.includes('pdf')) {
+                window.open(url, '_blank');
+              } else {
+                const enlaceTemporal = document.createElement('a');
+                enlaceTemporal.href = url;
+                enlaceTemporal.download = resultado.nombreArchivo;
+                document.body.appendChild(enlaceTemporal);
+                enlaceTemporal.click();
+                enlaceTemporal.remove();
+              }
+
+              desbloquearInterfaz();
+            })
+            .catch(function (error) {
+              mostrarError(error.message);
+            });
+        });
       })();
       </script>
 
