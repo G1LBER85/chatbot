@@ -7,37 +7,27 @@ include '../../../../conexion.php';
 $usuario = $_POST['usuario'];
 $contrasena = $_POST['contrasena'];
 
-// 1. Buscar al usuario solo por correo
+// 1. Buscar al usuario por correo o nombre de usuario
 $validar_login = mysqli_query($conn, "SELECT * FROM usuarios WHERE usuario='$usuario'");
 
 if(mysqli_num_rows($validar_login) > 0){
     $correo = mysqli_fetch_assoc($validar_login);
     
-    // 2. Verificar si la contraseña ingresada coincide con el hash almacenado
+    // 2. Verificar la contraseña encriptada
     if(password_verify($contrasena, $correo['contrasena'])){
-        
-        // --- AGREGA ESTA LÍNEA OBLIGATORIA ---
         $_SESSION['logueado'] = true;
         $_SESSION['correo'] = $correo;
         
-        header("location: ../../../dashboard.php");
-        exit;
+        header("Location: ../../../dashboard.php");
+        exit();
     } else {
-        echo '
-            <script>
-                alert("Contraseña incorrecta, por favor verifique los datos");
-                window.location = "../../index.php";
-            </script>
-        ';
-        exit;
+        // Redirige sin alert nativo para mostrar modal de contraseña incorrecta
+        header("Location: ../../index.php?status=error_pass");
+        exit();
     }
 } else {
-    echo '
-        <script>
-            alert("Usuario no existe, por favor verifique los datos introducidos");
-            window.location = "../../index.php";
-        </script>
-    ';
-    exit;
+    // Redirige si el usuario no existe en la base de datos
+    header("Location: ../../index.php?status=no_usuario");
+    exit();
 }
 ?>

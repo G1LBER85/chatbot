@@ -2,7 +2,7 @@
 require_once __DIR__ . '/login/php/inicio/auth.php';
 
 require '../conexion.php';
-
+/** @var mysqli $conn */
 $paginaActual = 'alumnos';
 $accion = $_GET['accion'] ?? '';
 $mensaje = '';
