@@ -294,40 +294,79 @@ if(isset($_SESSION['usuario'])){
         }
     </script>
 
-    <!-- PROCESAMIENTO DE NOTIFICACIONES SWEETALERT2 -->
-    <?php if (isset($_GET['status'])): ?>
-        <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                const status = "<?= htmlspecialchars($_GET['status']); ?>";
+  <!-- Cargar librería de modales modernos -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-                if (status === 'enviado') {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Correo enviado!',
-                        text: 'Si el correo está registrado, recibirás un enlace de recuperación.',
-                        confirmButtonColor: '#46A2FD'
-                    });
-                } else if (status === 'error') {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error de envío',
-                        text: 'Ocurrió un problema al enviar el correo. Por favor intentalo más tarde.',
-                        confirmButtonColor: '#d33'
-                    });
-                } else if (status === 'login_requerido') {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Acceso restringido',
-                        text: 'Por favor, debes iniciar sesión para acceder a esta sección.',
-                        confirmButtonColor: '#46A2FD'
-                    });
-                }
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const status = urlParams.get('status');
 
-                // Limpia la URL para evitar re-mostrar la alerta al recargar
-                window.history.replaceState({}, document.title, window.location.pathname);
+    if (status) {
+        if (status === 'error_pass') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Contraseña incorrecta',
+                text: 'Por favor, verifique los datos ingresados.',
+                confirmButtonColor: '#46A2FD'
             });
-        </script>
-    <?php endif; ?>
+        } else if (status === 'no_usuario') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Usuario no encontrado',
+                text: 'El usuario ingresado no existe en el sistema.',
+                confirmButtonColor: '#46A2FD'
+            });
+        } else if (status === 'no_registrado') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Correo no registrado',
+                text: 'El correo electrónico ingresado no se encuentra en la base de datos.',
+                confirmButtonColor: '#46A2FD'
+            });
+        } else if (status === 'enviado') {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Correo enviado!',
+                text: 'Revisa tu bandeja de entrada para restablecer tu contraseña.',
+                confirmButtonColor: '#46A2FD'
+            });
+        } else if (status === 'expirado') {
+            Swal.fire({
+                icon: 'info',
+                title: 'Sesión expirada',
+                text: 'Tu sesión ha finalizado por inactividad.',
+                confirmButtonColor: '#46A2FD'
+            });
+        } else if (status === 'pass_updated') {
+            Swal.fire({
+                icon: 'success',
+                title: 'Contraseña actualizada',
+                text: 'Tu contraseña se modificó correctamente. Ya puedes iniciar sesión.',
+                confirmButtonColor: '#46A2FD'
+            });
+        } else if (status === 'pass_mismatch') {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Las contraseñas no coinciden',
+                text: 'Asegúrate de escribir exactamente la misma contraseña en ambos campos.',
+                confirmButtonColor: '#46A2FD'
+            });
+        } else if (status === 'login_requerido') {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Acceso Restringido',
+            text: 'Debes iniciar sesión para acceder al panel.',
+            confirmButtonText: 'Entendido',
+            confirmButtonColor: '#46A2FD',
+            allowOutsideClick: false
+        });
+        }
 
+        // Limpia la URL para evitar que reaparezca al recargar
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+});
+</script>
 </body>
 </html>
