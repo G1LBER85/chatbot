@@ -18,7 +18,6 @@
 //   3. HTML — formulario/tabla de selección + modal de carga
 //   4. JavaScript — filtrado y "marcar todos"
 //   5. JavaScript — modal real de "Generando..." (con fetch)
-//
 // ═══════════════════════════════════════════════════════════════
 
 require '../conexion.php';
@@ -304,7 +303,32 @@ $alumnos = $conn->query("
 
           const datosFormulario = new FormData(formulario);
 
+          // Token al azar para identificar ESTA generación en
+          // particular: generar.php va escribiendo su progreso con
+          // este mismo token, y progreso.php es lo que se consulta
+          // más abajo para leerlo mientras se espera.
+          const token = 'tok' + Date.now() + Math.random().toString(36).slice(2);
+          datosFormulario.append('token', token);
+
           bloquearInterfaz();
+
+          // Cada 800ms se pregunta cuántas credenciales lleva
+          // generadas, y se actualiza el mensaje del modal. Un
+          // fallo al consultar el progreso NO debe interrumpir la
+          // generación real (que sigue su curso en el fetch de
+          // abajo) — por eso el .catch() de este sondeo no hace
+          // nada, solo se ignora ese intento y se reintenta en el
+          // siguiente ciclo.
+          const intervaloProgreso = setInterval(function () {
+            fetch('credenciales/proceso_de_credenciales/progreso.php?token=' + encodeURIComponent(token))
+              .then(function (r) { return r.json(); })
+              .then(function (datos) {
+                if (datos.total > 0) {
+                  modalMensaje.textContent = 'Generando credencial ' + datos.hechos + ' de ' + datos.total + '…';
+                }
+              })
+              .catch(function () {});
+          }, 800);
 
           fetch(formulario.action, {
             method: 'POST',
@@ -327,6 +351,7 @@ $alumnos = $conn->query("
               });
             })
             .then(function (resultado) {
+              clearInterval(intervaloProgreso);
               const url = URL.createObjectURL(resultado.blob);
 
               if (resultado.tipo.includes('pdf')) {
@@ -343,6 +368,7 @@ $alumnos = $conn->query("
               desbloquearInterfaz();
             })
             .catch(function (error) {
+              clearInterval(intervaloProgreso);
               mostrarError(error.message);
             });
         });

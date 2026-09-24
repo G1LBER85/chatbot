@@ -10,10 +10,11 @@
 // ═══════════════════════════════════════════════════════════════
 
 // ─────────────────────────────────────────────────────────────
-// [CONFIGURACIÓN] — edita aquí si cambia el nombre de la escuela
-// o el logo.
+// [CONFIGURACIÓN] — edita aquí si cambia el nombre de la escuela,
+// el turno, o el logo.
 // ─────────────────────────────────────────────────────────────
 const NOMBRE_ESCUELA = 'Preparatoria Número 3';
+const TURNO_ESCUELA = 'Turno Matutino';
 const RUTA_LOGO = __DIR__ . '/../../../img/logo_chiapas.png'; // se usa si existe; si no, se omite sin error
 
 /**
@@ -38,6 +39,34 @@ function imagenADataUri(string $rutaAbsoluta): ?string
     return 'data:' . $tipo . ';base64,' . base64_encode($contenido);
 }
 
+/**
+ * Arma el encabezado (logo + nombre de la escuela + turno) que
+ * comparten el frente y el reverso, para no repetir el HTML dos
+ * veces. Incluye la franja roja debajo, que también es compartida.
+ */
+function construirEncabezado(?string $logoDataUri): string
+{
+    $escuela = htmlspecialchars(NOMBRE_ESCUELA);
+    $turno = htmlspecialchars(TURNO_ESCUELA);
+
+    $logoHtml = $logoDataUri
+        ? '<img src="' . $logoDataUri . '" class="logo-escuela">'
+        : '';
+
+    return <<<HTML
+    <div class="encabezado">
+        <div class="fila-tabla">
+            <div class="celda-logo">{$logoHtml}</div>
+            <div class="celda-nombre-escuela">
+                <div class="nombre-institucion">{$escuela}</div>
+                <div class="turno-institucion">{$turno}</div>
+            </div>
+        </div>
+    </div>
+    <div class="franja-roja"></div>
+    HTML;
+}
+
 // ─────────────────────────────────────────────────────────────
 // [FRENTE DE LA TARJETA]
 // ─────────────────────────────────────────────────────────────
@@ -48,15 +77,12 @@ function construirHtmlCredencialFrente(array $alumno, ?string $logoDataUri): str
     $nombre = htmlspecialchars($alumno['nombre']);
     $gradoGrupo = htmlspecialchars($alumno['grado'] . '° ' . $alumno['grupo']);
     $curp = htmlspecialchars($alumno['CURP']);
-    $escuela = htmlspecialchars(NOMBRE_ESCUELA);
 
     $fotoHtml = $fotoDataUri
         ? '<img src="' . $fotoDataUri . '" class="foto-alumno">'
         : '<div class="foto-alumno foto-vacia">Sin foto</div>';
 
-    $logoHtml = $logoDataUri
-        ? '<img src="' . $logoDataUri . '" class="logo-escuela">'
-        : '';
+    $encabezadoHtml = construirEncabezado($logoDataUri);
 
     // NOTA: se usa display:table/table-cell en vez de flexbox para
     // acomodar las columnas. Dompdf tiene soporte muy parcial e
@@ -66,12 +92,7 @@ function construirHtmlCredencialFrente(array $alumno, ?string $logoDataUri): str
     // table-cell.
     return <<<HTML
     <div class="credencial">
-        <div class="encabezado">
-            <div class="fila-tabla">
-                <div class="celda-logo">{$logoHtml}</div>
-                <div class="celda-nombre-escuela">{$escuela}</div>
-            </div>
-        </div>
+        {$encabezadoHtml}
         <div class="cuerpo">
             <div class="fila-tabla">
                 <div class="celda-foto">{$fotoHtml}</div>
@@ -82,7 +103,10 @@ function construirHtmlCredencialFrente(array $alumno, ?string $logoDataUri): str
                 </div>
             </div>
         </div>
-        <div class="pie">ChecaBot — Control de Asistencia</div>
+        <div class="pie">
+            ChecaBot — Control de Asistencia
+            <span class="leyenda-uso-unico">Solo uso único para el registro del alumno</span>
+        </div>
     </div>
     HTML;
 }
@@ -95,20 +119,12 @@ function construirHtmlCredencialReverso(array $alumno, ?string $logoDataUri): st
 {
     $qrDataUri = generarQrDataUri($alumno['CURP']);
     $nombre = htmlspecialchars($alumno['nombre']);
-    $escuela = htmlspecialchars(NOMBRE_ESCUELA);
 
-    $logoHtml = $logoDataUri
-        ? '<img src="' . $logoDataUri . '" class="logo-escuela">'
-        : '';
+    $encabezadoHtml = construirEncabezado($logoDataUri);
 
     return <<<HTML
     <div class="credencial">
-        <div class="encabezado">
-            <div class="fila-tabla">
-                <div class="celda-logo">{$logoHtml}</div>
-                <div class="celda-nombre-escuela">{$escuela}</div>
-            </div>
-        </div>
+        {$encabezadoHtml}
         <div class="reverso-cuerpo">
             <img src="{$qrDataUri}" class="qr-reverso">
             <div class="reverso-texto">Escanea para registrar entrada/salida</div>
@@ -122,6 +138,15 @@ function construirHtmlCredencialReverso(array $alumno, ?string $logoDataUri): st
 // [HOJA COMPLETA] — una fila por alumno, con su frente y su
 // reverso lado a lado (así no hay que andar buscando cuál QR le
 // corresponde a cuál nombre).
+//
+// Después de armar cada alumno, se avisa el progreso llamando a
+// registrarProgresoCredencial() — esa función la define
+// panel/credenciales/proceso_de_credenciales/generar.php, no este
+// archivo. Se llama con function_exists() de por medio para que
+// esta plantilla no dependa obligatoriamente de generar.php: si en
+// algún momento se usa la plantilla desde otro lado sin esa
+// función definida, simplemente no se reporta progreso, sin
+// romperse.
 // ─────────────────────────────────────────────────────────────
 function construirHojaConParejas(array $alumnosDeLaHoja, ?string $logoDataUri): string
 {
@@ -132,6 +157,10 @@ function construirHojaConParejas(array $alumnosDeLaHoja, ?string $logoDataUri): 
         $html .= '<div class="hoja-celda">' . construirHtmlCredencialFrente($alumno, $logoDataUri) . '</div>';
         $html .= '<div class="hoja-celda">' . construirHtmlCredencialReverso($alumno, $logoDataUri) . '</div>';
         $html .= '</div>';
+
+        if (function_exists('registrarProgresoCredencial')) {
+            registrarProgresoCredencial();
+        }
     }
 
     $html .= '</div>';

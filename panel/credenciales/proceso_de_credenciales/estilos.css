@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   panel/estilos.css
+   panel/credenciales/proceso_de_credenciales/estilos.css
    ───────────────────────────────────────────────────────────────
    Estilos de la credencial. Dompdf no puede cargar este archivo
    por sí solo con un <link> (está bloqueado por seguridad — ver
@@ -52,7 +52,7 @@
 .celda-nombre-escuela {
     display: table-cell;
     vertical-align: middle;
-    padding: 1.8mm 2mm;
+    padding: 1.4mm 2mm;
 }
 
 .celda-logo {
@@ -65,9 +65,24 @@
     object-fit: contain;
 }
 
-.celda-nombre-escuela {
+.nombre-institucion {
     font-size: 8pt;
     font-weight: bold;
+    line-height: 1.2;
+}
+
+.turno-institucion {
+    font-size: 6.5pt;
+    font-weight: 500;
+    color: #cbd5e1;
+    line-height: 1.2;
+    margin-top: 0.3mm;
+}
+
+/* Franja roja, justo debajo del encabezado azul/marino. */
+.franja-roja {
+    height: 1.4mm;
+    background: #c0392b;
 }
 
 /* [CUERPO DEL FRENTE] — misma técnica: tabla para foto + datos. */
@@ -110,27 +125,27 @@
 }
 
 .dato-nombre {
-    font-size: 9.5pt;
+    font-size: 9pt;
     font-weight: bold;
     color: #243b53;
-    line-height: 1.3;
+    line-height: 1.25;
 }
 
 .dato-grado {
-    font-size: 8.5pt;
+    font-size: 8pt;
     color: #048A81;
     font-weight: bold;
-    margin-top: 2mm;
+    margin-top: 1.5mm;
 }
 
 .dato-curp {
     /* Se oscureció a propósito (antes un gris-azul muy claro casi
        ilegible impreso) y se le subió peso/tamaño. */
-    font-size: 8pt;
+    font-size: 7.5pt;
     font-weight: 600;
     color: #1e293b;
     font-family: monospace;
-    margin-top: 2mm;
+    margin-top: 1.5mm;
 }
 
 /* [REVERSO] — QR grande centrado. */
@@ -140,8 +155,8 @@
 }
 
 .qr-reverso {
-    width: 28mm;
-    height: 28mm;
+    width: 27mm;
+    height: 27mm;
 }
 
 .reverso-texto {
@@ -151,12 +166,24 @@
     margin-top: 1.5mm;
 }
 
+/* [PIE] — en el frente lleva dos líneas: el nombre del sistema y,
+   debajo, la leyenda de uso único. En el reverso solo lleva el
+   nombre del alumno (una sola línea), y este mismo estilo le
+   queda bien igual. */
 .pie {
     background: #f3f6f9;
     color: #7b8794;
-    font-size: 6pt;
+    font-size: 5.8pt;
     text-align: center;
-    padding: 1.2mm;
+    padding: 1mm;
+    line-height: 1.4;
+}
+
+.leyenda-uso-unico {
+    display: block;
+    font-size: 5.3pt;
+    font-weight: 600;
+    color: #9aa5b1;
 }
 
 /* [CUADRÍCULA DE LA HOJA] — solo la usa el lote, para acomodar
