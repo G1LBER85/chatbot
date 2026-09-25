@@ -54,6 +54,8 @@ if(isset($_SESSION['usuario'])){
             padding: 10px 20px;
             display: flex;
             justify-content: center;
+            align-items: center;
+            min-height: 380px;
             -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             background-color: rgba(0, 128, 255, 0.5);
@@ -61,7 +63,7 @@ if(isset($_SESSION['usuario'])){
         }
 
         .caja__trasera div{
-            margin: 100px 40px;
+            margin: 0 40px;
             color: white;
             transition: all 500ms;
         }
@@ -103,13 +105,16 @@ if(isset($_SESSION['usuario'])){
             color: #46A2FD;
         }
 
+        /* Tamaño igual al de Recuperar Cuenta y Centrado Vertical exacto */
         .contenedor__login-recuperacion{
             display: flex;
             align-items: center;
             width: 100%;
             max-width: 380px;
-            position: relative;
-            top: -185px;
+            height: 320px;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
             left: 10px;
             z-index: 10;
             transition: left 500ms cubic-bezier(0.175, 0.885, 0.320, 1.275);
@@ -117,32 +122,38 @@ if(isset($_SESSION['usuario'])){
 
         .contenedor__login-recuperacion form{
             width: 100%;
-            padding: 80px 20px;
+            height: 100%;
+            padding: 25px 25px;
             background: white;
             position: absolute;
             border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
         }
 
         .contenedor__login-recuperacion form h2{
-            font-size: 30px;
+            font-size: 26px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             color: #46A2FD;
         }
 
         .contenedor__login-recuperacion form input{
             width: 100%;
-            margin-top: 20px;
+            margin-top: 12px;
             padding: 10px;
             border: none;
             background: #F2F2F2;
-            font-size: 16px;
+            font-size: 15px;
             outline: none;
+            border-radius: 5px;
         }
 
         .contenedor__login-recuperacion form button{
             padding: 10px 40px;
-            margin-top: 40px;
+            margin-top: 20px;
             border: none;
             font-size: 14px;
             background: #46A2FD;
@@ -151,11 +162,12 @@ if(isset($_SESSION['usuario'])){
             color: white;
             outline: none;
             border-radius: 5px;
+            align-self: flex-start;
         }
 
         .formulario__login{
             opacity: 1;
-            display: block;
+            display: flex;
         }
 
         .formulario__recuperacion{
@@ -186,8 +198,9 @@ if(isset($_SESSION['usuario'])){
             }           
 
             .contenedor__login-recuperacion{
-                  top: -185px;
-                  left: 10px;
+                  top: 50%;
+                  transform: translateY(-50%);
+                  left: 0px;
                   margin: auto;
             }
 
@@ -252,25 +265,23 @@ if(isset($_SESSION['usuario'])){
                 caja_trasera_register.style.display = "block";
                 caja_trasera_register.style.opacity = "1";
                 caja_trasera_login.style.display = "none";
-                formulario_login.style.display = "block";
+                formulario_login.style.display = "flex";
                 contenedor_login_recuperacion.style.left = "0px";
                 formulario_recuperacion.style.display = "none";   
             }
         }
 
-        anchoPage();
-
         function iniciarSesion(){
             if (window.innerWidth > 850){
-                formulario_login.style.display = "block";
-                contenedor_login_recuperacion.style.left = "10px";
+                formulario_login.style.display = "flex";
                 formulario_recuperacion.style.display = "none";
+                contenedor_login_recuperacion.style.left = "10px";
                 caja_trasera_register.style.opacity = "1";
                 caja_trasera_login.style.opacity = "0";
             }else{
-                formulario_login.style.display = "block";
-                contenedor_login_recuperacion.style.left = "0px";
+                formulario_login.style.display = "flex";
                 formulario_recuperacion.style.display = "none";
+                contenedor_login_recuperacion.style.left = "0px";
                 caja_trasera_register.style.display = "block";
                 caja_trasera_login.style.display = "none";
             }
@@ -278,95 +289,103 @@ if(isset($_SESSION['usuario'])){
 
         function recuperarCuenta(){
             if (window.innerWidth > 850){
-                formulario_recuperacion.style.display = "block";
-                contenedor_login_recuperacion.style.left = "410px";
+                formulario_recuperacion.style.display = "flex";
                 formulario_login.style.display = "none";
+                contenedor_login_recuperacion.style.left = "410px";
                 caja_trasera_register.style.opacity = "0";
                 caja_trasera_login.style.opacity = "1";
             }else{
-                formulario_recuperacion.style.display = "block";
-                contenedor_login_recuperacion.style.left = "0px";
+                formulario_recuperacion.style.display = "flex";
                 formulario_login.style.display = "none";
+                contenedor_login_recuperacion.style.left = "0px";
                 caja_trasera_register.style.display = "none";
                 caja_trasera_login.style.display = "block";
                 caja_trasera_login.style.opacity = "1";
             }
         }
+
+        // Ejecutar por defecto al cargar la página
+        iniciarSesion();
+        anchoPage();
     </script>
 
-  <!-- Cargar librería de modales modernos -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const status = urlParams.get('status');
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const urlParams = new URLSearchParams(window.location.search);
-    const status = urlParams.get('status');
+        if (status) {
+            // Forzar estado de la tarjeta según el tipo de respuesta/error
+            if (status === 'error_pass' || status === 'no_usuario' || status === 'login_requerido') {
+                iniciarSesion();
+            } else if (status === 'no_registrado' || status === 'enviado') {
+                recuperarCuenta();
+            }
 
-    if (status) {
-        if (status === 'error_pass') {
-            Swal.fire({
-                icon: 'error',
-                title: 'Contraseña incorrecta',
-                text: 'Por favor, verifique los datos ingresados.',
-                confirmButtonColor: '#46A2FD'
-            });
-        } else if (status === 'no_usuario') {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Usuario no encontrado',
-                text: 'El usuario ingresado no existe en el sistema.',
-                confirmButtonColor: '#46A2FD'
-            });
-        } else if (status === 'no_registrado') {
-            Swal.fire({
-                icon: 'error',
-                title: 'Correo no registrado',
-                text: 'El correo electrónico ingresado no se encuentra en la base de datos.',
-                confirmButtonColor: '#46A2FD'
-            });
-        } else if (status === 'enviado') {
-            Swal.fire({
-                icon: 'success',
-                title: '¡Correo enviado!',
-                text: 'Revisa tu bandeja de entrada para restablecer tu contraseña.',
-                confirmButtonColor: '#46A2FD'
-            });
-        } else if (status === 'expirado') {
-            Swal.fire({
-                icon: 'info',
-                title: 'Sesión expirada',
-                text: 'Tu sesión ha finalizado por inactividad.',
-                confirmButtonColor: '#46A2FD'
-            });
-        } else if (status === 'pass_updated') {
-            Swal.fire({
-                icon: 'success',
-                title: 'Contraseña actualizada',
-                text: 'Tu contraseña se modificó correctamente. Ya puedes iniciar sesión.',
-                confirmButtonColor: '#46A2FD'
-            });
-        } else if (status === 'pass_mismatch') {
-            Swal.fire({
-                icon: 'warning',
-                title: 'Las contraseñas no coinciden',
-                text: 'Asegúrate de escribir exactamente la misma contraseña en ambos campos.',
-                confirmButtonColor: '#46A2FD'
-            });
-        } else if (status === 'login_requerido') {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Acceso Restringido',
-            text: 'Debes iniciar sesión para acceder al panel.',
-            confirmButtonText: 'Entendido',
-            confirmButtonColor: '#46A2FD',
-            allowOutsideClick: false
-        });
+            if (status === 'error_pass') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Contraseña incorrecta',
+                    text: 'Por favor, verifique los datos ingresados.',
+                    confirmButtonColor: '#46A2FD'
+                });
+            } else if (status === 'no_usuario') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Usuario no encontrado',
+                    text: 'El usuario ingresado no existe en el sistema.',
+                    confirmButtonColor: '#46A2FD'
+                });
+            } else if (status === 'no_registrado') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Correo no registrado',
+                    text: 'El correo electrónico ingresado no se encuentra en la base de datos.',
+                    confirmButtonColor: '#46A2FD'
+                });
+            } else if (status === 'enviado') {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Correo enviado!',
+                    text: 'Revisa tu bandeja de entrada para restablecer tu contraseña.',
+                    confirmButtonColor: '#46A2FD'
+                });
+            } else if (status === 'expirado') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Sesión expirada',
+                    text: 'Tu sesión ha finalizado por inactividad.',
+                    confirmButtonColor: '#46A2FD'
+                });
+            } else if (status === 'pass_updated') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Contraseña actualizada',
+                    text: 'Tu contraseña se modificó correctamente. Ya puedes iniciar sesión.',
+                    confirmButtonColor: '#46A2FD'
+                });
+            } else if (status === 'pass_mismatch') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Las contraseñas no coinciden',
+                    text: 'Asegúrate de escribir exactamente la misma contraseña en ambos campos.',
+                    confirmButtonColor: '#46A2FD'
+                });
+            } else if (status === 'login_requerido') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Acceso Restringido',
+                    text: 'Debes iniciar sesión para acceder al panel.',
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#46A2FD',
+                    allowOutsideClick: false
+                });
+            }
+
+            // Limpia la URL para evitar re-despliegues al actualizar
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
-
-        // Limpia la URL para evitar que reaparezca al recargar
-        window.history.replaceState({}, document.title, window.location.pathname);
-    }
-});
-</script>
+    });
+    </script>
 </body>
 </html>
