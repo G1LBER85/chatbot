@@ -1,4 +1,4 @@
-<?php
+<<?php
 require_once dirname(__DIR__) . '/panel/login/php/inicio/inactividad.php';
 
 // Conexión a la base de datos
@@ -302,6 +302,12 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 
   <!-- Menú de Navegación -->
   <nav class="sidebar-nav">
+    <?php if (tienePermiso('credenciales', $listaPermisos, $permisosUsuario)): ?>
+      <a href="credenciales.php" class="nav-link <?= $paginaActual === 'credenciales' ? 'activo' : '' ?>">
+        <span class="nav-icon">🪪</span> <span>Credencialización</span>
+      </a>
+    <?php endif; ?>
+
     <?php if (tienePermiso('dashboard', $listaPermisos, $permisosUsuario)): ?>
       <a href="dashboard.php" class="nav-link <?= $paginaActual === 'dashboard' ? 'activo' : '' ?>">
         <span class="nav-icon">🏠</span> <span>Dashboard</span>

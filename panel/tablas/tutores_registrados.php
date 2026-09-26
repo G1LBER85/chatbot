@@ -26,7 +26,18 @@ $tutoresRegistrados = $conn->query("
       <tr>
         <td><?= htmlspecialchars($fila['nombre']) ?></td>
         <td><?= htmlspecialchars($fila['grado']) ?></td>
-        <td><?= htmlspecialchars($fila['tutor_chat_id']) ?></td>
+        <td>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span><?= htmlspecialchars($fila['tutor_chat_id']) ?></span>
+            <!-- Quitar el Chat ID solo desvincula al tutor (tutor_chat_id = NULL);
+                 el alumno NO se borra, solo pasa a la vista de Tutores pendientes.
+                 Telegram vuelve a asignarlo solo si el tutor hace /start de nuevo. -->
+            <a href="tablas.php?vista=tutores_registrados&eliminar_chat_id=<?= $fila['id'] ?>"
+               class="btn btn-danger btn-small"
+               title="Quitar Chat ID"
+               onclick="return confirm('¿Quitar el Chat ID de <?= htmlspecialchars(addslashes($fila['nombre'])) ?>? El alumno pasará a Tutores pendientes.')">🗑️</a>
+          </div>
+        </td>
         <td>
           <div style="display:flex; gap:8px;">
             <!-- Editar reutiliza el mismo formulario de alumnos.php -->
