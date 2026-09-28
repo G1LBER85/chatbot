@@ -1,4 +1,4 @@
-<<?php
+<?php
 require_once dirname(__DIR__) . '/panel/login/php/inicio/inactividad.php';
 
 // Conexión a la base de datos
