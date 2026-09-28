@@ -42,7 +42,16 @@
         <td>
           <div style="display:flex; gap:8px;">
             <a href="administradores.php?accion=editar&id=<?= $admin['id'] ?>" class="btn btn-primary btn-small">✏️</a>
-            <a href="administradores.php?eliminar=<?= $admin['id'] ?>" class="btn btn-danger btn-small" onclick="return confirm('¿Deseas eliminar este administrador?')">🗑️</a>
+            <button type="button" class="btn btn-danger btn-small" onclick="Swal.fire({
+  title: '¿Deseas eliminar este administrador?',
+  text: 'Esta acción no se puede deshacer.',
+  icon: 'warning',
+  showCancelButton: true,
+  confirmButtonColor: '#d33',
+  cancelButtonColor: '#3085d6',
+  confirmButtonText: 'Aceptar',
+  cancelButtonText: 'Cancelar'
+}).then((r) => { if (r.isConfirmed) window.location.href = 'administradores.php?eliminar=<?= $admin['id'] ?>'; })">🗑️</button>
           </div>
         </td>
       </tr>

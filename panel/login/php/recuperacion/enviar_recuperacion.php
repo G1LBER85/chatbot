@@ -2,13 +2,15 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+/** @var mysqli $conn */
+
 require_once $_SERVER['DOCUMENT_ROOT'] . '/chatbot/conexion.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . '/chatbot/vendor/autoload.php'; 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['correo_recuperacion'])) {
     $correo = trim($_POST['correo_recuperacion']);
 
-    // Buscar el usuario por correo
+    // Buscar el usuario por correo en la base de datos
     $stmt = $conn->prepare("SELECT id, usuario FROM usuarios WHERE correo = ? LIMIT 1");
     $stmt->bind_param("s", $correo);
     $stmt->execute();
@@ -16,17 +18,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['correo_recuperacion'
     $stmt->close();
 
     if ($user) {
+        // Generar token y código único
         $bytes = random_bytes(5);
         $token = bin2hex($bytes);
         $codigo = rand(1000, 9999);
 
-        // Guardar en la tabla contrasena usando la columna 'correo'
+        // Guardar la solicitud en la tabla contrasena
         $stmtPass = $conn->prepare("INSERT INTO contrasena (correo, token, codigo) VALUES (?, ?, ?)");
         $stmtPass->bind_param("ssi", $correo, $token, $codigo);
         $stmtPass->execute();
         $stmtPass->close();
 
-        // Configuración de PHPMailer
+        // Configuración y envío del correo con PHPMailer
         $mail = new PHPMailer(true);
 
         try {
@@ -42,7 +45,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['correo_recuperacion'
             $mail->setFrom('jennifermezamancilla55@gmail.com', 'Sistema ChecaBot');
             $mail->addAddress($correo, $user['usuario']);
 
-            $enlace = "http://" . $_SERVER['HTTP_HOST'] . "/chatbot/panel/login/php/recuperacion/reset.php?email=" . urlencode($correo) . "&token=" . $token;
+            // OPCIÓN 1: Detecta dinámicamente si entraste por IP (ej. 192.168.X.X) o por dominio
+            $host = $_SERVER['HTTP_HOST'];
+            $enlace = "http://" . $host . "/chatbot/panel/login/php/recuperacion/reset.php?email=" . urlencode($correo) . "&token=" . $token;
 
             $mail->isHTML(true);
             $mail->Subject = 'Restablecer contraseña — ChecaBot';
@@ -56,19 +61,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['correo_recuperacion'
 
             $mail->send();
             header("Location: ../../index.php?status=enviado");
-            exit;
+            exit();
 
         } catch (Exception $e) {
-            header("Location: ../../index.php?status=error");
-            exit;
+            header("Location: ../../index.php?status=error_mail");
+            exit();
         }
     } else {
-        // Muestra el mismo mensaje aunque el correo no exista por seguridad
-        header("Location: ../../index.php?status=enviado");
-        exit;
+        // Redirección cuando el correo NO está registrado
+        header("Location: ../../index.php?status=no_registrado");
+        exit();
     }
 } else {
     header("Location: ../../index.php");
-    exit;
+    exit();
 }
 ?>

@@ -36,10 +36,7 @@ $totalRegistrosHoy = $conn->query("SELECT COUNT(*) AS n FROM registros WHERE DAT
         <p>Resumen general del sistema</p>
       </div>
 
-      <!-- BOTÓN REDIRIGIDO Y CON CLASE DE CERRAR SESIÓN ROJA -->
-      <a href="login/php/inicio/cerrar_sesion.php" class="btn-logout">
-        Cerrar sesión
-      </a>
+      
     </div>
 
     <div class="stat-grid">
