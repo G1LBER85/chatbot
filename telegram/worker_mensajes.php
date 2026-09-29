@@ -7,8 +7,8 @@
  */
 
 require 'config.php';
-require 'conexion.php';
-require 'redis_config.php';
+require '../conexion.php';
+require 'redis.php';
 
 logMsg("Worker iniciado. Esperando mensajes...");
 

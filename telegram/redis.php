@@ -4,7 +4,7 @@
  */
 
 // __DIR__ hace que funcione aunque se incluya desde panel/
-require_once __DIR__ . '/vendor/autoload.php';
+require_once __DIR__ . '/../vendor/autoload.php';
 
 use Predis\Client;
 

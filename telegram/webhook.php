@@ -1,8 +1,8 @@
 <?php
 $t0 = microtime(true);
 require 'config.php';
-require 'conexion.php';
-require 'redis_config.php';
+require '../conexion.php';
+require 'redis.php';
 error_log("TIEMPO conexiones: " . round(microtime(true) - $t0, 2) . "s");
 
 $update = json_decode(file_get_contents('php://input'), true);
@@ -68,14 +68,15 @@ if (isset($update['callback_query'])) {
                 "📌 *" . escaparMd($respuesta['titulo']) . "*\n\n" . escaparMd($respuesta['respuesta_texto'])
             );
 
-            if (!empty($respuesta['ruta_imagen'])) {
-                $redis->agregarACola([
-                    'tipo'       => 'foto',
-                    'chat_id'    => $chat_id,
-                    'url_imagen' => URL_BASE . $respuesta['ruta_imagen'],
-                    'caption'    => "📸 Información adjunta"
-                ]);
-            }
+          if ($respuesta['ruta_imagen'] && !empty($respuesta['ruta_imagen'])) {
+    $url_imagen = "https://sash-sake-guidance.ngrok-free.dev/chatbot/" . $respuesta['ruta_imagen'];
+    $redis->agregarACola([
+        'tipo'        => 'foto',
+        'chat_id'     => $chat_id,
+        'url_imagen'  => $url_imagen,
+        'caption'     => "📸"
+    ]);
+}
         } else {
             // La opción se borró o se desactivó: avisar y mandar el menú actualizado
             encolarMensaje($chat_id, "⚠️ Esa opción ya no está disponible. Aquí tienes el menú actualizado:");

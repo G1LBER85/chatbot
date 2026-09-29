@@ -8,7 +8,7 @@
 require __DIR__ . '/config.php';
 
 $api         = "https://api.telegram.org/bot" . TELEGRAM_TOKEN;
-$url_webhook = URL_BASE . "telegram_webhook.php";
+$url_webhook = TELEGRAM_WEBHOOK_URL;
 
 function llamarTelegram($url, $data = []) {
     $contexto = stream_context_create([
