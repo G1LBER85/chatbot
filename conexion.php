@@ -3,7 +3,7 @@
 date_default_timezone_set('America/Mexico_City');
 
 $conn = new mysqli(
-    'localhost',
+    '127.0.0.1',
     'root',
     '',
     'checabot'
