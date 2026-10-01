@@ -242,10 +242,10 @@
         }
 
         .avatar-foto {
-            width: 220px;
-            height: 220px;
-            min-width: 220px;
-            min-height: 220px;
+            width: 240px;
+            height: 240px;
+            min-width: 240px;
+            min-height: 240px;
             border-radius: 50%;
             background: #dbe8f8;
             display: flex;
@@ -287,7 +287,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 600;
             color: blue;
             margin-bottom: 8px;
@@ -312,7 +312,7 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 700;
             padding: 6px 14px;
             border-radius: 30px;
@@ -642,6 +642,21 @@
                         </div>
 
                         <div class="reg-fila">
+
+                            <svg viewBox="0 0 24 24">
+                                <rect x="3" y="4" width="18" height="16" rx="2"/>
+                                <path d="M7 8h10"/>
+                                <path d="M7 12h7"/>
+                                <path d="M7 16h5"/>
+                            </svg>
+
+                            <span id="ultimaCURP">
+                                —
+                            </span>
+
+                        </div>
+
+                        <div class="reg-fila">
                             <svg viewBox="0 0 24 24">
                                 <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
                                 <path d="M6 12v5c3 3 9 3 12 0v-5"/>
@@ -928,6 +943,11 @@
                     .getElementById('ultimoNombre')
                     .textContent =
                         ultimo.nombre || 'Sin registros';
+
+                document
+                    .getElementById('ultimaCURP')
+                    .textContent =
+                        ultimo.curp || '—';
 
                 document
                     .getElementById('ultimoGrupo')

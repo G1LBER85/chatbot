@@ -232,26 +232,10 @@
                 width: 100%;
                 height: 100%;
                 object-fit: cover;
-                object-position: center top;
+                object-position: center;
                 display: block;
             }
 
-            .foto-placeholder {
-                width: 100%;
-                height: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: black;
-            }
-
-            .foto-placeholder svg {
-                width: 140px;
-                height: 140px;
-                stroke: black;
-                fill: none;
-                stroke-width: 1;
-            }
 
             /* BANNER INFERIOR */
 
@@ -355,12 +339,6 @@
             </div>
 
             <div class="lado-der" id="ladoDer">
-                <div class="foto-placeholder" id="fotoPlaceholder">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                        <circle cx="12" cy="7" r="4" />
-                    </svg>
-                </div>
             
                 <img id="fotoAlumno" src="" alt="Foto del alumno" />
                 
@@ -380,7 +358,6 @@
                 document.querySelectorAll(".dato-icono svg");
                 document.getElementById("tituloExclamacion").classList.add("entrada");
                 document.getElementById("tituloExitoso").classList.add("entrada");
-                document.getElementById("fotoPlaceholder").style.background = "#d1fae5";
                 const iconoBadge = document.getElementById("badgeIcono");
                 iconoBadge.innerHTML =
                 '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>';
@@ -395,7 +372,6 @@
                 document.querySelectorAll(".dato-icono svg");
                 document.getElementById("tituloExclamacion").classList.add("salida");
                 document.getElementById("tituloExitoso").classList.add("salida");
-                document.getElementById("fotoPlaceholder").style.background = "#dbeafe";
                 const iconoBadge = document.getElementById("badgeIcono");
                 iconoBadge.innerHTML =
                 '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>';
@@ -415,14 +391,11 @@
                 }
 
                 const foto = document.getElementById("fotoAlumno");
-                const placeholder = document.getElementById("fotoPlaceholder");
                 if (datos.foto) {
                     foto.src = datos.foto;
                     foto.style.display = "block";
-                    placeholder.style.display = "none";
                 } else {
                     foto.style.display = "none";
-                    placeholder.style.display = "flex";
                 }
 
                 document.getElementById("nombreAlumno").textContent =

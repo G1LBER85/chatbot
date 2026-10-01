@@ -16,6 +16,7 @@ try {
         SELECT
             r.id,
             a.nombre,
+            a.CURP,
             a.grado,
             a.grupo,
             a.foto,
@@ -52,6 +53,7 @@ try {
 
         $ultimo = [
             'nombre'   => $fila['nombre'],
+            'curp'     => $fila['CURP'],
             'semestre' => $fila['grado'],
             'grupo'    => $fila['grupo'],
             'hora'     => $fila['hora'],
