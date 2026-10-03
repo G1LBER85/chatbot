@@ -327,6 +327,7 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
           <a href="alumnos.php?accion=nuevo" class="sub-link <?= ($paginaActual === 'alumnos' && $mostrandoFormulario) ? 'activo' : '' ?>">
             ➕ Registrar / editar
           </a>
+           
         </div>
       </div>
     <?php endif; ?>
@@ -350,6 +351,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
           <a href="tablas.php?vista=registros" class="sub-link <?= ($paginaActual === 'tablas' && $vistaActual === 'registros') ? 'activo' : '' ?>">
             🕐 Registros
           </a>
+          
+
         </div>
       </div>
     <?php endif; ?>
@@ -388,6 +391,10 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
         <span class="nav-icon">🖼️</span> <span>Cargar imágenes</span>
       </a>
     <?php endif; ?>
+          <a href="monitor_cola.php" class="nav-item <?= $paginaActual === 'monitor_cola' ? 'activo' : '' ?>">
+      <span class="nav-icono">📊</span> Monitor Cola
+    </a>    
+
   </nav>
 
   <!-- Tarjeta del Usuario + Cerrar Sesión -->
