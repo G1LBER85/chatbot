@@ -130,7 +130,7 @@ try {
     
 
     $stmtUltimo = $conn->prepare("
-         SELECT tipo
+         SELECT tipo, fecha_hora
     FROM registros
     WHERE alumno_id = ?
       AND fecha_hora >= CURDATE()
@@ -152,6 +152,28 @@ try {
     $ultimoRegistro = $stmtUltimo->get_result()->fetch_assoc();
 
     $stmtUltimo->close();
+
+    if (
+        $ultimoRegistro &&
+        $ultimoRegistro['tipo'] === 'entrada'
+    )
+    {
+        $horaEntrada = strtotime($ultimoRegistro['fecha_hora']);
+        $ahora = time();
+
+        if (($ahora - $horaEntrada) < 1800) {
+
+            http_response_code(429);
+
+            echo json_encode([
+                'ok' => false,
+                'bloqueado' => true,
+                'error' => 'El alumno no puede escanear salida antes de 30 minutos desde su entrada'
+            ], JSON_UNESCAPED_UNICODE);
+
+            exit;
+        }
+    }
 
     /*
      * Si no hay registros hoy, será entrada.
