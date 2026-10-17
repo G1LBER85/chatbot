@@ -3,7 +3,7 @@ require_once __DIR__ . '/login/php/inicio/auth.php';
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../conexion.php';
 require_once __DIR__ . '/../redis_config.php';
-
+//bien 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
