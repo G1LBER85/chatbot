@@ -872,7 +872,7 @@
 
             temporizadorMensaje = setTimeout(function () {
                 mensajeSistema.classList.remove('visible');
-            }, 800);
+            }, 2000);
         }
 
         /*
@@ -1205,6 +1205,20 @@
                 );
             }
         );
+
+        function pitido() {
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator(); //Crea el sonidito
+                    const vol = ctx.createGain(); //Crea el volumen
+                    osc.connect(vol); //Conecta el volumen...
+                    vol.connect(ctx.destination); //Y los manda a los altavoces o bocinas
+                    osc.frequency.value = 500; //La frecuencia del tono, entre más grande el número, más agudo es el sonido
+                    vol.gain.value = 1; //El volumen del tono, 1 es el máximo, 0 es silencio
+                    osc.start(); //Inicia el sonido
+                    osc.stop(ctx.currentTime + 2); //Detiene el sonido después de 2 segundos
+                } catch(e) {}
+        }
             
         /*
             Validar y enviar el código.
@@ -1260,6 +1274,10 @@
                 }
 
                 if (!respuesta.ok || !datos.ok) {
+
+                    if (datos.bloqueado) {
+                        pitido();
+                    }
 
                     throw new Error(
                         datos.error ||
