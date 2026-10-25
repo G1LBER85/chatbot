@@ -1,7 +1,7 @@
 <?php
 require '../conexion.php';
-require '../redis_config.php';
-
+require_once __DIR__ . '/../telegram/redis.php';
+require_once __DIR__ . '/../telegram/config.php';
 $paginaActual = 'monitor_cola';
 ?>
 
