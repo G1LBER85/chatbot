@@ -1,21 +1,25 @@
 <?php
 $t0 = microtime(true);
-require 'config.php';
-require '../conexion.php';
-require 'redis.php';
-error_log("TIEMPO conexiones: " . round(microtime(true) - $t0, 2) . "s");
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/redis.php';
 
 $update = json_decode(file_get_contents('php://input'), true);
 
-// DEBUG: VER QUÉ RECIBE (revisar en C:\xampp\apache\logs\error.log)
-error_log("DEBUG COMPLETO: " . json_encode($update));
-
 if (!$update) {
     http_response_code(200);
+    echo 'ok';
     exit;
-    
 }
-error_log("TIEMPO total: " . round(microtime(true) - $t0, 2) . "s");
+
+// Responder de inmediato a Telegram para que el webhook no expire
+http_response_code(200);
+header('Content-Type: text/plain; charset=utf-8');
+echo 'ok';
+if (function_exists('fastcgi_finish_request')) {
+    fastcgi_finish_request();
+}
+
 // ========== MENSAJES DE TEXTO ==========
 if (isset($update['message']['text'])) {
     $chat_id = $update['message']['chat']['id'];
@@ -33,32 +37,27 @@ if (isset($update['message']['text'])) {
 
 // ========== CALLBACK QUERY (BOTONES) ==========
 if (isset($update['callback_query'])) {
-    error_log("DEBUG: Callback recibido - " . json_encode($update['callback_query']));
+    $callback = $update['callback_query'];
+    $query_id = $callback['id'];
+    $chat_id  = $callback['message']['chat']['id'] ?? $callback['from']['id'];
+    $data_btn = $callback['data'] ?? '';
 
-    $callback    = $update['callback_query'];
-    $query_id    = $callback['id'];
-    $chat_id     = $callback['message']['chat']['id'] ?? $callback['from']['id'];
-    $data_btn    = $callback['data'] ?? '';
-    $texto_aviso = '✅ Enviado';
+    // 1) Responder PRIMERO al callback (así el ID no caduca)
+    responderCallback($query_id, '✅ Enviado');
 
-    // Buscar alumno por chat_id del tutor
+    // 2) Luego procesar y encolar el contenido
     $stmt = $conn->prepare("SELECT CURP FROM alumnos WHERE tutor_chat_id = ?");
     $stmt->bind_param("i", $chat_id);
     $stmt->execute();
     $alumno = $stmt->get_result()->fetch_assoc();
 
     if (!$alumno) {
-        // Tutor no registrado: explicarle cómo registrarse
         encolarMensaje($chat_id, "⚠️ *Aún no estás registrado*\n\n" . obtenerTextoRegistro());
-        $texto_aviso = '⚠️ Primero regístrate';
 
     } elseif (!preg_match('/^opcion_(\d+)$/', $data_btn, $coincidencia)) {
-        // callback_data con formato inesperado
         encolarMenu($chat_id, $conn);
-        $texto_aviso = '⚠️ Opción no válida';
 
     } else {
-        // CORRECCIÓN: se toma el número completo (opcion_10 → 10), no solo el último dígito
         $numero_opcion = (int) $coincidencia[1];
         $respuesta     = obtenerRespuesta($numero_opcion, $conn);
 
@@ -68,37 +67,18 @@ if (isset($update['callback_query'])) {
                 "📌 *" . escaparMd($respuesta['titulo']) . "*\n\n" . escaparMd($respuesta['respuesta_texto'])
             );
 
-          if ($respuesta['ruta_imagen'] && !empty($respuesta['ruta_imagen'])) {
-    $url_imagen = "https://sash-sake-guidance.ngrok-free.dev/chatbot/" . $respuesta['ruta_imagen'];
-    $redis->agregarACola([
-        'tipo'        => 'foto',
-        'chat_id'     => $chat_id,
-        'url_imagen'  => $url_imagen,
-        'caption'     => "📸"
-    ]);
-}
+            if (!empty($respuesta['ruta_imagen'])) {
+                encolarFoto($chat_id, URL_BASE . $respuesta['ruta_imagen'], "📸");
+            }
         } else {
-            // La opción se borró o se desactivó: avisar y mandar el menú actualizado
             encolarMensaje($chat_id, "⚠️ Esa opción ya no está disponible. Aquí tienes el menú actualizado:");
             encolarMenu($chat_id, $conn);
-            $texto_aviso = '⚠️ Opción no disponible';
         }
     }
-
-    // Quitar el "relojito" del botón en Telegram
-    responderCallback($query_id, $texto_aviso);
 }
-
-http_response_code(200);
-echo "ok";
-
 
 // ========== FUNCIONES AUXILIARES ==========
 
-/**
- * Escapa caracteres especiales de Markdown (_ * ` [) para que
- * Telegram no rechace el mensaje con "can't parse entities"
- */
 function escaparMd($texto) {
     return str_replace(
         ['_', '*', '`', '['],
@@ -116,19 +96,14 @@ function encolarMensaje($chat_id, $texto) {
     ]);
 }
 
-function obtenerBotonesMenu($conn) {
-    $botones = [];
-    $resultado = $conn->query(
-        "SELECT numero, titulo FROM telegram_respuestas
-         WHERE activo = 1 AND titulo != '' ORDER BY numero ASC"
-    );
-    while ($fila = $resultado->fetch_assoc()) {
-        $botones[] = [[
-            "text"          => $fila['titulo'],   // el texto de los botones no usa Markdown
-            "callback_data" => "opcion_" . $fila['numero']
-        ]];
-    }
-    return $botones;
+function encolarFoto($chat_id, $url_imagen, $caption) {
+    global $redis;
+    $redis->agregarACola([
+        'tipo'       => 'foto',
+        'chat_id'    => $chat_id,
+        'url_imagen' => $url_imagen,
+        'caption'    => $caption
+    ]);
 }
 
 function encolarMenu($chat_id, $conn) {
@@ -141,16 +116,29 @@ function encolarMenu($chat_id, $conn) {
     ]);
 }
 
+function obtenerBotonesMenu($conn) {
+    $botones = [];
+    $resultado = $conn->query(
+        "SELECT numero, titulo FROM telegram_respuestas
+         WHERE activo = 1 AND titulo != '' ORDER BY numero ASC"
+    );
+    while ($fila = $resultado->fetch_assoc()) {
+        $botones[] = [[
+            "text"          => $fila['titulo'],
+            "callback_data" => "opcion_" . $fila['numero']
+        ]];
+    }
+    return $botones;
+}
+
 function obtenerRespuesta($numero, $conn) {
     global $redis;
 
-    // Buscar en caché primero
     $respuesta = $redis->getRespuesta($numero);
     if ($respuesta) {
         return $respuesta;
     }
 
-    // Si no está en caché, buscar en BD
     $stmt = $conn->prepare("SELECT * FROM telegram_respuestas WHERE numero = ?");
     $stmt->bind_param("i", $numero);
     $stmt->execute();
@@ -163,7 +151,7 @@ function obtenerRespuesta($numero, $conn) {
 }
 
 function responderCallback($query_id, $texto) {
-    $url = "https://api.telegram.org/bot" . '8922581761:AAH_SEeEAOjedu18YI2BiWwcJghXv7i3vJE' . "/answerCallbackQuery";
+    $url = "https://api.telegram.org/bot" . TELEGRAM_TOKEN . "/answerCallbackQuery";
     $data = [
         "callback_query_id" => $query_id,
         "text"              => $texto,
@@ -175,7 +163,7 @@ function responderCallback($query_id, $texto) {
             "method"        => "POST",
             "content"       => json_encode($data),
             "ignore_errors" => true,
-            "timeout"       => 10
+            "timeout"       => 5
         ]
     ]);
     $resp = @file_get_contents($url, false, $contexto);
@@ -185,7 +173,6 @@ function responderCallback($query_id, $texto) {
 }
 
 function obtenerTextoRegistro() {
-    // CORRECCIÓN: en Markdown de Telegram la negrita es *texto*, no **texto**
     return "📝 *Registro de Tutor*\n\n"
          . "Para registrarte y recibir notificaciones, envía:\n\n"
          . "*/start CURP*\n\n"
@@ -207,7 +194,6 @@ function procesarRegistroCurp($chat_id, $texto, $nombre, $conn) {
 
     $curp = strtoupper(trim($partes[1]));
 
-    // Buscar alumno
     $stmt = $conn->prepare("SELECT * FROM alumnos WHERE CURP = ?");
     $stmt->bind_param("s", $curp);
     $stmt->execute();
@@ -221,7 +207,6 @@ function procesarRegistroCurp($chat_id, $texto, $nombre, $conn) {
         return;
     }
 
-    // Guardar chat_id del tutor
     $stmt2 = $conn->prepare("UPDATE alumnos SET tutor_chat_id = ? WHERE CURP = ?");
     $stmt2->bind_param("is", $chat_id, $curp);
     $stmt2->execute();

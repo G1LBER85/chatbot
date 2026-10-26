@@ -1,3 +1,15 @@
 <?php
-define('TELEGRAM_TOKEN', '8922581761:AAH_SEeEAOjedu18YI2BiWwcJghXv7i3vJE');
-define('TELEGRAM_WEBHOOK_URL', 'https://sash-sake-guidance.ngrok-free.dev/chatbot/telegram/webhook.php');
+require_once __DIR__ . '/../conexion.php';
+
+function obtenerConfig($clave) {
+    global $conn;
+    $stmt = $conn->prepare("SELECT valor FROM configuracion WHERE clave = ?");
+    $stmt->bind_param("s", $clave);
+    $stmt->execute();
+    $fila = $stmt->get_result()->fetch_assoc();
+    return $fila['valor'] ?? '';
+}
+
+// Token y URL leídos desde la base de datos
+define('TELEGRAM_TOKEN', obtenerConfig('telegram_token'));
+define('TELEGRAM_WEBHOOK_URL', obtenerConfig('telegram_webhook_url'));

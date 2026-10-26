@@ -7,7 +7,7 @@ if (file_exists($rutaConexion)) {
     require_once $rutaConexion;
 }
 
-// 1. Detectar identificador de sesión del usuario
+
 $identificadorSesion = '';
 
 if (isset($_SESSION['correo'])) {
@@ -355,89 +355,132 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 
         </div>
       </div>
-    <?php endif; ?>
+   
+<?php endif; ?>
 
-    <?php if (tienePermiso('administradores', $listaPermisos, $permisosUsuario)): ?>
-      <div class="nav-dropdown <?= $paginaActual === 'administradores' ? 'open' : '' ?>">
-        <button type="button" class="nav-dropdown-btn">
-          <span class="dropdown-title"><span class="nav-icon">👤</span> Administradores</span>
-          <span class="arrow">›</span>
-        </button>
-        <div class="nav-sub-list">
-          <a href="administradores.php" class="sub-link <?= ($paginaActual === 'administradores' && !$mostrandoFormulario) ? 'activo' : '' ?>">
-            Ver administradores
-          </a>
-          <a href="administradores.php?accion=nuevo" class="sub-link <?= ($paginaActual === 'administradores' && $mostrandoFormulario) ? 'activo' : '' ?>">
-            ➕ Registrar / editar
-          </a>
-        </div>
-      </div>
-    <?php endif; ?>
+<?php if (tienePermiso('administradores', $listaPermisos, $permisosUsuario)): ?>
+  <div class="nav-dropdown <?= $paginaActual === 'administradores' ? 'open' : '' ?>">
+    <button type="button" class="nav-dropdown-btn">
+      <span class="dropdown-title">
+        <span class="nav-icon">👤</span> Administradores
+      </span>
+      <span class="arrow">›</span>
+    </button>
 
-    <?php if (tienePermiso('telegram', $listaPermisos, $permisosUsuario)): ?>
-      <a href="telegram_respuestas.php" class="nav-link <?= $paginaActual === 'telegram_respuestas' ? 'activo' : '' ?>">
-        <span class="nav-icon">🤖</span> <span>Respuestas Telegram</span>
+    <div class="nav-sub-list">
+      <a href="administradores.php"
+         class="sub-link <?= ($paginaActual === 'administradores' && !$mostrandoFormulario) ? 'activo' : '' ?>">
+        Ver administradores
       </a>
-    <?php endif; ?>
 
-    <?php if (tienePermiso('importar', $listaPermisos, $permisosUsuario)): ?>
-      <a href="importar_alumnos.php" class="nav-link <?= $paginaActual === 'importar_alumnos' ? 'activo' : '' ?>">
-        <span class="nav-icon">📋</span> <span>Importar alumnos</span>
+      <a href="administradores.php?accion=nuevo"
+         class="sub-link <?= ($paginaActual === 'administradores' && $mostrandoFormulario) ? 'activo' : '' ?>">
+        ➕ Registrar / editar
       </a>
-    <?php endif; ?>
-
-    <?php if (tienePermiso('imagenes', $listaPermisos, $permisosUsuario)): ?>
-      <a href="cargar_imagenes.php" class="nav-link <?= $paginaActual === 'cargar_imagenes' ? 'activo' : '' ?>">
-        <span class="nav-icon">🖼️</span> <span>Cargar imágenes</span>
-      </a>
-    <?php endif; ?>
-          <a href="monitor_cola.php" class="nav-item <?= $paginaActual === 'monitor_cola' ? 'activo' : '' ?>">
-      <span class="nav-icono">📊</span> Monitor Cola
-    </a>    
-
-  </nav>
-
-  <!-- Tarjeta del Usuario + Cerrar Sesión -->
-  <div class="sidebar-user-footer">
-    <div class="user-avatar-wrapper">
-      <div class="user-avatar">👤</div>
-      <span class="status-indicator"></span>
     </div>
-    <div class="user-details">
-      <span class="user-name"><?= htmlspecialchars($nombreUsuario) ?></span>
-      <span class="user-role"><?= htmlspecialchars($rolUsuario) ?></span>
-    </div>
-    <a href="login/php/inicio/cerrar_sesion.php" class="logout-btn" title="Cerrar sesión">
-      <svg class="logout-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-        <polyline points="16 17 21 12 16 7"></polyline>
-        <line x1="21" y1="12" x2="9" y2="12"></line>
-      </svg>
-    </a>
   </div>
+<?php endif; ?>
+
+<?php if (tienePermiso('telegram', $listaPermisos, $permisosUsuario)): ?>
+  <a href="telegram_respuestas.php"
+     class="nav-link <?= $paginaActual === 'telegram_respuestas' ? 'activo' : '' ?>">
+    <span class="nav-icon">🤖</span>
+    <span>Respuestas Telegram</span>
+  </a>
+<?php endif; ?>
+
+<?php if (tienePermiso('importar', $listaPermisos, $permisosUsuario)): ?>
+  <a href="importar_alumnos.php"
+     class="nav-link <?= $paginaActual === 'importar_alumnos' ? 'activo' : '' ?>">
+    <span class="nav-icon">📋</span>
+    <span>Importar alumnos</span>
+  </a>
+<?php endif; ?>
+
+<?php if (tienePermiso('imagenes', $listaPermisos, $permisosUsuario)): ?>
+  <a href="cargar_imagenes.php"
+     class="nav-link <?= $paginaActual === 'cargar_imagenes' ? 'activo' : '' ?>">
+    <span class="nav-icon">🖼️</span>
+    <span>Cargar imágenes</span>
+  </a>
+<?php endif; ?>
+
+<?php if (tienePermiso('configuracion', $listaPermisos, $permisosUsuario)): ?>
+  <a href="configuracion.php"
+     class="nav-link <?= $paginaActual === 'configuracion' ? 'activo' : '' ?>">
+    <span class="nav-icon">⚙️</span>
+    <span>Configuración</span>
+  </a>
+<?php endif; ?>
+
+<?php if (tienePermiso('monitor_cola', $listaPermisos, $permisosUsuario)): ?>
+  <a href="monitor_cola.php"
+     class="nav-link <?= $paginaActual === 'monitor_cola' ? 'activo' : '' ?>">
+    <span class="nav-icon">📬</span>
+    <span>Monitor de Cola</span>
+  </a>
+<?php endif; ?>
+
+</nav>
+
+<!-- Tarjeta del Usuario + Cerrar Sesión -->
+<div class="sidebar-user-footer">
+  <div class="user-avatar-wrapper">
+    <div class="user-avatar">👤</div>
+    <span class="status-indicator"></span>
+  </div>
+
+  <div class="user-details">
+    <span class="user-name">
+      <?= htmlspecialchars($nombreUsuario) ?>
+    </span>
+    <span class="user-role">
+      <?= htmlspecialchars($rolUsuario) ?>
+    </span>
+  </div>
+
+  <a href="login/php/inicio/cerrar_sesion.php"
+     class="logout-btn"
+     title="Cerrar sesión">
+    <svg class="logout-icon"
+         width="20"
+         height="20"
+         viewBox="0 0 24 24"
+         fill="none"
+         stroke="currentColor"
+         stroke-width="2"
+         stroke-linecap="round"
+         stroke-linejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+      <polyline points="16 17 21 12 16 7"></polyline>
+      <line x1="21" y1="12" x2="9" y2="12"></line>
+    </svg>
+  </a>
+</div>
 </aside>
 
-<!-- Script para la animación y cierre automático de otros submenús -->
+<!-- Script para abrir un submenú y cerrar los demás -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const dropdowns = document.querySelectorAll('.nav-dropdown');
 
   dropdowns.forEach(dropdown => {
     const btn = dropdown.querySelector('.nav-dropdown-btn');
-    
+
+    if (!btn) return;
+
     btn.addEventListener('click', (e) => {
       e.preventDefault();
-      
-      // Cerrar cualquier otro desplegable que esté abierto
+
       dropdowns.forEach(otherDropdown => {
         if (otherDropdown !== dropdown) {
           otherDropdown.classList.remove('open');
         }
       });
 
-      // Alternar el estado del desplegable actual
       dropdown.classList.toggle('open');
     });
   });
 });
 </script>
+```
