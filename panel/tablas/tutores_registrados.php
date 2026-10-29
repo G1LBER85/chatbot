@@ -12,7 +12,7 @@ $tutoresRegistrados = $conn->query("
 ?>
 
 <?php if ($tutoresRegistrados->num_rows > 0): ?>
-  <table>
+  <table id="tablaDatos">
     <thead>
       <tr>
         <th>Alumno</th>
@@ -23,7 +23,7 @@ $tutoresRegistrados = $conn->query("
     </thead>
     <tbody>
       <?php while ($fila = $tutoresRegistrados->fetch_assoc()): ?>
-      <tr>
+      <tr data-grado="<?= htmlspecialchars($fila['grado'] ?? '') ?>" data-grupo="<?= htmlspecialchars($fila['grupo'] ?? '') ?>">
         <td><?= htmlspecialchars($fila['nombre']) ?></td>
         <td><?= htmlspecialchars($fila['grado']) ?></td>
         <td>
