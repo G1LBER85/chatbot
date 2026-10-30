@@ -17,7 +17,7 @@ $gradosGrupos = $conn->query("
 ?>
 
 <?php if ($gradosGrupos->num_rows > 0): ?>
-  <table>
+  <table id="tablaDatos">
     <thead>
       <tr>
         <th>Nombre</th>
@@ -28,7 +28,7 @@ $gradosGrupos = $conn->query("
     </thead>
     <tbody>
       <?php while ($fila = $gradosGrupos->fetch_assoc()): ?>
-      <tr>
+      <tr data-grado="<?= htmlspecialchars($fila['grado'] ?? '') ?>" data-grupo="<?= htmlspecialchars($fila['grupo'] ?? '') ?>">
         <td><?= htmlspecialchars($fila['nombre']) ?></td>
         <td><?= htmlspecialchars($fila['grado']) ?></td>
         <td><?= htmlspecialchars($fila['grupo'] ?: '—') ?></td>

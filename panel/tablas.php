@@ -102,6 +102,26 @@ if (isset($_GET['chat_eliminado'])) { $mensaje = "✅ Chat ID eliminado, el alum
     </div>
 
     <?php
+    // ── BARRA DE BÚSQUEDA GENERAL ─────────────────────────────────
+    // Una sola barra para toda la sección: busca dentro de la tabla que
+    // esté abierta. En las vistas de alumnos filtra en el navegador (al
+    // instante) y recuerda el filtro de cada tabla aunque se recargue la
+    // página (ver tablas/_barra_filtros.php). "registros" NO usa esta
+    // barra: trae la suya porque filtra en el servidor, ya que esa tabla
+    // puede tener miles de filas y no basta con filtrar las que se ven.
+    if ($vistaActual !== 'registros') {
+        $placeholders = [
+            'grados_grupos'       => 'Nombre, grado o grupo…',
+            'tutores_registrados' => 'Nombre del alumno o Chat ID…',
+            'tutores_pendientes'  => 'Nombre o CURP…',
+        ];
+        $filtroClave         = $vistaActual;
+        $filtroTablaId       = 'tablaDatos';
+        $filtroConGradoGrupo = true;
+        $filtroPlaceholder   = $placeholders[$vistaActual] ?? 'Buscar…';
+        include 'tablas/_barra_filtros.php';
+    }
+
     // Incluye SOLO el contenido de la vista elegida.
     // Cada archivo en tablas/ trae su propia consulta SQL y tabla HTML
     // (ya NO procesa formularios ni redirige — eso vive arriba).

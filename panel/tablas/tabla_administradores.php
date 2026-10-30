@@ -10,7 +10,18 @@
 </div>
 
 <?php if ($administradores && $administradores->num_rows > 0): ?>
-  <table>
+  <?php
+  // Misma barra de búsqueda de la sección Tablas, sin grado/grupo
+  // (los administradores no tienen). Busca en nombre, correo, usuario
+  // y permisos, y recuerda el filtro aunque se recargue la página
+  // (por ejemplo, después de eliminar o de editar un administrador).
+  $filtroClave         = 'administradores';
+  $filtroTablaId       = 'tablaAdministradores';
+  $filtroConGradoGrupo = false;
+  $filtroPlaceholder   = 'Nombre, usuario, correo o permisos…';
+  include __DIR__ . '/_barra_filtros.php';
+  ?>
+  <table id="tablaAdministradores">
     <thead>
       <tr>
         <th>ID</th>

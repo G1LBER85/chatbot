@@ -12,7 +12,7 @@ $tutoresPendientes = $conn->query("
 ?>
 
 <?php if ($tutoresPendientes->num_rows > 0): ?>
-  <table>
+  <table id="tablaDatos">
     <thead>
       <tr>
         <th>Alumno</th>
@@ -23,7 +23,7 @@ $tutoresPendientes = $conn->query("
     </thead>
     <tbody>
       <?php while ($fila = $tutoresPendientes->fetch_assoc()): ?>
-      <tr>
+      <tr data-grado="<?= htmlspecialchars($fila['grado'] ?? '') ?>" data-grupo="<?= htmlspecialchars($fila['grupo'] ?? '') ?>">
         <td><?= htmlspecialchars($fila['nombre']) ?></td>
         <td><?= htmlspecialchars($fila['grado']) ?> <?= htmlspecialchars($fila['grupo'] ?? '') ?></td>
         <td><span style="font-family: monospace;"><?= $fila['CURP'] ? htmlspecialchars($fila['CURP']) : '<span style="color:#bbb;">Sin capturar</span>' ?></span></td>
