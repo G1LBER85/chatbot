@@ -251,14 +251,14 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Alumnos — Panel de Administrador ChecaBot</title>
   <link rel="stylesheet" href="css/panel.css">
+  <!-- Asegurar la carga de SweetAlert2 por si no está en el layout principal -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 
 <div class="layout">
 
-
   <?php include '../sidebar/sidebar.php'; ?>
-
 
   <main class="contenido">
 
@@ -359,8 +359,17 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
               </td>
               <td>
                 <div style="display:flex; gap:8px;">
-                  <a href="alumnos.php?accion=editar&id=<?= $alumno['id'] ?>" class="btn btn-primary btn-small">✏️</a>
-                  <a href="alumnos.php?eliminar=<?= $alumno['id'] ?>" class="btn btn-danger btn-small" onclick="return confirm('¿Eliminar a <?= addslashes($alumno['nombre']) ?>?')">🗑️</a>
+                  <a href="alumnos.php?accion=editar&id=<?= $alumno['id'] ?>" class="btn btn-primary btn-small" title="Editar alumno">✏️</a>
+                  <button type="button" class="btn btn-danger btn-small" title="Eliminar alumno" onclick="Swal.fire({
+                    title: '¿Eliminar a <?= addslashes($alumno['nombre']) ?>?',
+                    text: 'Esta acción es irreversible y eliminará tanto los datos del alumno como su historial de asistencia.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Aceptar',
+                    cancelButtonText: 'Cancelar'
+                  }).then((r) => { if (r.isConfirmed) window.location.href = 'alumnos.php?eliminar=<?= $alumno['id'] ?>'; })">🗑️</button>
                 </div>
               </td>
             </tr>

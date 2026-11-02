@@ -1,2 +1,3 @@
 panel/credenciales/proceso_de_credenciales/progreso/
 *.sql
+"vendor/" 
