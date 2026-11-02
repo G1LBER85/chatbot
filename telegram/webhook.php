@@ -162,9 +162,26 @@ function tutorRegistrado($chat_id, $conn) {
     return $existe;
 }
 
-// Manda UN mensaje por cada alumno vinculado a este chat (por ejemplo,
-// hermanos con el mismo Telegram). Separados para no pasar el límite de
-// 4096 caracteres que tiene un mensaje de Telegram.
+// Rango de los "registros semanales", calculado en MySQL para que coincida
+// con el reloj con el que se guardaron los registros:
+//   desde = el LUNES DE LA SEMANA PASADA
+//   hasta = hoy
+//   lunes = el lunes de ESTA semana (separa "esta semana" de "semana pasada")
+// No importa qué día lo soliciten, siempre llega hasta el lunes anterior:
+//   lunes   02/11/2026 -> desde 26/10/2026
+//   viernes 06/11/2026 -> desde 26/10/2026
+// (WEEKDAY: lunes = 0 ... domingo = 6. La semana empieza en lunes.)
+function obtenerRangoSemanal($conn) {
+    return $conn->query(
+        "SELECT DATE_SUB(CURDATE(), INTERVAL (WEEKDAY(CURDATE()) + 7) DAY) AS desde,
+                DATE_SUB(CURDATE(), INTERVAL WEEKDAY(CURDATE()) DAY)       AS lunes,
+                CURDATE()                                                  AS hasta"
+    )->fetch_assoc();
+}
+
+// Manda los registros de cada alumno vinculado a este chat (por ejemplo,
+// hermanos con el mismo Telegram). Cada alumno va en su propio mensaje, y si
+// un alumno tiene tantos registros que no caben en uno, se parte en varios.
 function encolarRegistroAlumno($chat_id, $conn) {
     $stmt = $conn->prepare(
         "SELECT id, nombre, grado, grupo FROM alumnos
@@ -180,62 +197,69 @@ function encolarRegistroAlumno($chat_id, $conn) {
         return;
     }
 
+    $rango = obtenerRangoSemanal($conn);
+
     foreach ($alumnos as $alumno) {
-        encolarMensaje(
-            $chat_id,
-            armarTextoRegistros($alumno, obtenerRegistrosRecientes($alumno['id'], $conn))
-        );
+        $registros = obtenerRegistrosDelPeriodo($alumno['id'], $rango['desde'], $conn);
+
+        foreach (armarTextosRegistros($alumno, $registros, $rango) as $texto) {
+            encolarMensaje($chat_id, $texto);
+        }
     }
 }
 
-// Los últimos registros del alumno, del más reciente al más viejo.
-// "es_hoy" se calcula en MySQL (CURDATE) para que "hoy" sea el mismo día
-// con el que se guardaron los registros, sin depender de la zona horaria de PHP.
-function obtenerRegistrosRecientes($alumno_id, $conn) {
+// Los registros del alumno desde $desde (AAAA-MM-DD) hasta ahora, del más
+// reciente al más viejo. "es_hoy" se calcula en MySQL (CURDATE) para que
+// "hoy" sea el mismo día con el que se guardaron los registros, sin depender
+// de la zona horaria de PHP. El LIMIT es solo un tope de seguridad.
+function obtenerRegistrosDelPeriodo($alumno_id, $desde, $conn) {
+    $desde_hora = $desde . ' 00:00:00';
+
     $stmt = $conn->prepare(
         "SELECT tipo, fecha_hora, (DATE(fecha_hora) = CURDATE()) AS es_hoy
          FROM registros
-         WHERE alumno_id = ?
+         WHERE alumno_id = ? AND fecha_hora >= ?
          ORDER BY fecha_hora DESC, id DESC
-         LIMIT 40"
+         LIMIT 300"
     );
-    $stmt->bind_param("i", $alumno_id);
+    $stmt->bind_param("is", $alumno_id, $desde_hora);
     $stmt->execute();
     $filas = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     return $filas;
 }
 
-// Arma el texto: hoy + los últimos 5 días con registros, cada día en orden
-// de la mañana a la tarde. No toca la base de datos (solo da formato).
-function armarTextoRegistros($alumno, $registros) {
-    // Agrupar por día. Llegan del más reciente al más viejo, así que al
-    // encontrar el sexto día distinto ya no hay nada más que mostrar.
+// Da formato a los registros: "Esta semana" y "Semana pasada", cada día con
+// sus entradas y salidas de la mañana a la tarde, el día más reciente primero.
+// Devuelve una LISTA de textos: casi siempre uno solo, pero si no cabe en un
+// mensaje de Telegram (tope de 4096 caracteres) se parte por días.
+// No toca la base de datos (solo da formato).
+function armarTextosRegistros($alumno, $registros, $rango) {
+    $cabecera = "🕐 *Registro de entrada y salida*\n"
+              . "👤 *" . escaparMd($alumno['nombre']) . "*\n"
+              . "🎓 Grado: " . escaparMd($alumno['grado'] . $alumno['grupo']) . "\n"
+              . "📅 Del " . date('d/m/Y', strtotime($rango['desde']))
+              . " al " . date('d/m/Y', strtotime($rango['hasta'])) . "\n";
+
+    // Agrupar por día (llegan del más reciente al más viejo)
     $dias = [];
     foreach ($registros as $r) {
         $dia = substr($r['fecha_hora'], 0, 10);
         if (!isset($dias[$dia])) {
-            if (count($dias) >= 5) {
-                break;
-            }
             $dias[$dia] = ['hoy' => ((int) $r['es_hoy']) === 1, 'filas' => []];
         }
         $dias[$dia]['filas'][] = $r;
     }
 
-    $texto = "🕐 *Registro de entrada y salida*\n"
-           . "👤 *" . escaparMd($alumno['nombre']) . "*\n"
-           . "🎓 Grado: " . escaparMd($alumno['grado'] . $alumno['grupo']) . "\n";
-
     if (!$dias) {
-        return $texto . "\nAún no hay registros de entrada o salida de este alumno.";
+        return [$cabecera . "\nNo hay registros de entrada o salida en este periodo."];
     }
 
-    if (!reset($dias)['hoy']) {
-        $texto .= "\n📍 Hoy aún no hay registros.\n";
-    }
+    $aviso = reset($dias)['hoy'] ? '' : "\n📍 Hoy aún no hay registros.\n";
 
+    // Un bloque de texto por día, con la sección a la que pertenece
     $nombresDia = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+    $bloques = [];
 
     foreach ($dias as $dia => $info) {
         $fecha = date('d/m/Y', strtotime($dia));
@@ -243,16 +267,47 @@ function armarTextoRegistros($alumno, $registros) {
             ? "Hoy · " . $fecha
             : $nombresDia[(int) date('w', strtotime($dia))] . " " . $fecha;
 
-        $texto .= "\n*" . $etiqueta . "*\n";
+        $texto = "\n*" . $etiqueta . "*\n";
 
         // Dentro del día, de la primera hora a la última
         foreach (array_reverse($info['filas']) as $r) {
             $hora = date('h:i A', strtotime($r['fecha_hora']));
             $texto .= ($r['tipo'] === 'entrada' ? "✅ Entrada" : "🚪 Salida") . " — " . $hora . "\n";
         }
+
+        $bloques[] = [
+            // Las fechas AAAA-MM-DD se comparan bien como texto
+            'seccion' => ($dia >= $rango['lunes']) ? "📆 *Esta semana*" : "📆 *Semana pasada*",
+            'texto'   => $texto
+        ];
     }
 
-    return rtrim($texto);
+    // Juntar los días en mensajes de máximo ~3500 caracteres (con margen
+    // bajo el tope de 4096 de Telegram)
+    $mensajes = [];
+    $actual = $cabecera . $aviso;
+    $conDias = false;          // ¿el mensaje que se está armando ya trae algún día?
+    $seccionActual = '';
+
+    foreach ($bloques as $b) {
+        $titulo = ($b['seccion'] !== $seccionActual) ? "\n" . $b['seccion'] . "\n" : '';
+
+        if ($conDias && mb_strlen($actual . $titulo . $b['texto'], 'UTF-8') > 3500) {
+            $mensajes[] = rtrim($actual);
+            $actual = "🕐 *Registro de entrada y salida* (continuación)\n"
+                    . "👤 *" . escaparMd($alumno['nombre']) . "*\n";
+            $conDias = false;
+            $titulo = "\n" . $b['seccion'] . "\n";
+        }
+
+        $actual .= $titulo . $b['texto'];
+        $seccionActual = $b['seccion'];
+        $conDias = true;
+    }
+
+    $mensajes[] = rtrim($actual);
+
+    return $mensajes;
 }
 
 function obtenerRespuesta($numero, $conn) {
@@ -346,4 +401,4 @@ function procesarRegistroCurp($chat_id, $texto, $nombre, $conn) {
     );
 
     encolarMenu($chat_id, $conn);
-}
+}       
