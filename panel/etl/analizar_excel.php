@@ -217,42 +217,339 @@ function excelDetectarColumnas(array $filas): ?array
 }
 
 
+// -----------------------------------------------------
+// DETECCIÓN POR CONTENIDO (cuando NO hay encabezados)
+//
+// Muchas bases (como la de la escuela) no traen encabezados.
+// Entonces cada columna se reconoce por lo que CONTIENE:
+//
+//   CURP ........... 18 caracteres con el formato oficial
+//                    (4 letras, 6 números, H/M/X, ...)
+//   Grado y grupo .. valores como "2A", "4 B"
+//   Grado .......... números del 1 al 6
+//   Grupo .......... una letra de la A a la J
+//   Nombre ......... texto con varias palabras (la columna de
+//                    texto más largo)
+//
+// Las columnas que no sirven (matrícula, sexo, número de
+// lista, nacionalidad, etc.) simplemente se ignoran.
+// -----------------------------------------------------
+
+function excelLetraColumna(int $indice): string
+{
+    // 0 → A, 1 → B, ... 25 → Z, 26 → AA
+    $letra = '';
+
+    $n = $indice + 1;
+
+    while ($n > 0) {
+
+        $resto = ($n - 1) % 26;
+
+        $letra = chr(65 + $resto) . $letra;
+
+        $n = intdiv($n - 1, 26);
+
+    }
+
+    return $letra;
+}
+
+
+function excelPrimeraFilaDeDatos(array $filas): int
+{
+    // Los títulos y filas casi vacías de arriba se saltan: la
+    // primera fila "de verdad" es la primera con 3 o más datos.
+    foreach ($filas as $indice => $fila) {
+
+        $llenas = 0;
+
+        foreach ($fila as $celda) {
+
+            if (trim((string) $celda) !== '') {
+                $llenas++;
+            }
+
+        }
+
+        if ($llenas >= 3) {
+            return (int) $indice;
+        }
+
+    }
+
+    return 0;
+}
+
+
+function excelInferirColumnas(array $filas, int $desde): ?array
+{
+    // Se revisan hasta 400 filas: sobra para reconocer el patrón
+    // y mantiene rápido el análisis aunque el Excel sea enorme.
+    $muestra = array_slice($filas, $desde, 400);
+
+    $total     = [];
+    $nCurp     = [];
+    $nGradoGr  = [];
+    $nGrado    = [];
+    $nGrupo    = [];
+    $nNombre   = [];
+    $largo     = [];
+    $distintos = [];
+
+    foreach ($muestra as $fila) {
+
+        foreach ($fila as $col => $celda) {
+
+            $v = trim((string) $celda);
+
+            if ($v === '') {
+                continue;
+            }
+
+            $total[$col] = ($total[$col] ?? 0) + 1;
+
+            $distintos[$col][strtoupper($v)] = true;
+
+            $sinEspacios = strtoupper(str_replace(' ', '', $v));
+
+            if (preg_match(
+                '/^[A-Z]{4}\d{6}[HMX][A-Z]{5}[A-Z0-9]\d$/',
+                $sinEspacios
+            )) {
+                $nCurp[$col] = ($nCurp[$col] ?? 0) + 1;
+            }
+
+            if (preg_match('/^[1-6]\s*[A-Za-z]$/', $v)) {
+                $nGradoGr[$col] = ($nGradoGr[$col] ?? 0) + 1;
+            }
+
+            if (preg_match('/^[1-6](\.0+)?$/', $v)) {
+                $nGrado[$col] = ($nGrado[$col] ?? 0) + 1;
+            }
+
+            if (preg_match('/^[A-Ja-j]$/', $v)) {
+                $nGrupo[$col] = ($nGrupo[$col] ?? 0) + 1;
+            }
+
+            // Nombre: solo letras, con al menos un espacio
+            if (
+                preg_match('/\s/', $v)
+                &&
+                mb_strlen($v, 'UTF-8') >= 5
+                &&
+                preg_match('/^[\p{L}\p{M}][\p{L}\p{M}\'’. \-]*$/u', $v)
+            ) {
+                $nNombre[$col] = ($nNombre[$col] ?? 0) + 1;
+                $largo[$col]   = ($largo[$col] ?? 0) + mb_strlen($v, 'UTF-8');
+            }
+
+        }
+
+    }
+
+    // Devuelve la columna con mayor proporción de aciertos
+    // (mínimo 60 % de sus celdas con datos), sin repetir columnas.
+    $mejor = function (array $conteos, array $excluir = []) use ($total) {
+
+        $ganador = null;
+
+        $mayor = 0.0;
+
+        foreach ($conteos as $col => $n) {
+
+            if (in_array($col, $excluir, true)) {
+                continue;
+            }
+
+            $razon = $n / $total[$col];
+
+            if ($razon >= 0.6 && $razon > $mayor) {
+                $mayor = $razon;
+                $ganador = $col;
+            }
+
+        }
+
+        return $ganador;
+    };
+
+    // 1) CURP (obligatoria)
+    $curp = $mejor($nCurp);
+
+    if ($curp === null) {
+        return null;
+    }
+
+    $columnas = ['curp' => $curp];
+
+    // 2) Grado y grupo: una columna "2A" o dos columnas separadas
+    $gradoGrupo = $mejor($nGradoGr, [$curp]);
+
+    if ($gradoGrupo !== null) {
+
+        $columnas['grado_grupo'] = $gradoGrupo;
+
+    } else {
+
+        $grado = $mejor($nGrado, [$curp]);
+
+        // Una columna que solo trae H / M / X es de SEXO, no de
+        // grupo (la "H" también sería una letra de grupo válida).
+        $candidatasGrupo = [];
+
+        foreach ($nGrupo as $col => $n) {
+
+            $valores = array_map('strval', array_keys($distintos[$col]));
+
+            if (array_diff($valores, ['H', 'M', 'X']) === []) {
+                continue;
+            }
+
+            $candidatasGrupo[$col] = $n;
+
+        }
+
+        $grupo = $mejor($candidatasGrupo, [$curp, $grado]);
+
+        if ($grado === null || $grupo === null) {
+            return null;
+        }
+
+        $columnas['grado'] = $grado;
+
+        $columnas['grupo'] = $grupo;
+
+    }
+
+    // 3) Nombre: de las columnas que quedan, la de texto más largo
+    $usadas = array_values($columnas);
+
+    $nombre = null;
+
+    $mejorPuntaje = 0.0;
+
+    foreach ($nNombre as $col => $n) {
+
+        if (in_array($col, $usadas, true)) {
+            continue;
+        }
+
+        $razon = $n / $total[$col];
+
+        if ($razon < 0.6) {
+            continue;
+        }
+
+        $puntaje = $razon * ($largo[$col] / $n);
+
+        if ($puntaje > $mejorPuntaje) {
+            $mejorPuntaje = $puntaje;
+            $nombre = $col;
+        }
+
+    }
+
+    if ($nombre === null) {
+        return null;
+    }
+
+    $columnas['nombre'] = $nombre;
+
+    return $columnas;
+}
+
+
 $alumnos = [];
 
 $curpsExcel = [];
 
 
+// ORDEN DE PRUEBA para reconocer las columnas:
+//   1) Por los ENCABEZADOS, si el Excel los trae completos.
+//   2) Por el CONTENIDO de cada columna, si no hay encabezados
+//      o están incompletos.
+//   3) Orden estándar de la escuela (A = "1A", D = CURP,
+//      E = Nombre), si lo anterior no logró reconocer nada.
+
 $deteccion = excelDetectarColumnas($filas);
 
-if ($deteccion === null) {
+$modoDeteccion = '';
 
-    // PLAN B: sin encabezados → orden de siempre
-    $columnas = [
-        'grado_grupo' => 0,
-        'curp'        => 3,
-        'nombre'      => 4
-    ];
-
-    $primeraFilaDeDatos = 0;
-
-} else {
-
-    if (!empty($deteccion['faltan'])) {
-
-        die(
-            'El encabezado del Excel no tiene estas columnas: '
-            . implode(', ', $deteccion['faltan'])
-            . '. Revisa los nombres de las columnas en la primera fila.'
-        );
-
-    }
+if ($deteccion !== null && empty($deteccion['faltan'])) {
 
     $columnas = $deteccion['columnas'];
 
     // Los títulos y la fila de encabezados no son alumnos
     $primeraFilaDeDatos = $deteccion['fila_encabezado'] + 1;
 
+    $modoDeteccion = 'por los encabezados';
+
+} else {
+
+    $primeraFilaDeDatos = ($deteccion !== null)
+        ? $deteccion['fila_encabezado'] + 1
+        : excelPrimeraFilaDeDatos($filas);
+
+    $columnas = excelInferirColumnas($filas, $primeraFilaDeDatos);
+
+    if ($columnas !== null) {
+
+        $modoDeteccion = 'por su contenido';
+
+    } elseif ($deteccion !== null) {
+
+        die(
+            'El encabezado del Excel no tiene estas columnas: '
+            . implode(', ', $deteccion['faltan'])
+            . ', y tampoco se pudieron reconocer por su contenido. '
+            . 'Revisa los nombres de las columnas en la primera fila.'
+        );
+
+    } else {
+
+        // PLAN B: orden estándar de la escuela
+        $columnas = [
+            'grado_grupo' => 0,
+            'curp'        => 3,
+            'nombre'      => 4
+        ];
+
+        $primeraFilaDeDatos = 0;
+
+        $modoDeteccion = 'orden estándar';
+
+    }
+
 }
+
+// Texto para mostrar en la vista previa qué columnas se leyeron
+$etiquetasColumnas = [
+    'grado_grupo' => 'Grado y grupo',
+    'grado'       => 'Grado',
+    'grupo'       => 'Grupo',
+    'nombre'      => 'Nombre',
+    'curp'        => 'CURP'
+];
+
+$partesColumnas = [];
+
+foreach ($etiquetasColumnas as $campo => $etiqueta) {
+
+    if (isset($columnas[$campo])) {
+
+        $partesColumnas[] =
+            $etiqueta . ' → columna '
+            . excelLetraColumna((int) $columnas[$campo]);
+
+    }
+
+}
+
+$descripcionColumnas =
+    implode(' · ', $partesColumnas)
+    . ' · datos desde la fila '
+    . ($primeraFilaDeDatos + 1);
 
 // Si vienen "grado" y "grupo" en columnas separadas se usan
 // esas; si no, se usa la columna única "1A".
@@ -1711,6 +2008,19 @@ function textoCambios($cambios)
             <?= htmlspecialchars(
                 $archivo['name']
             ) ?>
+
+        </strong>
+
+    </div>
+
+
+    <div class="archivo">
+
+        🧭 Columnas detectadas (<?= htmlspecialchars($modoDeteccion) ?>):
+
+        <strong>
+
+            <?= htmlspecialchars($descripcionColumnas) ?>
 
         </strong>
 

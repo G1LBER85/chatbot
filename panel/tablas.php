@@ -51,7 +51,8 @@ if (isset($_GET['eliminar_alumno'])) {
 // alumno. El alumno pasa automáticamente a "Tutores pendientes",
 // porque esa vista filtra por tutor_chat_id IS NULL. Si el tutor
 // quiere volver a recibir notificaciones, debe escribir /start de
-// nuevo en el bot — ya no hay forma de capturarlo manualmente aquí.
+// nuevo en el bot (o se le captura a mano con el candado de la tabla).
+// Esta acción solo se ofrece DESPUÉS de abrir el candado 🔓.
 if (isset($_GET['eliminar_chat_id'])) {
     $idAlumno = intval($_GET['eliminar_chat_id']);
 
@@ -64,9 +65,49 @@ if (isset($_GET['eliminar_chat_id'])) {
     exit;
 }
 
+// [PROCESO: EDITAR EL CHAT ID DEL TUTOR A MANO] ────────────────────
+// Se usa desde el candado de "Tutores registrados". Es la ÚNICA forma de
+// cambiar el Chat ID de un alumno que ya tiene tutor: desde Telegram ya no
+// se puede (el bot no sobrescribe). Va por POST, con un token anti-CSRF,
+// para que otro sitio no pueda hacer este cambio en nombre del administrador.
+if (empty($_SESSION['csrf_tablas'])) {
+    $_SESSION['csrf_tablas'] = bin2hex(random_bytes(32));
+}
+$csrf = $_SESSION['csrf_tablas'];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['editar_chat_id'])) {
+    $tokenRecibido = is_string($_POST['csrf'] ?? null) ? $_POST['csrf'] : '';
+    $idAlumno      = (int) ($_POST['alumno_id'] ?? 0);
+    $nuevoChatId   = is_string($_POST['nuevo_chat_id'] ?? null) ? trim($_POST['nuevo_chat_id']) : '';
+
+    // Un Chat ID de Telegram es un número entero positivo (5 a 18 dígitos)
+    if (!hash_equals($_SESSION['csrf_tablas'], $tokenRecibido)) {
+        $resultado = 'chat_sesion=1';
+    } elseif ($idAlumno <= 0 || !preg_match('/^[1-9]\d{4,17}$/', $nuevoChatId)) {
+        $resultado = 'chat_invalido=1';
+    } else {
+        // Solo se edita a alumnos que YA tienen tutor (el candado no sirve
+        // para dar de alta a uno nuevo: eso se hace desde Telegram)
+        $stmtEditar = $conn->prepare(
+            "UPDATE alumnos SET tutor_chat_id = ? WHERE id = ? AND tutor_chat_id IS NOT NULL"
+        );
+        $stmtEditar->bind_param("si", $nuevoChatId, $idAlumno);
+        $stmtEditar->execute();
+        $resultado = $stmtEditar->affected_rows > 0 ? 'chat_actualizado=1' : 'chat_sin_cambios=1';
+        $stmtEditar->close();
+    }
+
+    header("Location: tablas.php?vista=tutores_registrados&{$resultado}");
+    exit;
+}
+
 // [MENSAJES DE CONFIRMACIÓN] ──────────────────────────────────────
 if (isset($_GET['eliminado'])) { $mensaje = "✅ Eliminado correctamente"; $tipo_mensaje = "success"; }
 if (isset($_GET['chat_eliminado'])) { $mensaje = "✅ Chat ID eliminado, el alumno pasó a Tutores pendientes"; $tipo_mensaje = "success"; }
+if (isset($_GET['chat_actualizado'])) { $mensaje = "✅ Chat ID actualizado. El candado volvió a cerrarse"; $tipo_mensaje = "success"; }
+if (isset($_GET['chat_sin_cambios'])) { $mensaje = "ℹ️ No hubo cambios: el Chat ID era el mismo o el alumno ya no tiene tutor"; $tipo_mensaje = "success"; }
+if (isset($_GET['chat_invalido'])) { $mensaje = "⚠️ Chat ID no válido: debe ser solo números, de 5 a 18 dígitos"; $tipo_mensaje = "error"; }
+if (isset($_GET['chat_sesion'])) { $mensaje = "⚠️ La página estaba caducada y no se hizo el cambio. Inténtalo de nuevo"; $tipo_mensaje = "error"; }
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -91,7 +132,7 @@ if (isset($_GET['chat_eliminado'])) { $mensaje = "✅ Chat ID eliminado, el alum
     </div>
 
     <?php if ($mensaje): ?>
-      <div class="mensaje <?= $tipo_mensaje ?>"><?= $mensaje ?></div>
+      <div class="mensaje <?= $tipo_mensaje ?>"<?= $tipo_mensaje === 'error' ? ' style="background:#fdeeee; color:#a12a2a; border:1px solid #f1c0c0;"' : '' ?>><?= $mensaje ?></div>
     <?php endif; ?>
 
     <div class="sub-tabs">
