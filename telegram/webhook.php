@@ -361,6 +361,12 @@ function obtenerTextoRegistro() {
          . "📞 Solicítalo a la escuela si no lo tienes.";
 }
 
+function textoCandadoTutor() {
+    return "🔒 *Este alumno ya tiene un tutor registrado*\n\n"
+         . "Por seguridad, el registro no se puede cambiar desde Telegram.\n\n"
+         . "📞 Si necesitas actualizarlo, acude a la escuela.";
+}
+
 function procesarRegistroCurp($chat_id, $texto, $nombre, $conn) {
     global $redis;
 
@@ -386,9 +392,42 @@ function procesarRegistroCurp($chat_id, $texto, $nombre, $conn) {
         return;
     }
 
-    $stmt2 = $conn->prepare("UPDATE alumnos SET tutor_chat_id = ? WHERE CURP = ?");
+    // 🔒 CANDADO: si el alumno YA tiene un tutor registrado, otro /start con
+    // su CURP NO lo sobrescribe (la CURP no es secreta, así que no puede ser
+    // la única llave). Cambiar o quitar al tutor es un trabajo MANUAL del
+    // panel (Tablas → Tutores registrados → candado).
+    $chat_actual = (int) ($alumno['tutor_chat_id'] ?? 0);
+
+    if ($chat_actual !== 0) {
+        if ($chat_actual === (int) $chat_id) {
+            // El mismo tutor escribió otra vez: no es un error, solo se avisa
+            encolarMensaje(
+                $chat_id,
+                "✅ *Ya estabas registrado*\n\n"
+                . "Sigues recibiendo las notificaciones de:\n"
+                . "*" . escaparMd($alumno['nombre']) . "*"
+            );
+            encolarMenu($chat_id, $conn);
+        } else {
+            encolarMensaje($chat_id, textoCandadoTutor());
+        }
+        return;
+    }
+
+    // El UPDATE vuelve a exigir que siga libre (IS NULL o 0). Así, si dos
+    // personas escriben /start con la misma CURP al mismo tiempo, solo la
+    // primera se queda con el alumno y la otra recibe el aviso del candado.
+    $stmt2 = $conn->prepare(
+        "UPDATE alumnos SET tutor_chat_id = ?
+         WHERE CURP = ? AND (tutor_chat_id IS NULL OR tutor_chat_id = 0)"
+    );
     $stmt2->bind_param("is", $chat_id, $curp);
     $stmt2->execute();
+
+    if ($stmt2->affected_rows === 0) {
+        encolarMensaje($chat_id, textoCandadoTutor());
+        return;
+    }
 
     $redis->setChatId($curp, $chat_id);
 
@@ -401,4 +440,4 @@ function procesarRegistroCurp($chat_id, $texto, $nombre, $conn) {
     );
 
     encolarMenu($chat_id, $conn);
-}       
+}
