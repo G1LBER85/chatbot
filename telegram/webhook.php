@@ -54,6 +54,11 @@ if (isset($update['callback_query'])) {
     if (!$alumno) {
         encolarMensaje($chat_id, "⚠️ *Aún no estás registrado*\n\n" . obtenerTextoRegistro());
 
+    } elseif ($data_btn === 'registro_alumno') {
+        // Opción dinámica (no está en la tabla telegram_respuestas): consulta
+        // en vivo las entradas y salidas del alumno de ESTE tutor.
+        encolarRegistroAlumno($chat_id, $conn);
+
     } elseif (!preg_match('/^opcion_(\d+)$/', $data_btn, $coincidencia)) {
         encolarMenu($chat_id, $conn);
 
@@ -112,12 +117,24 @@ function encolarMenu($chat_id, $conn) {
         'tipo'    => 'menu',
         'chat_id' => $chat_id,
         'texto'   => "👋 ¿Qué necesitas?\n\nSelecciona una opción:",
-        'botones' => obtenerBotonesMenu($conn)
+        'botones' => obtenerBotonesMenu($conn, $chat_id)
     ]);
 }
 
-function obtenerBotonesMenu($conn) {
+function obtenerBotonesMenu($conn, $chat_id) {
     $botones = [];
+
+    // Pregunta fija DINÁMICA: solo aparece si este tutor ya está registrado
+    // (tiene al menos un alumno con su chat_id). Va primero en la lista.
+    // Para quitarla de arriba y ponerla al final, mover este bloque
+    // debajo del while de más abajo.
+    if (tutorRegistrado($chat_id, $conn)) {
+        $botones[] = [[
+            "text"          => "🕐 Registro de entrada y salida de tu alumno",
+            "callback_data" => "registro_alumno"
+        ]];
+    }
+
     $resultado = $conn->query(
         "SELECT numero, titulo FROM telegram_respuestas
          WHERE activo = 1 AND titulo != '' ORDER BY numero ASC"
@@ -129,6 +146,113 @@ function obtenerBotonesMenu($conn) {
         ]];
     }
     return $botones;
+}
+
+// ========== REGISTRO DE ENTRADA Y SALIDA DEL ALUMNO ==========
+
+// ¿Este chat ya está vinculado a algún alumno?
+// El chat_id viene de Telegram (no se puede falsificar desde el texto del
+// mensaje), así que un tutor nunca ve información de alumnos que no son suyos.
+function tutorRegistrado($chat_id, $conn) {
+    $stmt = $conn->prepare("SELECT 1 FROM alumnos WHERE tutor_chat_id = ? LIMIT 1");
+    $stmt->bind_param("i", $chat_id);
+    $stmt->execute();
+    $existe = $stmt->get_result()->num_rows > 0;
+    $stmt->close();
+    return $existe;
+}
+
+// Manda UN mensaje por cada alumno vinculado a este chat (por ejemplo,
+// hermanos con el mismo Telegram). Separados para no pasar el límite de
+// 4096 caracteres que tiene un mensaje de Telegram.
+function encolarRegistroAlumno($chat_id, $conn) {
+    $stmt = $conn->prepare(
+        "SELECT id, nombre, grado, grupo FROM alumnos
+         WHERE tutor_chat_id = ? ORDER BY nombre ASC"
+    );
+    $stmt->bind_param("i", $chat_id);
+    $stmt->execute();
+    $alumnos = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    if (!$alumnos) {
+        encolarMensaje($chat_id, "⚠️ *Aún no estás registrado*\n\n" . obtenerTextoRegistro());
+        return;
+    }
+
+    foreach ($alumnos as $alumno) {
+        encolarMensaje(
+            $chat_id,
+            armarTextoRegistros($alumno, obtenerRegistrosRecientes($alumno['id'], $conn))
+        );
+    }
+}
+
+// Los últimos registros del alumno, del más reciente al más viejo.
+// "es_hoy" se calcula en MySQL (CURDATE) para que "hoy" sea el mismo día
+// con el que se guardaron los registros, sin depender de la zona horaria de PHP.
+function obtenerRegistrosRecientes($alumno_id, $conn) {
+    $stmt = $conn->prepare(
+        "SELECT tipo, fecha_hora, (DATE(fecha_hora) = CURDATE()) AS es_hoy
+         FROM registros
+         WHERE alumno_id = ?
+         ORDER BY fecha_hora DESC, id DESC
+         LIMIT 40"
+    );
+    $stmt->bind_param("i", $alumno_id);
+    $stmt->execute();
+    $filas = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $filas;
+}
+
+// Arma el texto: hoy + los últimos 5 días con registros, cada día en orden
+// de la mañana a la tarde. No toca la base de datos (solo da formato).
+function armarTextoRegistros($alumno, $registros) {
+    // Agrupar por día. Llegan del más reciente al más viejo, así que al
+    // encontrar el sexto día distinto ya no hay nada más que mostrar.
+    $dias = [];
+    foreach ($registros as $r) {
+        $dia = substr($r['fecha_hora'], 0, 10);
+        if (!isset($dias[$dia])) {
+            if (count($dias) >= 5) {
+                break;
+            }
+            $dias[$dia] = ['hoy' => ((int) $r['es_hoy']) === 1, 'filas' => []];
+        }
+        $dias[$dia]['filas'][] = $r;
+    }
+
+    $texto = "🕐 *Registro de entrada y salida*\n"
+           . "👤 *" . escaparMd($alumno['nombre']) . "*\n"
+           . "🎓 Grado: " . escaparMd($alumno['grado'] . $alumno['grupo']) . "\n";
+
+    if (!$dias) {
+        return $texto . "\nAún no hay registros de entrada o salida de este alumno.";
+    }
+
+    if (!reset($dias)['hoy']) {
+        $texto .= "\n📍 Hoy aún no hay registros.\n";
+    }
+
+    $nombresDia = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+
+    foreach ($dias as $dia => $info) {
+        $fecha = date('d/m/Y', strtotime($dia));
+        $etiqueta = $info['hoy']
+            ? "Hoy · " . $fecha
+            : $nombresDia[(int) date('w', strtotime($dia))] . " " . $fecha;
+
+        $texto .= "\n*" . $etiqueta . "*\n";
+
+        // Dentro del día, de la primera hora a la última
+        foreach (array_reverse($info['filas']) as $r) {
+            $hora = date('h:i A', strtotime($r['fecha_hora']));
+            $texto .= ($r['tipo'] === 'entrada' ? "✅ Entrada" : "🚪 Salida") . " — " . $hora . "\n";
+        }
+    }
+
+    return rtrim($texto);
 }
 
 function obtenerRespuesta($numero, $conn) {
