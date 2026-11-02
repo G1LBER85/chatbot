@@ -84,47 +84,229 @@ try {
 // 4. EXTRAER Y TRANSFORMAR
 // =====================================================
 
+// -----------------------------------------------------
+// DETECCIÓN AUTOMÁTICA DE COLUMNAS
+//
+// El Excel puede traer las columnas en CUALQUIER ORDEN.
+// Se busca la fila de encabezados (entre las primeras 15
+// filas) y cada columna se identifica por su nombre, sin
+// importar mayúsculas, acentos ni signos:
+//
+//   Nombre ........... "Nombre", "Nombre completo", "Alumno"
+//   CURP ............. "CURP"
+//   Grado ............ "Grado", "Año", "Semestre"
+//   Grupo ............ "Grupo"
+//   Grado y grupo .... "Grado y grupo", "Grado/Grupo"  (una
+//                      sola columna con valores como "1A")
+//
+// El grado se acepta de las dos formas: una columna "1A", o
+// dos columnas separadas (grado y grupo).
+//
+// PLAN B: si el Excel NO trae encabezados (como el que manda
+// la escuela), se usa el orden de siempre:
+//   A = grado y grupo ("1A"), D = CURP, E = Nombre.
+// -----------------------------------------------------
+
+function excelNormalizarEncabezado($texto): string
+{
+    $texto = mb_strtolower(trim((string) $texto), 'UTF-8');
+
+    // Quitar acentos
+    $texto = strtr($texto, [
+        'á' => 'a', 'é' => 'e', 'í' => 'i',
+        'ó' => 'o', 'ú' => 'u', 'ü' => 'u',
+        'ñ' => 'n'
+    ]);
+
+    // Todo lo que no sea letra o número se vuelve espacio:
+    // "Grado/Grupo" → "grado grupo", "C.U.R.P." → "c u r p"
+    return trim(preg_replace('/[^a-z0-9]+/', ' ', $texto));
+}
+
+
+function excelDetectarColumnas(array $filas): ?array
+{
+    $sinonimos = [
+        'grado_grupo' => ['grado y grupo', 'grado grupo', 'grupo y grado', 'gradogrupo'],
+        'grado'       => ['grado', 'ano', 'semestre', 'grado escolar'],
+        'grupo'       => ['grupo', 'grp'],
+        'nombre'      => ['nombre', 'nombres', 'nombre s', 'nombre completo',
+                          'nombre del alumno', 'nombre alumno', 'alumno',
+                          'alumna', 'estudiante'],
+        'curp'        => ['curp', 'c u r p', 'clave curp', 'curp del alumno'],
+    ];
+
+    $mejor = null;
+
+    $limite = min(count($filas), 15);
+
+    for ($i = 0; $i < $limite; $i++) {
+
+        $columnas = [];
+
+        foreach (($filas[$i] ?? []) as $posicion => $celda) {
+
+            $texto = excelNormalizarEncabezado($celda);
+
+            if ($texto === '') {
+                continue;
+            }
+
+            foreach ($sinonimos as $campo => $lista) {
+
+                if (
+                    !isset($columnas[$campo])
+                    &&
+                    in_array($texto, $lista, true)
+                ) {
+                    $columnas[$campo] = $posicion;
+                    break;
+                }
+
+            }
+
+        }
+
+        // Una fila "parece de encabezados" si reconocemos al
+        // menos 2 columnas; se queda la que reconozca más.
+        if (
+            count($columnas) >= 2
+            &&
+            (
+                $mejor === null
+                ||
+                count($columnas) > count($mejor['columnas'])
+            )
+        ) {
+            $mejor = [
+                'columnas'        => $columnas,
+                'fila_encabezado' => $i
+            ];
+        }
+
+    }
+
+    if ($mejor === null) {
+        return null;   // No hay encabezados: se usará el Plan B
+    }
+
+    // ¿Qué columnas obligatorias NO se encontraron?
+    $c = $mejor['columnas'];
+
+    $faltan = [];
+
+    if (!isset($c['curp'])) {
+        $faltan[] = 'CURP';
+    }
+
+    if (!isset($c['nombre'])) {
+        $faltan[] = 'Nombre';
+    }
+
+    if (
+        !isset($c['grado_grupo'])
+        &&
+        !(isset($c['grado']) && isset($c['grupo']))
+    ) {
+        $faltan[] = 'Grado y grupo (o "Grado" y "Grupo" por separado)';
+    }
+
+    $mejor['faltan'] = $faltan;
+
+    return $mejor;
+}
+
+
 $alumnos = [];
 
 $curpsExcel = [];
 
 
-// -----------------------------------------------------
-// IMPORTANTE
-//
-// Según el Excel que mostraste:
-//
-// A = Grado y grupo
-// D = CURP
-// E = Nombre
-//
-// PHP:
-// A = índice 0
-// D = índice 3
-// E = índice 4
-// -----------------------------------------------------
+$deteccion = excelDetectarColumnas($filas);
+
+if ($deteccion === null) {
+
+    // PLAN B: sin encabezados → orden de siempre
+    $columnas = [
+        'grado_grupo' => 0,
+        'curp'        => 3,
+        'nombre'      => 4
+    ];
+
+    $primeraFilaDeDatos = 0;
+
+} else {
+
+    if (!empty($deteccion['faltan'])) {
+
+        die(
+            'El encabezado del Excel no tiene estas columnas: '
+            . implode(', ', $deteccion['faltan'])
+            . '. Revisa los nombres de las columnas en la primera fila.'
+        );
+
+    }
+
+    $columnas = $deteccion['columnas'];
+
+    // Los títulos y la fila de encabezados no son alumnos
+    $primeraFilaDeDatos = $deteccion['fila_encabezado'] + 1;
+
+}
+
+// Si vienen "grado" y "grupo" en columnas separadas se usan
+// esas; si no, se usa la columna única "1A".
+$columnasSeparadas = isset($columnas['grado'], $columnas['grupo']);
+
 
 foreach ($filas as $indice => $fila) {
+
+
+    if ($indice < $primeraFilaDeDatos) {
+        continue;
+    }
 
 
     // ================================================
     // OBTENER DATOS
     // ================================================
 
-    $gradoGrupoOriginal = trim(
-        (string)($fila[0] ?? '')
-    );
+    $gradoOriginal = '';
+
+    $grupoOriginal = '';
+
+    if ($columnasSeparadas) {
+
+        $gradoOriginal = trim(
+            (string)($fila[$columnas['grado']] ?? '')
+        );
+
+        $grupoOriginal = trim(
+            (string)($fila[$columnas['grupo']] ?? '')
+        );
+
+        $gradoGrupoOriginal = trim(
+            $gradoOriginal . ' ' . $grupoOriginal
+        );
+
+    } else {
+
+        $gradoGrupoOriginal = trim(
+            (string)($fila[$columnas['grado_grupo']] ?? '')
+        );
+
+    }
 
 
     $curp = strtoupper(
         trim(
-            (string)($fila[3] ?? '')
+            (string)($fila[$columnas['curp']] ?? '')
         )
     );
 
 
     $nombre = trim(
-        (string)($fila[4] ?? '')
+        (string)($fila[$columnas['nombre']] ?? '')
     );
 
 
@@ -156,13 +338,39 @@ foreach ($filas as $indice => $fila) {
     $grupo = '';
 
 
-    if (
+    if ($columnasSeparadas) {
+
+        // Excel con las columnas "grado" y "grupo" SEPARADAS.
+        // Un número escrito en Excel a veces llega como "1.0":
+        // se le quita el ".0" para dejar solo "1".
+
+        $gradoLimpio = preg_replace(
+            '/\.0+$/',
+            '',
+            $gradoOriginal
+        );
+
+        if (preg_match('/^\d+$/', $gradoLimpio)) {
+
+            $grado = $gradoLimpio;
+
+        }
+
+        if (preg_match('/^[A-Za-z]+$/', $grupoOriginal)) {
+
+            $grupo = strtoupper($grupoOriginal);
+
+        }
+
+    } elseif (
         preg_match(
             '/^(\d+)\s*([A-Za-z]+)$/',
             $gradoGrupoOriginal,
             $coincidencias
         )
     ) {
+
+        // Excel con una sola columna "1A"
 
         $grado =
             $coincidencias[1];
