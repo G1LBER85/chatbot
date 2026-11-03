@@ -78,7 +78,7 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: blue; /* Color azul original */
+  background-color: #2B458A; /* Color azul original */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   box-sizing: border-box;
 }
@@ -92,8 +92,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   align-items: center;
   gap: 12px;
   padding: 18px 20px;
-  border-bottom: 5px solid black;
-  background-color: black
+  border-bottom: 2px solid black;
+  background-color: #2B458A;
 }
 
 .brand-icon {
@@ -136,8 +136,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .nav-link:hover, .nav-link.activo {
-  background-color: black;
-  color: red;
+  background-color: #2b3d4f;
+  color: #ffffff;
   transform: scale(1.09);
 }
 
@@ -159,8 +159,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .nav-dropdown-btn:hover {
-  background-color: black;
-  color: red;
+  background-color: #2b3d4f;
+  color: #ffffff;
   transform: scale(1.09);
 }
 
@@ -213,8 +213,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   display: flex;
   align-items: center;
   padding: 14px 16px;
-  border: 2px solid purple;
-  background-color: red;
+  border: 2px solid #2b3d4f;
+  background-color: #2b3d4f;
   gap: 12px;
 }
 
@@ -274,7 +274,7 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: darkred;
+  background-color: #213140;
   padding: 10px;
   border-radius: 6px;
   text-decoration: none;

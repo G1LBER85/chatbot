@@ -239,7 +239,7 @@ if ($accion === 'editar' && isset($_GET['id'])) {
 // Solo se necesita cuando NO estamos en modo nuevo/editar
 $alumnos = null;
 if ($accion !== 'nuevo' && $accion !== 'editar') {
-    $alumnos = $conn->query("SELECT * FROM alumnos ORDER BY id DESC");
+    $alumnos = $conn->query("SELECT * FROM alumnos ORDER BY grado ASC, grupo ASC, nombre ASC");
 }
 
 $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
