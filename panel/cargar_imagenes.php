@@ -57,7 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['alumno_id'])) {
 }
 
 // ── Consultar alumnos ──
-$alumnos = $conn->query("SELECT id, nombre, grado, grupo, CURP, foto FROM alumnos ORDER BY id DESC");
+$alumnos = $conn->query("
+  SELECT id, nombre, grado, grupo, CURP, foto 
+  FROM alumnos 
+  ORDER BY grado ASC, grupo ASC, nombre ASC");
 ?>
 
 
@@ -131,7 +134,6 @@ $alumnos = $conn->query("SELECT id, nombre, grado, grupo, CURP, foto FROM alumno
         <table id="tablaAlumnos">
           <thead>
             <tr>
-              <th>ID</th>
               <th>Foto</th>
               <th>Nombre</th>
               <th>Grado/Grupo</th>
@@ -145,7 +147,6 @@ $alumnos = $conn->query("SELECT id, nombre, grado, grupo, CURP, foto FROM alumno
               data-grado="<?= htmlspecialchars($alumno['grado']) ?>"
               data-grupo="<?= htmlspecialchars($alumno['grupo']) ?>"
               data-nombre="<?= htmlspecialchars(mb_strtolower($alumno['nombre'], 'UTF-8')) ?>">
-              <td><?= $alumno['id'] ?></td>
               <td>
                 <?php if (!empty($alumno['foto'])): ?>
                   <img class="foto-mini" src="<?= htmlspecialchars('../' . str_replace('\\', '/', $alumno['foto'])) ?>" alt="">
@@ -173,7 +174,7 @@ $alumnos = $conn->query("SELECT id, nombre, grado, grupo, CURP, foto FROM alumno
             </tr>
             <?php endwhile; ?>
             <tr id="filaSinResultados" style="display:none;">
-              <td colspan="6" class="empty-state">No se encontraron alumnos con esos filtros.</td>
+              <td colspan="5" class="empty-state">No se encontraron alumnos con esos filtros.</td>
             </tr>
           </tbody>
         </table>

@@ -78,8 +78,7 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #2b3d4f; /* Color azul original */
-  color: #d1dbe5;
+  background-color: #2B458A; /* Color azul original */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   box-sizing: border-box;
 }
@@ -93,7 +92,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   align-items: center;
   gap: 12px;
   padding: 18px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 2px solid black;
+  background-color: #2B458A;
 }
 
 .brand-icon {
@@ -102,14 +102,14 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 
 .brand-info strong {
   display: block;
-  color: #ffffff;
+  color: white;
   font-size: 1.1rem;
   font-weight: 700;
   line-height: 1.2;
 }
 
 .brand-info small {
-  color: #8fa3b8;
+  color: white;
   font-size: 0.78rem;
 }
 
@@ -127,17 +127,18 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  color: #d1dbe5;
+  color: white;
   text-decoration: none;
   border-radius: 6px;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 600;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: .3s;
 }
 
 .nav-link:hover, .nav-link.activo {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #2b3d4f;
   color: #ffffff;
+  transform: scale(1.09);
 }
 
 .nav-dropdown-btn {
@@ -148,18 +149,19 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   padding: 10px 14px;
   background: transparent;
   border: none;
-  color: #d1dbe5;
-  font-size: 0.92rem;
+  color: white;
+  font-size: 1rem;
   font-weight: 600;
   border-radius: 6px;
   cursor: pointer;
   text-align: left;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: .3s;
 }
 
 .nav-dropdown-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: #2b3d4f;
   color: #ffffff;
+  transform: scale(1.09);
 }
 
 .dropdown-title {
@@ -211,8 +213,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   display: flex;
   align-items: center;
   padding: 14px 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background-color: #223140;
+  border: 2px solid #2b3d4f;
+  background-color: #2b3d4f;
   gap: 12px;
 }
 
@@ -253,8 +255,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .user-name {
-  color: #ffffff;
-  font-size: 0.9rem;
+  color: yellow;
+  font-size: 1rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -263,16 +265,17 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .user-role {
-  color: #8fa3b8;
-  font-size: 0.75rem;
+  color: white;
+  font-size: 0.80rem;
 }
 
 .logout-btn {
-  color: #8fa3b8;
+  color: black;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
+  background-color: #213140;
+  padding: 10px;
   border-radius: 6px;
   text-decoration: none;
   flex-shrink: 0;
@@ -280,8 +283,7 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .logout-btn:hover {
-  color: #e74c3c;
-  background-color: rgba(231, 76, 60, 0.12);
+  transform: scale(1.3);
 }
 
 .logout-icon {
@@ -483,4 +485,3 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
-```

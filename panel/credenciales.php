@@ -23,7 +23,7 @@ $alumnos = $conn->query("
     SELECT id, nombre, grado, grupo, CURP
     FROM alumnos
     WHERE activo = 1
-    ORDER BY grado DESC, grupo ASC, nombre ASC
+    ORDER BY grado ASC, grupo ASC, nombre ASC
 ");
 ?>
 <!DOCTYPE html>
