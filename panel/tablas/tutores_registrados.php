@@ -28,37 +28,20 @@ $tutoresRegistrados = $conn->query("
         <td><?= htmlspecialchars($fila['grado']) ?></td>
         <td>
           <!-- 🔒 CANDADO DEL CHAT ID
-               Cerrado por defecto: solo muestra el número. Con clic en el candado se
-               abre 🔓 y aparece el campo para editarlo A MANO (el bot ya no puede
-               sobrescribirlo). Quitar el Chat ID también quedó detrás del candado. -->
+               El número SIEMPRE se ve y NO se puede editar: nace cuando el tutor
+               se registra en Telegram y el bot ya no lo sobrescribe. Con clic en el
+               candado se abre 🔓 y aparece una sola opción: el basurero, que quita
+               al tutor (el alumno pasa a Tutores pendientes y puede volver a
+               registrarse desde Telegram). -->
           <div class="chat-id-celda">
-            <div class="chat-id-bloqueado">
-              <span class="chat-id-texto"><?= htmlspecialchars($fila['tutor_chat_id']) ?></span>
-              <button type="button" class="btn btn-secondary btn-small btn-candado"
-                      title="Bloqueado. Clic para desbloquear y editar el Chat ID"
-                      aria-label="Desbloquear el Chat ID">🔒</button>
-            </div>
-
-            <form method="post" action="tablas.php?vista=tutores_registrados" class="chat-id-edicion"
-                  autocomplete="off" data-nombre="<?= htmlspecialchars($fila['nombre']) ?>">
-              <input type="hidden" name="editar_chat_id" value="1">
-              <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
-              <input type="hidden" name="alumno_id" value="<?= (int) $fila['id'] ?>">
-              <span title="Desbloqueado">🔓</span>
-              <input type="text" name="nuevo_chat_id" class="chat-id-campo"
-                     value="<?= htmlspecialchars($fila['tutor_chat_id']) ?>"
-                     inputmode="numeric" pattern="[1-9][0-9]{4,17}" maxlength="18" required
-                     title="Solo números, de 5 a 18 dígitos">
-              <button type="submit" class="btn btn-primary btn-small" title="Guardar el nuevo Chat ID">💾</button>
-              <!-- Quitar el Chat ID solo desvincula al tutor (tutor_chat_id = NULL);
-                   el alumno NO se borra, solo pasa a la vista de Tutores pendientes. -->
-              <a href="tablas.php?vista=tutores_registrados&eliminar_chat_id=<?= (int) $fila['id'] ?>"
-                 class="btn btn-danger btn-small"
-                 title="Quitar el Chat ID (el alumno pasa a Tutores pendientes)"
-                 onclick="return confirm('¿Quitar el Chat ID de <?= htmlspecialchars(addslashes($fila['nombre'])) ?>? El alumno pasará a Tutores pendientes.')">🗑️</a>
-              <button type="button" class="btn btn-secondary btn-small btn-cancelar-candado"
-                      title="Cancelar y volver a bloquear">✖</button>
-            </form>
+            <span class="chat-id-texto"><?= htmlspecialchars($fila['tutor_chat_id']) ?></span>
+            <button type="button" class="btn btn-secondary btn-small btn-candado"
+                    title="Bloqueado. Clic para ver la opción de quitar el Chat ID"
+                    aria-label="Desbloquear para quitar el Chat ID" aria-expanded="false">🔒</button>
+            <a href="tablas.php?vista=tutores_registrados&eliminar_chat_id=<?= (int) $fila['id'] ?>"
+               class="btn btn-danger btn-small chat-id-quitar"
+               title="Quitar el Chat ID (el alumno pasa a Tutores pendientes)"
+               onclick="return confirm('¿Quitar el Chat ID de <?= htmlspecialchars(addslashes($fila['nombre'])) ?>? El alumno pasará a Tutores pendientes.')">🗑️</a>
           </div>
         </td>
         <td>
@@ -78,12 +61,11 @@ $tutoresRegistrados = $conn->query("
   </table>
 
   <style>
-    /* Candado del Chat ID: cerrado = solo texto; abierto = formulario de edición */
-    .chat-id-bloqueado { display: flex; align-items: center; gap: 8px; }
-    .chat-id-edicion   { display: none; align-items: center; gap: 6px; flex-wrap: wrap; margin: 0; }
-    .chat-id-celda.abierta .chat-id-bloqueado { display: none; }
-    .chat-id-celda.abierta .chat-id-edicion   { display: flex; }
-    .chat-id-campo { width: 170px; padding: 5px 8px; font-family: monospace; }
+    /* Candado del Chat ID: el número siempre se ve. Cerrado = sin opciones;
+       abierto = aparece solo el basurero para quitar al tutor. */
+    .chat-id-celda { display: flex; align-items: center; gap: 8px; }
+    .chat-id-quitar { display: none; }
+    .chat-id-celda.abierta .chat-id-quitar { display: inline-block; }
   </style>
 
   <script>
@@ -91,52 +73,40 @@ $tutoresRegistrados = $conn->query("
     var tabla = document.getElementById('tablaDatos');
     if (!tabla) return;
 
-    function cerrar(celda) {
-      // Vuelve a bloquear y descarta lo que se haya escrito sin guardar
-      celda.classList.remove('abierta');
-      var campo = celda.querySelector('.chat-id-campo');
-      if (campo) campo.value = campo.defaultValue;
+    // Abre (🔓) o cierra (🔒) el candado de una celda
+    function poner(celda, abierta) {
+      celda.classList.toggle('abierta', abierta);
+      var candado = celda.querySelector('.btn-candado');
+      candado.textContent = abierta ? '🔓' : '🔒';
+      candado.title = abierta
+        ? 'Desbloqueado. Clic para volver a bloquear'
+        : 'Bloqueado. Clic para ver la opción de quitar el Chat ID';
+      candado.setAttribute('aria-expanded', abierta ? 'true' : 'false');
     }
 
-    function abrir(celda) {
-      // Solo un candado abierto a la vez: se cierran los demás
-      Array.prototype.forEach.call(tabla.querySelectorAll('.chat-id-celda.abierta'), function (otra) {
-        if (otra !== celda) cerrar(otra);
+    // Cierra todos los candados (menos "excepto", si se indica)
+    function cerrarTodos(excepto) {
+      Array.prototype.forEach.call(tabla.querySelectorAll('.chat-id-celda.abierta'), function (celda) {
+        if (celda !== excepto) poner(celda, false);
       });
-      celda.classList.add('abierta');
-      var campo = celda.querySelector('.chat-id-campo');
-      campo.focus();
-      campo.select();
     }
 
+    // Clic en un candado: se abre o se cierra, y solo uno queda abierto a la vez
     tabla.addEventListener('click', function (e) {
       var candado = e.target.closest('.btn-candado');
-      if (candado) { abrir(candado.closest('.chat-id-celda')); return; }
-      var cancelar = e.target.closest('.btn-cancelar-candado');
-      if (cancelar) cerrar(cancelar.closest('.chat-id-celda'));
+      if (!candado) return;
+      var celda = candado.closest('.chat-id-celda');
+      var abrir = !celda.classList.contains('abierta');
+      cerrarTodos(celda);
+      poner(celda, abrir);
     });
 
-    // Esc vuelve a cerrar el candado
-    tabla.addEventListener('keydown', function (e) {
-      if (e.key !== 'Escape') return;
-      var abierta = tabla.querySelector('.chat-id-celda.abierta');
-      if (abierta) cerrar(abierta);
+    // Clic en cualquier otro lado, o Esc: todo vuelve a quedar bloqueado
+    document.addEventListener('click', function (e) {
+      if (!e.target.closest('.chat-id-celda')) cerrarTodos(null);
     });
-
-    // Al guardar: si no cambió nada, solo se cierra; si cambió, se pide confirmación
-    tabla.addEventListener('submit', function (e) {
-      var campo = e.target.querySelector('.chat-id-campo');
-      if (!campo) return;
-      var nuevo = campo.value.trim();
-      if (nuevo === campo.defaultValue) {
-        e.preventDefault();
-        cerrar(e.target.closest('.chat-id-celda'));
-        return;
-      }
-      var nombre = e.target.getAttribute('data-nombre') || 'este alumno';
-      if (!confirm('¿Cambiar el Chat ID del tutor de ' + nombre + ' a ' + nuevo + '?')) {
-        e.preventDefault();
-      }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') cerrarTodos(null);
     });
   })();
   </script>

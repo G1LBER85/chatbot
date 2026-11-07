@@ -80,9 +80,9 @@
 }
 
 /* Franja roja, justo debajo del encabezado azul/marino. */
-.franja-roja {
+.franja-rosa {
     height: 1.4mm;
-    background: #c0392b;
+    background:#ec4899;
 }
 
 /* [CUERPO DEL FRENTE] — misma técnica: tabla para foto + datos. */

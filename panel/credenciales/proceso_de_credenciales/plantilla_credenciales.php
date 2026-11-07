@@ -63,7 +63,7 @@ function construirEncabezado(?string $logoDataUri): string
             </div>
         </div>
     </div>
-    <div class="franja-roja"></div>
+    <div class="franja-rosa"></div>
     HTML;
 }
 
