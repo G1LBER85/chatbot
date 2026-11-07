@@ -78,7 +78,7 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #2B458A; /* Color azul original */
+  background-color: #2b3d4f; /* Color azul original */
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   box-sizing: border-box;
 }
@@ -92,8 +92,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   align-items: center;
   gap: 12px;
   padding: 18px 20px;
-  border-bottom: 2px solid black;
-  background-color: #2B458A;
+  border-bottom: 1px solid black;
+  background-color: #2b3d4f;
 }
 
 .brand-icon {
@@ -136,8 +136,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .nav-link:hover, .nav-link.activo {
-  background-color: #2b3d4f;
-  color: #ffffff;
+  background-color: #2B458A;
+  color: white;
   transform: scale(1.09);
 }
 
@@ -159,8 +159,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .nav-dropdown-btn:hover {
-  background-color: #2b3d4f;
-  color: #ffffff;
+  background-color: #2B458A;
+  color: white;
   transform: scale(1.09);
 }
 
@@ -188,7 +188,7 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 
 .sub-link {
   padding: 8px 12px;
-  color: #9cb0c5;
+  color: white;
   text-decoration: none;
   font-size: 0.88rem;
   border-radius: 6px;
@@ -196,8 +196,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .sub-link:hover, .sub-link.activo {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.08);
+  color: white;
+  background-color: #2B458A;
 }
 
 .nav-dropdown.open .nav-sub-list {
@@ -213,8 +213,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   display: flex;
   align-items: center;
   padding: 14px 16px;
-  border: 2px solid #2b3d4f;
-  background-color: #2b3d4f;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: #223140;
   gap: 12px;
 }
 
@@ -255,7 +255,7 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .user-name {
-  color: yellow;
+  color: whitesmoke;
   font-size: 1rem;
   font-weight: 700;
   white-space: nowrap;
@@ -270,7 +270,7 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .logout-btn {
-  color: black;
+  color: #8fa3b8;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -284,6 +284,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 
 .logout-btn:hover {
   transform: scale(1.3);
+  color: #e74c3c;
+  background-color: rgba(231, 76, 60, 0.12);
 }
 
 .logout-icon {
