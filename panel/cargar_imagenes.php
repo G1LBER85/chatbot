@@ -149,7 +149,8 @@ $alumnos = $conn->query("
               data-nombre="<?= htmlspecialchars(mb_strtolower($alumno['nombre'], 'UTF-8')) ?>">
               <td>
                 <?php if (!empty($alumno['foto'])): ?>
-                  <img class="foto-mini" src="<?= htmlspecialchars('../' . str_replace('\\', '/', $alumno['foto'])) ?>" alt="">
+                  <?php $rutaFoto = '../' . str_replace('\\', '/', $alumno['foto']); ?>
+                  <img class="foto-mini" src="<?= htmlspecialchars($rutaFoto) ?>?v=<?= @filemtime(__DIR__ . '/' . $rutaFoto) ?: time() ?>" alt="">
                 <?php else: ?>
                   <span class="foto-mini" style="display:inline-flex;align-items:center;justify-content:center;">🧑</span>
                 <?php endif; ?>
