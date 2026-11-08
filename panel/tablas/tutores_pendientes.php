@@ -7,7 +7,7 @@
 $tutoresPendientes = $conn->query("
     SELECT * FROM alumnos
     WHERE tutor_chat_id IS NULL
-    ORDER BY grado DESC, nombre ASC
+    ORDER BY grado ASC, nombre ASC
 ");
 ?>
 

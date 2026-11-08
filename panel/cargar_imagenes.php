@@ -4,6 +4,7 @@ require '../conexion.php';
 $paginaActual = 'cargar_imagenes';
 $mensaje = '';
 $tipo_mensaje = '';
+$fotoNueva = '';
 
 // ── Procesar subida de foto ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['alumno_id'])) {
@@ -32,8 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['alumno_id'])) {
                 $stmt->bind_param("si", $rutaBD, $id);
 
                 if ($stmt->execute()) {
-                    $mensaje      = "✅ Foto actualizada correctamente";
+                    $mensaje      = "✅ La imagen se actualizó correctamente";
                     $tipo_mensaje = "success";
+                    $fotoNueva    = $rutaBD;
                 } else {
                     $mensaje      = "❌ Error al guardar en la base de datos";
                     $tipo_mensaje = "error";
@@ -56,8 +58,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['alumno_id'])) {
     }
 }
 
+// Si la subida viene de JavaScript (sin recargar la página), responder en JSON
+if (isset($_POST['ajax'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'mensaje' => $mensaje,
+        'tipo'    => $tipo_mensaje,
+        'foto'    => $fotoNueva ? '../' . $fotoNueva . '?v=' . time() : ''
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
+}
+
 // ── Consultar alumnos ──
-$alumnos = $conn->query("SELECT id, nombre, grado, grupo, CURP, foto FROM alumnos ORDER BY id DESC");
+$alumnos = $conn->query("
+  SELECT id, nombre, grado, grupo, CURP, foto 
+  FROM alumnos 
+  ORDER BY grado ASC, grupo ASC, nombre ASC");
 ?>
 
 
@@ -86,9 +102,9 @@ $alumnos = $conn->query("SELECT id, nombre, grado, grupo, CURP, foto FROM alumno
 
       <main class="contenido">
 
-        <?php if ($mensaje): ?>
-          <div class="mensaje <?= $tipo_mensaje ?>"><?= $mensaje ?></div>
-        <?php endif; ?>
+        <div id="mensajeFoto" class="mensaje"
+          style="display:none; position:fixed; top:20px; right:20px; z-index:2000; max-width:700px; font-size:25px;">
+        </div>
 
         <div class="panel-header">
           <div>
@@ -131,7 +147,6 @@ $alumnos = $conn->query("SELECT id, nombre, grado, grupo, CURP, foto FROM alumno
         <table id="tablaAlumnos">
           <thead>
             <tr>
-              <th>ID</th>
               <th>Foto</th>
               <th>Nombre</th>
               <th>Grado/Grupo</th>
@@ -145,10 +160,10 @@ $alumnos = $conn->query("SELECT id, nombre, grado, grupo, CURP, foto FROM alumno
               data-grado="<?= htmlspecialchars($alumno['grado']) ?>"
               data-grupo="<?= htmlspecialchars($alumno['grupo']) ?>"
               data-nombre="<?= htmlspecialchars(mb_strtolower($alumno['nombre'], 'UTF-8')) ?>">
-              <td><?= $alumno['id'] ?></td>
-              <td>
+              <td id="foto-<?= $alumno['id'] ?>">
                 <?php if (!empty($alumno['foto'])): ?>
-                  <img class="foto-mini" src="<?= htmlspecialchars('../' . str_replace('\\', '/', $alumno['foto'])) ?>" alt="">
+                  <?php $rutaFoto = '../' . str_replace('\\', '/', $alumno['foto']); ?>
+                  <img class="foto-mini" src="<?= htmlspecialchars($rutaFoto) ?>?v=<?= @filemtime(__DIR__ . '/' . $rutaFoto) ?: time() ?>" alt="">
                 <?php else: ?>
                   <span class="foto-mini" style="display:inline-flex;align-items:center;justify-content:center;">🧑</span>
                 <?php endif; ?>
@@ -173,7 +188,7 @@ $alumnos = $conn->query("SELECT id, nombre, grado, grupo, CURP, foto FROM alumno
             </tr>
             <?php endwhile; ?>
             <tr id="filaSinResultados" style="display:none;">
-              <td colspan="6" class="empty-state">No se encontraron alumnos con esos filtros.</td>
+              <td colspan="5" class="empty-state">No se encontraron alumnos con esos filtros.</td>
             </tr>
           </tbody>
         </table>
@@ -263,6 +278,29 @@ $alumnos = $conn->query("SELECT id, nombre, grado, grupo, CURP, foto FROM alumno
         document.getElementById('modalFoto').classList.remove('visible');
       }
 
+      function enviarFoto(id) {
+        const datos = new FormData(document.getElementById('form-' + id));
+        datos.append('ajax', '1');
+
+        fetch(location.href, { method: 'POST', body: datos })
+          .then(function (r) { return r.json(); })
+          .then(function (res) {
+            const caja = document.getElementById('mensajeFoto');
+            caja.className = 'mensaje ' + res.tipo;
+            caja.textContent = res.mensaje;
+            caja.style.display = 'block';
+            setTimeout(function () { caja.style.display = 'none'; }, 4000);
+
+            if (res.foto) {
+              document.getElementById('foto-' + id).innerHTML =
+                '<img class="foto-mini" src="' + res.foto + '" alt="">';
+            }
+          })
+          .catch(function () {
+            alert('No se pudo subir la foto. Intenta de nuevo.');
+          });
+      }
+
       function seleccionarArchivo(input) {
         if (!input.files || !input.files[0]) return;
         const fileInput = document.getElementById('archivo-' + alumnoIdActual);
@@ -270,7 +308,7 @@ $alumnos = $conn->query("SELECT id, nombre, grado, grupo, CURP, foto FROM alumno
         dataTransfer.items.add(input.files[0]);
         fileInput.files = dataTransfer.files;
         cerrarModalFoto();
-        document.getElementById('form-' + alumnoIdActual).submit();
+        enviarFoto(alumnoIdActual);
       }
 
       function abrirCamara() {
@@ -313,7 +351,7 @@ $alumnos = $conn->query("SELECT id, nombre, grado, grupo, CURP, foto FROM alumno
           dataTransfer.items.add(archivo);
           fileInput.files = dataTransfer.files;
           cerrarCamara();
-          document.getElementById('form-' + alumnoIdActual).submit();
+          enviarFoto(alumnoIdActual);
         }, 'image/jpeg', 0.92);
       }
     </script>
