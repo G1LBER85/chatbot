@@ -4,6 +4,7 @@ require '../conexion.php';
 $paginaActual = 'cargar_imagenes';
 $mensaje = '';
 $tipo_mensaje = '';
+$fotoNueva = '';
 
 // ── Procesar subida de foto ──
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['alumno_id'])) {
@@ -32,8 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['alumno_id'])) {
                 $stmt->bind_param("si", $rutaBD, $id);
 
                 if ($stmt->execute()) {
-                    $mensaje      = "✅ Foto actualizada correctamente";
+                    $mensaje      = "✅ La imagen se actualizó correctamente";
                     $tipo_mensaje = "success";
+                    $fotoNueva    = $rutaBD;
                 } else {
                     $mensaje      = "❌ Error al guardar en la base de datos";
                     $tipo_mensaje = "error";
@@ -54,6 +56,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['alumno_id'])) {
         $mensaje      = "⚠️ No se recibió ningún archivo";
         $tipo_mensaje = "warning";
     }
+}
+
+// Si la subida viene de JavaScript (sin recargar la página), responder en JSON
+if (isset($_POST['ajax'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    echo json_encode([
+        'mensaje' => $mensaje,
+        'tipo'    => $tipo_mensaje,
+        'foto'    => $fotoNueva ? '../' . $fotoNueva . '?v=' . time() : ''
+    ], JSON_UNESCAPED_UNICODE);
+    exit;
 }
 
 // ── Consultar alumnos ──
@@ -89,9 +102,9 @@ $alumnos = $conn->query("
 
       <main class="contenido">
 
-        <?php if ($mensaje): ?>
-          <div class="mensaje <?= $tipo_mensaje ?>"><?= $mensaje ?></div>
-        <?php endif; ?>
+        <div id="mensajeFoto" class="mensaje"
+          style="display:none; position:fixed; top:20px; right:20px; z-index:2000; max-width:700px; font-size:25px;">
+        </div>
 
         <div class="panel-header">
           <div>
@@ -147,7 +160,7 @@ $alumnos = $conn->query("
               data-grado="<?= htmlspecialchars($alumno['grado']) ?>"
               data-grupo="<?= htmlspecialchars($alumno['grupo']) ?>"
               data-nombre="<?= htmlspecialchars(mb_strtolower($alumno['nombre'], 'UTF-8')) ?>">
-              <td>
+              <td id="foto-<?= $alumno['id'] ?>">
                 <?php if (!empty($alumno['foto'])): ?>
                   <?php $rutaFoto = '../' . str_replace('\\', '/', $alumno['foto']); ?>
                   <img class="foto-mini" src="<?= htmlspecialchars($rutaFoto) ?>?v=<?= @filemtime(__DIR__ . '/' . $rutaFoto) ?: time() ?>" alt="">
@@ -265,6 +278,29 @@ $alumnos = $conn->query("
         document.getElementById('modalFoto').classList.remove('visible');
       }
 
+      function enviarFoto(id) {
+        const datos = new FormData(document.getElementById('form-' + id));
+        datos.append('ajax', '1');
+
+        fetch(location.href, { method: 'POST', body: datos })
+          .then(function (r) { return r.json(); })
+          .then(function (res) {
+            const caja = document.getElementById('mensajeFoto');
+            caja.className = 'mensaje ' + res.tipo;
+            caja.textContent = res.mensaje;
+            caja.style.display = 'block';
+            setTimeout(function () { caja.style.display = 'none'; }, 4000);
+
+            if (res.foto) {
+              document.getElementById('foto-' + id).innerHTML =
+                '<img class="foto-mini" src="' + res.foto + '" alt="">';
+            }
+          })
+          .catch(function () {
+            alert('No se pudo subir la foto. Intenta de nuevo.');
+          });
+      }
+
       function seleccionarArchivo(input) {
         if (!input.files || !input.files[0]) return;
         const fileInput = document.getElementById('archivo-' + alumnoIdActual);
@@ -272,7 +308,7 @@ $alumnos = $conn->query("
         dataTransfer.items.add(input.files[0]);
         fileInput.files = dataTransfer.files;
         cerrarModalFoto();
-        document.getElementById('form-' + alumnoIdActual).submit();
+        enviarFoto(alumnoIdActual);
       }
 
       function abrirCamara() {
@@ -315,7 +351,7 @@ $alumnos = $conn->query("
           dataTransfer.items.add(archivo);
           fileInput.files = dataTransfer.files;
           cerrarCamara();
-          document.getElementById('form-' + alumnoIdActual).submit();
+          enviarFoto(alumnoIdActual);
         }, 'image/jpeg', 0.92);
       }
     </script>
