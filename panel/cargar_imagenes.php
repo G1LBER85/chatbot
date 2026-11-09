@@ -144,6 +144,15 @@ $alumnos = $conn->query("
                 </select>
               </div>
             </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label>Fotografía</label>
+
+                <select id="filtroFoto">
+                    <option value="">Todos</option>
+                    <option value="si">Con fotografía</option>
+                    <option value="no">Sin fotografía</option>
+                </select>
+            </div>
             <div class="form-group" style="margin-bottom:0; flex:1; min-width:220px;">
               <label>Buscar por nombre</label>
               <input type="text" id="filtroNombre" placeholder="Ejemplo: Juan Pérez" autocomplete="off">
@@ -167,7 +176,8 @@ $alumnos = $conn->query("
             <tr
               data-grado="<?= htmlspecialchars($alumno['grado']) ?>"
               data-grupo="<?= htmlspecialchars($alumno['grupo']) ?>"
-              data-nombre="<?= htmlspecialchars(mb_strtolower($alumno['nombre'], 'UTF-8')) ?>">
+              data-nombre="<?= htmlspecialchars(mb_strtolower($alumno['nombre'], 'UTF-8')) ?>"
+              data-foto="<?= !empty($alumno['foto']) ? 'si' : 'no' ?>">
               <td id="foto-<?= $alumno['id'] ?>">
                 <?php if (!empty($alumno['foto'])): ?>
                   <?php $rutaFoto = '../' . str_replace('\\', '/', $alumno['foto']); ?>
@@ -206,18 +216,21 @@ $alumnos = $conn->query("
             const filtroGrado  = document.getElementById('filtroGrado');
             const filtroGrupo  = document.getElementById('filtroGrupo');
             const filtroNombre = document.getElementById('filtroNombre');
+            const filtroFoto = document.getElementById('filtroFoto');
             const filas        = document.querySelectorAll('#tablaAlumnos tbody tr[data-nombre]');
             const filaSin      = document.getElementById('filaSinResultados');
 
             function aplicarFiltros() {
               const grado  = filtroGrado.value;
               const grupo  = filtroGrupo.value;
+              const foto   = filtroFoto.value;
               const nombre = filtroNombre.value.trim().toLowerCase();
               let visibles = 0;
 
               filas.forEach(function (fila) {
                 const ok = (grado  === '' || fila.dataset.grado  === grado)  &&
                           (grupo  === '' || fila.dataset.grupo  === grupo)  &&
+                          (foto   === '' || fila.dataset.foto   === foto) &&
                           (nombre === '' || fila.dataset.nombre.includes(nombre));
                 fila.style.display = ok ? '' : 'none';
                 if (ok) visibles++;
@@ -228,6 +241,7 @@ $alumnos = $conn->query("
 
             filtroGrado.addEventListener('change', aplicarFiltros);
             filtroGrupo.addEventListener('change', aplicarFiltros);
+            filtroFoto.addEventListener('change', aplicarFiltros);
             filtroNombre.addEventListener('input',  aplicarFiltros);
             
           })();
