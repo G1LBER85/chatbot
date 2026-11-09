@@ -224,14 +224,21 @@ $alumnos = $conn->query("
               const grado  = filtroGrado.value;
               const grupo  = filtroGrupo.value;
               const foto   = filtroFoto.value;
-              const nombre = filtroNombre.value.trim().toLowerCase();
+              const nombre = quitarAcentos(filtroNombre.value.trim());
               let visibles = 0;
+
+              function quitarAcentos(texto) {
+                return texto
+                  .normalize('NFD')
+                  .replace(/[\u0300-\u036f]/g, '')
+                  .toLowerCase();
+              }
 
               filas.forEach(function (fila) {
                 const ok = (grado  === '' || fila.dataset.grado  === grado)  &&
                           (grupo  === '' || fila.dataset.grupo  === grupo)  &&
                           (foto   === '' || fila.dataset.foto   === foto) &&
-                          (nombre === '' || fila.dataset.nombre.includes(nombre));
+                          (nombre === '' || quitarAcentos(fila.dataset.nombre).includes(nombre));
                 fila.style.display = ok ? '' : 'none';
                 if (ok) visibles++;
               });
