@@ -40,7 +40,17 @@ function subirFotoAlumno($curp, $extensionesPermitidas)
     $rutaDestino = $carpetaFotos . '/' . $nombreArchivo;
 
     if (move_uploaded_file($_FILES['foto']['tmp_name'], $rutaDestino)) {
-        return 'fotos/' . $nombreArchivo;
+
+      // Borrar la foto anterior si tenía otra extensión
+      foreach ($extensionesPermitidas as $ext) {
+        $vieja = $carpetaFotos . '/' . strtoupper($curp) . '.' . $ext;
+        if ($ext !== $extension && file_exists($vieja)) {
+            unlink($vieja);
+        }
+      }
+
+      return 'fotos/' . $nombreArchivo;
+       
     }
 
     return null;
