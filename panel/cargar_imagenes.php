@@ -29,18 +29,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['alumno_id'])) {
 
             if (move_uploaded_file($_FILES['foto']['tmp_name'], $rutaDestino)) {
 
-                $stmt = $conn->prepare("UPDATE alumnos SET foto = ? WHERE id = ?");
-                $stmt->bind_param("si", $rutaBD, $id);
+              // Borrar la foto anterior si tenía otra extensión (jpg, jpeg o png)
+              foreach (['jpg', 'jpeg', 'png'] as $ext) {
+                  $vieja = $carpetaFotos . '/' . strtoupper($curp) . '.' . $ext;
+                  if ($ext !== $extension && file_exists($vieja)) {
+                      unlink($vieja);
+                  }
+              }
 
-                if ($stmt->execute()) {
-                    $mensaje      = "✅ La imagen se actualizó correctamente";
-                    $tipo_mensaje = "success";
-                    $fotoNueva    = $rutaBD;
-                } else {
-                    $mensaje      = "❌ Error al guardar en la base de datos";
-                    $tipo_mensaje = "error";
-                }
-                $stmt->close();
+              $stmt = $conn->prepare("UPDATE alumnos SET foto = ? WHERE id = ?");
+              $stmt->bind_param("si", $rutaBD, $id);
+
+              if ($stmt->execute()) {
+                  $mensaje      = "✅ La imagen se actualizó correctamente";
+                  $tipo_mensaje = "success";
+                  $fotoNueva    = $rutaBD;
+              } else {
+                  $mensaje      = "❌ Error al guardar en la base de datos";
+                  $tipo_mensaje = "error";
+              }
+              $stmt->close();
 
             } else {
                 $mensaje      = "❌ No se pudo mover el archivo";
