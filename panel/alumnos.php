@@ -40,7 +40,17 @@ function subirFotoAlumno($curp, $extensionesPermitidas)
     $rutaDestino = $carpetaFotos . '/' . $nombreArchivo;
 
     if (move_uploaded_file($_FILES['foto']['tmp_name'], $rutaDestino)) {
-        return 'fotos/' . $nombreArchivo;
+
+      // Borrar la foto anterior si tenía otra extensión
+      foreach ($extensionesPermitidas as $ext) {
+        $vieja = $carpetaFotos . '/' . strtoupper($curp) . '.' . $ext;
+        if ($ext !== $extension && file_exists($vieja)) {
+            unlink($vieja);
+        }
+      }
+
+      return 'fotos/' . $nombreArchivo;
+       
     }
 
     return null;
@@ -239,7 +249,7 @@ if ($accion === 'editar' && isset($_GET['id'])) {
 // Solo se necesita cuando NO estamos en modo nuevo/editar
 $alumnos = null;
 if ($accion !== 'nuevo' && $accion !== 'editar') {
-    $alumnos = $conn->query("SELECT * FROM alumnos ORDER BY id DESC");
+    $alumnos = $conn->query("SELECT * FROM alumnos ORDER BY grado ASC, grupo ASC, nombre ASC");
 }
 
 $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
@@ -251,14 +261,14 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Alumnos — Panel de Administrador ChecaBot</title>
   <link rel="stylesheet" href="css/panel.css">
+  <!-- Asegurar la carga de SweetAlert2 por si no está en el layout principal -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
 
 <div class="layout">
 
-
   <?php include '../sidebar/sidebar.php'; ?>
-
 
   <main class="contenido">
 
@@ -359,8 +369,17 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
               </td>
               <td>
                 <div style="display:flex; gap:8px;">
-                  <a href="alumnos.php?accion=editar&id=<?= $alumno['id'] ?>" class="btn btn-primary btn-small">✏️</a>
-                  <a href="alumnos.php?eliminar=<?= $alumno['id'] ?>" class="btn btn-danger btn-small" onclick="return confirm('¿Eliminar a <?= addslashes($alumno['nombre']) ?>?')">🗑️</a>
+                  <a href="alumnos.php?accion=editar&id=<?= $alumno['id'] ?>" class="btn btn-primary btn-small" title="Editar alumno">✏️</a>
+                  <button type="button" class="btn btn-danger btn-small" title="Eliminar alumno" onclick="Swal.fire({
+                    title: '¿Eliminar a <?= addslashes($alumno['nombre']) ?>?',
+                    text: 'Esta acción es irreversible y eliminará tanto los datos del alumno como su historial de asistencia.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Aceptar',
+                    cancelButtonText: 'Cancelar'
+                  }).then((r) => { if (r.isConfirmed) window.location.href = 'alumnos.php?eliminar=<?= $alumno['id'] ?>'; })">🗑️</button>
                 </div>
               </td>
             </tr>
@@ -382,13 +401,20 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
           function aplicarFiltros() {
             const grado = filtroGrado.value;
             const grupo = filtroGrupo.value;
-            const nombre = filtroNombre.value.trim().toLowerCase();
+            const nombre = quitarAcentos(filtroNombre.value.trim());
             let visibles = 0;
+
+            function quitarAcentos(texto) {
+                return texto
+                  .normalize('NFD')
+                  .replace(/[\u0300-\u036f]/g, '')
+                  .toLowerCase();
+              }
 
             filas.forEach(function (fila) {
               const coincideGrado = grado === '' || fila.dataset.grado === grado;
               const coincideGrupo = grupo === '' || fila.dataset.grupo === grupo;
-              const coincideNombre = nombre === '' || fila.dataset.nombre.includes(nombre);
+              const coincideNombre = nombre === '' || quitarAcentos(fila.dataset.nombre).includes(nombre);
               const visible = coincideGrado && coincideGrupo && coincideNombre;
               fila.style.display = visible ? '' : 'none';
               if (visible) visibles++;

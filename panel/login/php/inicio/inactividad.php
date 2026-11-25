@@ -1,7 +1,7 @@
 <!-- Banner flotante oculto -->
 <div style="display: none;">
     <span>La sesión expira en:</span>
-    <strong id="number">1:00</strong>
+    <strong id="number">10:00</strong>
 </div>
 
 <!-- Incluir SweetAlert2 si no se ha cargado previamente en el archivo principal -->
@@ -10,8 +10,12 @@
 <!-- Script de conteo e inactividad -->
 <script type="text/javascript">
     (function() {
-        let n = 60; // 60 segundos
+        const TIEMPO_MAXIMO = 120; // 600 segundos (10 minutos)
+        let n = TIEMPO_MAXIMO;
         const l = document.getElementById("number");
+
+        // Variable global para bloquear la expiración durante cargas
+        window.isProcessing = false;
 
         function formatearTiempo(segundos) {
             const minutos = Math.floor(segundos / 60);
@@ -22,7 +26,10 @@
         }
 
         function reiniciarContador() {
-            n = 60; // Reinicia el tiempo al detectar movimiento/teclado
+            // Si hay una carga activa, ignoramos el movimiento para que no interfiera
+            if (window.isProcessing) return;
+
+            n = TIEMPO_MAXIMO; // Restablece al tiempo máximo correcto
             if (l) l.innerText = formatearTiempo(n);
         }
 
@@ -33,6 +40,11 @@
         if (l) l.innerText = formatearTiempo(n);
 
         const intervalId = window.setInterval(function() {
+            // SI ESTÁ CARGANDO ALGO, PAUSAMOS EL CONTADOR (No descuenta 'n')
+            if (window.isProcessing) {
+                return; 
+            }
+
             n--;
             if (l) l.innerText = formatearTiempo(n);
 

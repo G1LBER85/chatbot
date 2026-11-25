@@ -26,7 +26,7 @@ if($fila){
         'grupo'  => $fila['grado'],
         'hora'   => $fila['hora'],
         'fecha'  => $fila['fecha'],
-        'foto'   => $fila['foto'] ?? ''
+        'foto'   => $fila['foto'] ? $fila['foto'] . '?v=' . @filemtime(__DIR__ . '/../' . $fila['foto']) : ''
     ]);
 } else {
     echo json_encode([

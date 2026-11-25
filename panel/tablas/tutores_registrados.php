@@ -7,7 +7,7 @@
 $tutoresRegistrados = $conn->query("
     SELECT * FROM alumnos
     WHERE tutor_chat_id IS NOT NULL
-    ORDER BY grado DESC, nombre ASC
+    ORDER BY grado ASC, nombre ASC
 ");
 ?>
 
@@ -28,31 +28,51 @@ $tutoresRegistrados = $conn->query("
         <td><?= htmlspecialchars($fila['grado']) ?></td>
         <td>
           <!-- 🔒 CANDADO DEL CHAT ID
-               El número SIEMPRE se ve y NO se puede editar: nace cuando el tutor
-               se registra en Telegram y el bot ya no lo sobrescribe. Con clic en el
-               candado se abre 🔓 y aparece una sola opción: el basurero, que quita
-               al tutor (el alumno pasa a Tutores pendientes y puede volver a
-               registrarse desde Telegram). -->
+               El número SIEMPRE se ve y NO se puede editar.
+               El candado permite mostrar la opción para quitarlo. -->
           <div class="chat-id-celda">
             <span class="chat-id-texto"><?= htmlspecialchars($fila['tutor_chat_id']) ?></span>
-            <button type="button" class="btn btn-secondary btn-small btn-candado"
+
+            <button type="button"
+                    class="btn btn-secondary btn-small btn-candado"
                     title="Bloqueado. Clic para ver la opción de quitar el Chat ID"
-                    aria-label="Desbloquear para quitar el Chat ID" aria-expanded="false">🔒</button>
-            <a href="tablas.php?vista=tutores_registrados&eliminar_chat_id=<?= (int) $fila['id'] ?>"
-               class="btn btn-danger btn-small chat-id-quitar"
-               title="Quitar el Chat ID (el alumno pasa a Tutores pendientes)"
-               onclick="return confirm('¿Quitar el Chat ID de <?= htmlspecialchars(addslashes($fila['nombre'])) ?>? El alumno pasará a Tutores pendientes.')">🗑️</a>
+                    aria-label="Desbloquear para quitar el Chat ID"
+                    aria-expanded="false">🔒</button>
+
+            <button type="button"
+                    class="btn btn-danger btn-small chat-id-quitar"
+                    title="Quitar Chat ID"
+                    onclick="Swal.fire({
+                      title: '¿Quitar el Chat ID de <?= htmlspecialchars(addslashes($fila['nombre'])) ?>?',
+                      text: 'El alumno pasará a Tutores pendientes.',
+                      icon: 'warning',
+                      showCancelButton: true,
+                      confirmButtonColor: '#d33',
+                      cancelButtonColor: '#3085d6',
+                      confirmButtonText: 'Aceptar',
+                      cancelButtonText: 'Cancelar'
+                    }).then((r) => {
+                      if (r.isConfirmed) {
+                        window.location.href = 'tablas.php?vista=tutores_registrados&eliminar_chat_id=<?= (int) $fila['id'] ?>';
+                      }
+                    })">🗑</button>
           </div>
         </td>
         <td>
           <div style="display:flex; gap:8px;">
             <!-- Editar reutiliza el mismo formulario de alumnos.php -->
             <a href="alumnos.php?accion=editar&id=<?= $fila['id'] ?>" class="btn btn-primary btn-small" title="Editar alumno">✏️</a>
-            <!-- Eliminar se procesa arriba en tablas.php (eliminar_alumno) -->
-            <a href="tablas.php?vista=tutores_registrados&eliminar_alumno=<?= $fila['id'] ?>"
-               class="btn btn-danger btn-small"
-               title="Eliminar alumno"
-               onclick="return confirm('¿Eliminar a <?= htmlspecialchars(addslashes($fila['nombre'])) ?>? Esto también borrará su historial de asistencia.')">🗑️</a>
+            <!-- Eliminar con modal de SweetAlert2 -->
+            <button type="button" class="btn btn-danger btn-small" title="Eliminar alumno" onclick="Swal.fire({
+              title: '¿Eliminar a <?= htmlspecialchars(addslashes($fila['nombre'])) ?>?',
+              text: 'Esta acción es irreversible y eliminará tanto los datos del alumno como su historial de asistencia.',
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonColor: '#d33',
+              cancelButtonColor: '#3085d6',
+              confirmButtonText: 'Aceptar',
+              cancelButtonText: 'Cancelar'
+            }).then((r) => { if (r.isConfirmed) window.location.href = 'tablas.php?vista=tutores_registrados&eliminar_alumno=<?= $fila['id'] ?>'; })">🗑️</button>
           </div>
         </td>
       </tr>
