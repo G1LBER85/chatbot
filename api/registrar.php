@@ -161,7 +161,7 @@ try {
         $horaEntrada = strtotime($ultimoRegistro['fecha_hora']);
         $ahora = time();
 
-        if (($ahora - $horaEntrada) < 1800) {
+        if (($ahora - $horaEntrada) < 1800) { // 30 minutos = 1800 segundos
 
             http_response_code(429);
 

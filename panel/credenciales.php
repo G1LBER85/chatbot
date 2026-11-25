@@ -23,7 +23,7 @@ $alumnos = $conn->query("
     SELECT id, nombre, grado, grupo, CURP
     FROM alumnos
     WHERE activo = 1
-    ORDER BY grado DESC, grupo ASC, nombre ASC
+    ORDER BY grado ASC, grupo ASC, nombre ASC
 ");
 ?>
 <!DOCTYPE html>
@@ -293,16 +293,23 @@ $alumnos = $conn->query("
         const filas = document.querySelectorAll('#tablaAlumnos tbody tr[data-nombre]');
         const filaSinResultados = document.getElementById('filaSinResultados');
 
+        function quitarAcentos(texto) {
+          return texto
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
+        }
+
         function aplicarFiltros() {
           const grado = filtroGrado.value;
           const grupo = filtroGrupo.value;
-          const nombre = filtroNombre.value.trim().toLowerCase();
+          const nombre = quitarAcentos(filtroNombre.value.trim());
           let visibles = 0;
 
           filas.forEach(function (fila) {
             const coincideGrado = grado === '' || fila.dataset.grado === grado;
             const coincideGrupo = grupo === '' || fila.dataset.grupo === grupo;
-            const coincideNombre = nombre === '' || fila.dataset.nombre.includes(nombre);
+            const coincideNombre = nombre === '' || quitarAcentos(fila.dataset.nombre).includes(nombre);
             const visible = coincideGrado && coincideGrupo && coincideNombre;
             fila.style.display = visible ? '' : 'none';
             if (visible) visibles++;

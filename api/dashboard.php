@@ -59,7 +59,7 @@ try {
             'hora'     => $fila['hora'],
             'fecha'    => $fila['fecha'],
             'tipo'     => $fila['tipo'],
-            'foto'     => $fila['foto'],
+            'foto'     => $fila['foto'] ? $fila['foto'] . '?v=' . @filemtime(__DIR__ . '/../' . $fila['foto']) : '',
         ];
     }
 

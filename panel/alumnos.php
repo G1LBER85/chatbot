@@ -40,7 +40,17 @@ function subirFotoAlumno($curp, $extensionesPermitidas)
     $rutaDestino = $carpetaFotos . '/' . $nombreArchivo;
 
     if (move_uploaded_file($_FILES['foto']['tmp_name'], $rutaDestino)) {
-        return 'fotos/' . $nombreArchivo;
+
+      // Borrar la foto anterior si tenía otra extensión
+      foreach ($extensionesPermitidas as $ext) {
+        $vieja = $carpetaFotos . '/' . strtoupper($curp) . '.' . $ext;
+        if ($ext !== $extension && file_exists($vieja)) {
+            unlink($vieja);
+        }
+      }
+
+      return 'fotos/' . $nombreArchivo;
+       
     }
 
     return null;
@@ -239,7 +249,7 @@ if ($accion === 'editar' && isset($_GET['id'])) {
 // Solo se necesita cuando NO estamos en modo nuevo/editar
 $alumnos = null;
 if ($accion !== 'nuevo' && $accion !== 'editar') {
-    $alumnos = $conn->query("SELECT * FROM alumnos ORDER BY id DESC");
+    $alumnos = $conn->query("SELECT * FROM alumnos ORDER BY grado ASC, grupo ASC, nombre ASC");
 }
 
 $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
@@ -391,13 +401,20 @@ $mostrandoFormulario = ($accion === 'nuevo' || $accion === 'editar');
           function aplicarFiltros() {
             const grado = filtroGrado.value;
             const grupo = filtroGrupo.value;
-            const nombre = filtroNombre.value.trim().toLowerCase();
+            const nombre = quitarAcentos(filtroNombre.value.trim());
             let visibles = 0;
+
+            function quitarAcentos(texto) {
+                return texto
+                  .normalize('NFD')
+                  .replace(/[\u0300-\u036f]/g, '')
+                  .toLowerCase();
+              }
 
             filas.forEach(function (fila) {
               const coincideGrado = grado === '' || fila.dataset.grado === grado;
               const coincideGrupo = grupo === '' || fila.dataset.grupo === grupo;
-              const coincideNombre = nombre === '' || fila.dataset.nombre.includes(nombre);
+              const coincideNombre = nombre === '' || quitarAcentos(fila.dataset.nombre).includes(nombre);
               const visible = coincideGrado && coincideGrupo && coincideNombre;
               fila.style.display = visible ? '' : 'none';
               if (visible) visibles++;

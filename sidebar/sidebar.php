@@ -79,7 +79,6 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   display: flex;
   flex-direction: column;
   background-color: #2b3d4f; /* Color azul original */
-  color: #d1dbe5;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   box-sizing: border-box;
 }
@@ -93,7 +92,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   align-items: center;
   gap: 12px;
   padding: 18px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid black;
+  background-color: #2b3d4f;
 }
 
 .brand-icon {
@@ -102,14 +102,14 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 
 .brand-info strong {
   display: block;
-  color: #ffffff;
+  color: white;
   font-size: 1.1rem;
   font-weight: 700;
   line-height: 1.2;
 }
 
 .brand-info small {
-  color: #8fa3b8;
+  color: white;
   font-size: 0.78rem;
 }
 
@@ -127,17 +127,18 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  color: #d1dbe5;
+  color: white;
   text-decoration: none;
   border-radius: 6px;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 600;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: .3s;
 }
 
 .nav-link:hover, .nav-link.activo {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background-color: #2B458A;
+  color: white;
+  transform: scale(1.09);
 }
 
 .nav-dropdown-btn {
@@ -148,18 +149,19 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   padding: 10px 14px;
   background: transparent;
   border: none;
-  color: #d1dbe5;
-  font-size: 0.92rem;
+  color: white;
+  font-size: 1rem;
   font-weight: 600;
   border-radius: 6px;
   cursor: pointer;
   text-align: left;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: .3s;
 }
 
 .nav-dropdown-btn:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  background-color: #2B458A;
+  color: white;
+  transform: scale(1.09);
 }
 
 .dropdown-title {
@@ -186,7 +188,7 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 
 .sub-link {
   padding: 8px 12px;
-  color: #9cb0c5;
+  color: white;
   text-decoration: none;
   font-size: 0.88rem;
   border-radius: 6px;
@@ -194,8 +196,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .sub-link:hover, .sub-link.activo {
-  color: #ffffff;
-  background-color: rgba(255, 255, 255, 0.08);
+  color: white;
+  background-color: #2B458A;
 }
 
 .nav-dropdown.open .nav-sub-list {
@@ -253,8 +255,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .user-name {
-  color: #ffffff;
-  font-size: 0.9rem;
+  color: whitesmoke;
+  font-size: 1rem;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -263,8 +265,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .user-role {
-  color: #8fa3b8;
-  font-size: 0.75rem;
+  color: white;
+  font-size: 0.80rem;
 }
 
 .logout-btn {
@@ -272,7 +274,8 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px;
+  background-color: #213140;
+  padding: 10px;
   border-radius: 6px;
   text-decoration: none;
   flex-shrink: 0;
@@ -280,6 +283,7 @@ $mostrandoFormulario = $mostrandoFormulario ?? false;
 }
 
 .logout-btn:hover {
+  transform: scale(1.3);
   color: #e74c3c;
   background-color: rgba(231, 76, 60, 0.12);
 }
@@ -483,4 +487,3 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
-```
