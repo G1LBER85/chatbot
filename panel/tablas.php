@@ -51,7 +51,11 @@ if (isset($_GET['eliminar_alumno'])) {
 // alumno. El alumno pasa automáticamente a "Tutores pendientes",
 // porque esa vista filtra por tutor_chat_id IS NULL. Si el tutor
 // quiere volver a recibir notificaciones, debe escribir /start de
-// nuevo en el bot — ya no hay forma de capturarlo manualmente aquí.
+// nuevo en el bot. El Chat ID NO se puede editar ni capturar a mano:
+// solo nace cuando el tutor se registra en Telegram, y el bot no lo
+// sobrescribe mientras siga puesto. Quitarlo (esta acción) es lo único
+// que se puede hacer desde el panel, y solo se ofrece DESPUÉS de abrir
+// el candado 🔓 de la tabla de Tutores registrados.
 if (isset($_GET['eliminar_chat_id'])) {
     $idAlumno = intval($_GET['eliminar_chat_id']);
 
