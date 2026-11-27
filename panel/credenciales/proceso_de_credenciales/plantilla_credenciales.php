@@ -133,7 +133,7 @@ function construirHtmlCredencialFrente(array $alumno, ?string $logoDataUri): str
             </div>
         </div>
         <div class="pie">
-            Uso exclusivo para acceso a institución.
+            Uso exclusivo para acceso a la institución.
             <span class="leyenda-uso-unico">Sin validez oficial.</span>
         </div>
     </div>
