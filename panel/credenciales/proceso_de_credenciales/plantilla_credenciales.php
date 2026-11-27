@@ -13,9 +13,10 @@
 // [CONFIGURACIÓN] — edita aquí si cambia el nombre de la escuela,
 // el turno, o el logo.
 // ─────────────────────────────────────────────────────────────
-const NOMBRE_ESCUELA = 'Preparatoria Número 3';
+const NOMBRE_ESCUELA = 'Escuela Preparatoria Núm. 3 del Estado';
 const TURNO_ESCUELA = 'Turno Matutino';
-const RUTA_LOGO = __DIR__ . '/../../../img/logo_chiapas.png'; // se usa si existe; si no, se omite sin error
+const RUTA_LOGO = __DIR__ . '/../../../img/logo_escuela_sinfondo.png'; // se usa si existe; si no, se omite sin error
+const RUTA_LOGO_CHIAPAS = __DIR__ . '/../../../img/logo_chiapas.png';
 
 /**
  * Convierte una imagen del disco a un data URI base64 TAL CUAL,
@@ -39,6 +40,17 @@ function imagenADataUri(string $rutaAbsoluta): ?string
     return 'data:' . $tipo . ';base64,' . base64_encode($contenido);
 }
 
+function logoChiapasDataUri(): ?string
+{
+    static $uri = false;   // false = todavía no se ha leído
+
+    if ($uri === false) {
+        $uri = imagenADataUri(RUTA_LOGO_CHIAPAS);
+    }
+
+    return $uri;
+}
+
 /**
  * Arma el encabezado (logo + nombre de la escuela + turno) que
  * comparten el frente y el reverso, para no repetir el HTML dos
@@ -53,6 +65,11 @@ function construirEncabezado(?string $logoDataUri): string
         ? '<img src="' . $logoDataUri . '" class="logo-escuela">'
         : '';
 
+    $chiapasUri = logoChiapasDataUri();
+    $logoChiapasHtml = $chiapasUri
+        ? '<img src="' . $chiapasUri . '" class="logo-chiapas">'
+        : '';
+
     return <<<HTML
     <div class="encabezado">
         <div class="fila-tabla">
@@ -61,6 +78,7 @@ function construirEncabezado(?string $logoDataUri): string
                 <div class="nombre-institucion">{$escuela}</div>
                 <div class="turno-institucion">{$turno}</div>
             </div>
+            <div class="celda-logo-derecha">{$logoChiapasHtml}</div>
         </div>
     </div>
     <div class="franja-rosa"></div>
@@ -97,15 +115,26 @@ function construirHtmlCredencialFrente(array $alumno, ?string $logoDataUri): str
             <div class="fila-tabla">
                 <div class="celda-foto">{$fotoHtml}</div>
                 <div class="celda-datos">
+                    <span style="font-size: 8px; font-weight: bold;">Nombre Completo:</span>
                     <div class="dato-nombre">{$nombre}</div>
+
+                    <span style="font-size: 8px; font-weight: bold;">Semestre y Grupo:</span>
                     <div class="dato-grado">{$gradoGrupo}</div>
+
+                    <span style="font-size: 8px; font-weight: bold;">CURP:</span>
                     <div class="dato-curp">{$curp}</div>
+
+                    <span style="font-size: 8px; font-weight: bold;">CCT:</span>
+                    <div class="dato-nombre">07EBH0072Z</div>
+
+                    <span style="font-size: 8px; font-weight: bold;">Nivel Educativo:</span>
+                    <div class="dato-nombre">Bachillerato</div>
                 </div>
             </div>
         </div>
         <div class="pie">
-            ChecaBot — Control de Asistencia
-            <span class="leyenda-uso-unico">Solo uso único para el registro del alumno</span>
+            Uso exclusivo para acceso a la institución.
+            <span class="leyenda-uso-unico">Sin validez oficial.</span>
         </div>
     </div>
     HTML;
@@ -129,7 +158,9 @@ function construirHtmlCredencialReverso(array $alumno, ?string $logoDataUri): st
             <img src="{$qrDataUri}" class="qr-reverso">
             <div class="reverso-texto">Escanea para registrar entrada/salida</div>
         </div>
-        <div class="pie">{$nombre}</div>
+        <div class="pie">{$nombre}
+            <span class="leyenda-uso-unico">Sin validez oficial.</span>
+        </div>
     </div>
     HTML;
 }
